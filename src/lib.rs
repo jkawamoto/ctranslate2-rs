@@ -6,11 +6,13 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-use std::ffi::{c_char, c_int, CStr, CString};
+use std::ffi::{c_char, c_int, CStr, CString, OsStr};
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
 use tokenizers::{Decoder, EncodeInput, Tokenizer};
+
+const TOKENIZER_FILENAME: &str = "tokenizer.json";
 
 struct StringArray {
     chars: Vec<*mut c_char>,
@@ -53,8 +55,9 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new<T: Into<Vec<u8>>, U: AsRef<Path>>(model: T, tokenizer: U) -> Result<Translator> {
-        let model_path = CString::new(model).expect("failed to convert the given path to CString");
+    pub fn new<T: Into<Vec<u8>> + AsRef<OsStr>>(path: T) -> Result<Translator> {
+        let tokenizer = Path::new(&path).join(TOKENIZER_FILENAME);
+        let model_path = CString::new(path).expect("failed to convert the given path to CString");
         let translator = unsafe { ctranslate2_sys::Translator::new(model_path.as_ptr()) };
 
         Ok(Translator {
@@ -65,9 +68,9 @@ impl Translator {
     }
 
     pub fn translate<'s, T, U>(&mut self, source: T, target_prefix: Vec<U>) -> Result<String>
-        where
-            T: Into<EncodeInput<'s>>,
-            U: Into<Vec<u8>>,
+    where
+        T: Into<EncodeInput<'s>>,
+        U: Into<Vec<u8>>,
     {
         let source = StringArray::new(
             self.tokenizer
