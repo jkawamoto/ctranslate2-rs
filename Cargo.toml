@@ -1,0 +1,14 @@
+[package]
+name = "ctranslate2"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ctranslate2-sys = { path = "sys" }
+anyhow = "1.0.71"
+tokenizers = "0.13.3"
+
+
+[build-dependencies]
