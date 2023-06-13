@@ -3,11 +3,10 @@
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 At this time, it has only been tested and confirmed to work on Intel Macs.
 
-## Compilation and Execution
-
-* `libiomp5.dylib` is required.
-* Add the path to the directory containing `libiomp5.dylib` to the `DYLD_LIBRARY_PATH` environment variable.
-* `libiomp5.dylib` can be obtained from [Intel's website](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html).
+### Compilation
+* [OpenBLAS](https://www.openblas.net/) and [OpenMP](https://openmp.llvm.org/) are required.
+* Set the path to `libopenblas` (.a or .so) in the `OPENBLAS_LIBRARY` environment variable.
+* Set the path to `libomp` (.a or .so) in the `OMP_LIBRARY` environment variable.
 
 ## About the Model
 The model files need to be converted for CTranslate2.
