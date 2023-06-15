@@ -29,7 +29,7 @@ use ctranslate2::Translator;
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let mut t = Translator::new(path)?;
+    let t = Translator::new(path)?;
     let res = t.translate("Hello world!", vec!["deu_Latn"])?;
     println!("{}", res);
 

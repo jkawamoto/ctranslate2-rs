@@ -35,8 +35,9 @@ Translator::~Translator() {
   delete static_cast<ctranslate2::Translator *>(this->impl);
 }
 
-StringArray Translator::translate(const struct StringArray sources,
-                                  const struct StringArray target_prefix) {
+StringArray
+Translator::translate(const struct StringArray sources,
+                      const struct StringArray target_prefix) const {
   vector<string> s, tp;
   for (int i = 0; i != sources.length; ++i) {
     s.push_back(string(sources.strings[i]));

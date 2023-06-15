@@ -22,5 +22,5 @@ public:
   ~Translator();
 
   StringArray translate(const struct StringArray source,
-                        const struct StringArray target_prefix);
+                        const struct StringArray target_prefix) const;
 };

@@ -6,7 +6,8 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-use std::ffi::{c_char, c_int, CStr, CString, OsStr};
+use std::ffi::{c_char, c_int, CStr, CString};
+use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -55,9 +56,10 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new<T: Into<Vec<u8>> + AsRef<OsStr>>(path: T) -> Result<Translator> {
-        let tokenizer = Path::new(&path).join(TOKENIZER_FILENAME);
-        let model_path = CString::new(path).expect("failed to convert the given path to CString");
+    pub fn new<T: AsRef<Path>>(path: T) -> Result<Translator> {
+        let tokenizer = path.as_ref().join(TOKENIZER_FILENAME);
+        let model_path = CString::new(path.as_ref().as_os_str().as_bytes())
+            .expect("failed to convert the given path to CString");
         let translator = unsafe { ctranslate2_sys::Translator::new(model_path.as_ptr()) };
 
         Ok(Translator {
@@ -67,9 +69,9 @@ impl Translator {
         })
     }
 
-    pub fn translate<'s, T, U>(&mut self, source: T, target_prefix: Vec<U>) -> Result<String>
+    pub fn translate<'a, T, U>(&self, source: T, target_prefix: Vec<U>) -> Result<String>
     where
-        T: Into<EncodeInput<'s>>,
+        T: Into<EncodeInput<'a>>,
         U: Into<Vec<u8>>,
     {
         let source = StringArray::new(
