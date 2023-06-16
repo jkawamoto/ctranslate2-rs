@@ -3,11 +3,6 @@
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 At this time, it has only been tested and confirmed to work on Intel Macs.
 
-### Compilation
-* [OpenBLAS](https://www.openblas.net/) and [OpenMP](https://openmp.llvm.org/) are required.
-* Set the path to `libopenblas` (.a or .so) in the `OPENBLAS_LIBRARY` environment variable.
-* Set the path to `libomp` (.a or .so) in the `OMP_LIBRARY` environment variable.
-
 ## About the Model
 The model files need to be converted for CTranslate2.
 For instance, the following command will convert `nllb-200-distilled-600M`:
