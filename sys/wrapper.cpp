@@ -36,31 +36,35 @@ Translator::~Translator() {
   delete static_cast<ctranslate2::Translator *>(this->impl);
 }
 
+inline vector<string> string_array_to_string_vec(const StringArray &a) {
+  vector<string> res;
+  for (unsigned long i = 0; i != a.length; ++i) {
+    res.push_back(string(a.strings[i]));
+  }
+  return res;
+}
+
+inline StringArray *string_vec_to_string_array(const vector<string> &vec) {
+  char **ss = new char *[vec.size()];
+  for (std::vector<std::string>::size_type i = 0; i != vec.size(); ++i) {
+    const string &s = vec[i];
+    ss[i] = new char[s.size() + 1];
+    std::char_traits<char>::copy(ss[i], s.c_str(), s.size() + 1);
+  }
+  return new StringArray{ss, vec.size()};
+}
+
 StringArray const *
-Translator::translate(const StringArray &sources,
+Translator::translate(const StringArray &source,
                       const StringArray &target_prefix) const {
-  vector<string> s, tp;
-  for (unsigned long i = 0; i != sources.length; ++i) {
-    s.push_back(string(sources.strings[i]));
-  }
-  for (unsigned long i = 0; i != target_prefix.length; ++i) {
-    tp.push_back(string(target_prefix.strings[i]));
-  }
+  vector<vector<string>> ss;
+  ss.push_back(string_array_to_string_vec(source));
 
-  vector<vector<string>> ss, tps;
-  ss.push_back(s);
-  tps.push_back(tp);
+  vector<vector<string>> tps;
+  tps.push_back(string_array_to_string_vec(target_prefix));
 
-  const auto output = static_cast<ctranslate2::Translator *>(this->impl)
-                          ->translate_batch(ss, tps)[0]
-                          .output();
-  char **strings = new char *[output.size()];
+  const auto res = static_cast<ctranslate2::Translator *>(this->impl)
+                       ->translate_batch(ss, tps);
 
-  for (std::vector<std::string>::size_type i = 0; i != output.size(); ++i) {
-    const string &s = output[i];
-    strings[i] = new char[s.size() + 1];
-    std::char_traits<char>::copy(strings[i], s.c_str(), s.size() + 1);
-  }
-
-  return new StringArray{strings, output.size()};
+  return string_vec_to_string_array(res[0].output());
 }
