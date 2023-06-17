@@ -11,9 +11,11 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=wrapper.cpp");
+    println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
 
