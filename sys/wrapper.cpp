@@ -18,14 +18,15 @@
 using std::string;
 using std::vector;
 
-void release_string_array(struct StringArray a) {
-  for (auto i = 0; i != a.length; ++i) {
-    free(a.strings[i]);
+void release_string_array(StringArray const *a) {
+  for (unsigned long i = 0; i != a->length; ++i) {
+    delete[] a->strings[i];
   }
-  delete[] a.strings;
+  delete[] a->strings;
+  delete a;
 }
 
-Translator::Translator(const char *model_path) {
+Translator::Translator(char const *model_path) {
   const auto model = ctranslate2::models::Model::load(std::string(model_path));
   const ctranslate2::models::ModelLoader model_loader(model_path);
   this->impl = new ctranslate2::Translator(model_loader);
@@ -35,14 +36,14 @@ Translator::~Translator() {
   delete static_cast<ctranslate2::Translator *>(this->impl);
 }
 
-StringArray
-Translator::translate(const struct StringArray sources,
-                      const struct StringArray target_prefix) const {
+StringArray const *
+Translator::translate(const StringArray &sources,
+                      const StringArray &target_prefix) const {
   vector<string> s, tp;
-  for (int i = 0; i != sources.length; ++i) {
+  for (unsigned long i = 0; i != sources.length; ++i) {
     s.push_back(string(sources.strings[i]));
   }
-  for (int i = 0; i != target_prefix.length; ++i) {
+  for (unsigned long i = 0; i != target_prefix.length; ++i) {
     tp.push_back(string(target_prefix.strings[i]));
   }
 
@@ -56,12 +57,10 @@ Translator::translate(const struct StringArray sources,
   char **strings = new char *[output.size()];
 
   for (std::vector<std::string>::size_type i = 0; i != output.size(); ++i) {
-    strings[i] = strdup(output[i].c_str());
+    const string &s = output[i];
+    strings[i] = new char[s.size() + 1];
+    std::char_traits<char>::copy(strings[i], s.c_str(), s.size() + 1);
   }
 
-  struct StringArray res;
-  res.strings = strings;
-  res.length = output.size();
-
-  return res;
+  return new StringArray{strings, output.size()};
 }
