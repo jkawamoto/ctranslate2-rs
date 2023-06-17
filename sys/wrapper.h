@@ -7,20 +7,20 @@
 // http://opensource.org/licenses/mit-license.php
 
 struct StringArray {
-  char *const *strings;
-  int length;
+  char const *const *strings;
+  unsigned long length;
 };
 
-void release_string_array(struct StringArray a);
+void release_string_array(StringArray const *a);
 
 class Translator {
 private:
   void *impl;
 
 public:
-  Translator(const char *model_path);
+  Translator(char const *model_path);
   ~Translator();
 
-  StringArray translate(const struct StringArray source,
-                        const struct StringArray target_prefix) const;
+  StringArray const *translate(const StringArray &source,
+                               const StringArray &target_prefix) const;
 };

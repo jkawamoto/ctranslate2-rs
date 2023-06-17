@@ -18,14 +18,15 @@
 using std::string;
 using std::vector;
 
-void release_string_array(struct StringArray a) {
-  for (auto i = 0; i != a.length; ++i) {
-    free(a.strings[i]);
+void release_string_array(StringArray const *a) {
+  for (unsigned long i = 0; i != a->length; ++i) {
+    delete[] a->strings[i];
   }
-  delete[] a.strings;
+  delete[] a->strings;
+  delete a;
 }
 
-Translator::Translator(const char *model_path) {
+Translator::Translator(char const *model_path) {
   const auto model = ctranslate2::models::Model::load(std::string(model_path));
   const ctranslate2::models::ModelLoader model_loader(model_path);
   this->impl = new ctranslate2::Translator(model_loader);
@@ -35,33 +36,35 @@ Translator::~Translator() {
   delete static_cast<ctranslate2::Translator *>(this->impl);
 }
 
-StringArray
-Translator::translate(const struct StringArray sources,
-                      const struct StringArray target_prefix) const {
-  vector<string> s, tp;
-  for (int i = 0; i != sources.length; ++i) {
-    s.push_back(string(sources.strings[i]));
+inline vector<string> string_array_to_string_vec(const StringArray &a) {
+  vector<string> res;
+  for (unsigned long i = 0; i != a.length; ++i) {
+    res.push_back(string(a.strings[i]));
   }
-  for (int i = 0; i != target_prefix.length; ++i) {
-    tp.push_back(string(target_prefix.strings[i]));
-  }
-
-  vector<vector<string>> ss, tps;
-  ss.push_back(s);
-  tps.push_back(tp);
-
-  const auto output = static_cast<ctranslate2::Translator *>(this->impl)
-                          ->translate_batch(ss, tps)[0]
-                          .output();
-  char **strings = new char *[output.size()];
-
-  for (std::vector<std::string>::size_type i = 0; i != output.size(); ++i) {
-    strings[i] = strdup(output[i].c_str());
-  }
-
-  struct StringArray res;
-  res.strings = strings;
-  res.length = output.size();
-
   return res;
+}
+
+inline StringArray *string_vec_to_string_array(const vector<string> &vec) {
+  char **ss = new char *[vec.size()];
+  for (std::vector<std::string>::size_type i = 0; i != vec.size(); ++i) {
+    const string &s = vec[i];
+    ss[i] = new char[s.size() + 1];
+    std::char_traits<char>::copy(ss[i], s.c_str(), s.size() + 1);
+  }
+  return new StringArray{ss, vec.size()};
+}
+
+StringArray const *
+Translator::translate(const StringArray &source,
+                      const StringArray &target_prefix) const {
+  vector<vector<string>> ss;
+  ss.push_back(string_array_to_string_vec(source));
+
+  vector<vector<string>> tps;
+  tps.push_back(string_array_to_string_vec(target_prefix));
+
+  const auto res = static_cast<ctranslate2::Translator *>(this->impl)
+                       ->translate_batch(ss, tps);
+
+  return string_vec_to_string_array(res[0].output());
 }
