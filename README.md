@@ -1,7 +1,11 @@
 # ctranslate2-rs
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
-At this time, it has only been tested and confirmed to work on Intel Macs.
+At this time, it has only been tested and confirmed to work on Intel Mac and Linux.
+
+## Compilation
+On Linux, [OpenBLAS](https://www.openblas.net/) is required.
+Please add the path to the directory containing `libopenblas.a` to `LIBRARY_PATH` environment variable.
 
 ## About the Model
 The model files need to be converted for CTranslate2.
