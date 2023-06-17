@@ -1,0 +1,36 @@
+name: Rust library
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install OpenBLAS
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libclang-dev libopenblas-dev
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --verbose
+        env:
+          LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
+      - name: Run tests
+        run: cargo test --verbose

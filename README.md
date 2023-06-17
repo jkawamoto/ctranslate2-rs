@@ -1,4 +1,5 @@
 # ctranslate2-rs
+[![Rust library](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml)
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 At this time, it has only been tested and confirmed to work on Intel Mac and Linux.
