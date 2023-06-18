@@ -10,14 +10,57 @@ use std::ffi::CString;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use tokenizers::{Decoder, EncodeInput, Tokenizer};
+
+use ctranslate2_sys::{release_translation_result, TranslationResult};
 
 use crate::array::{StringArrayAux, StringArrayPtr};
 
 mod array;
 
 const TOKENIZER_FILENAME: &str = "tokenizer.json";
+
+struct TranslationResultPtr(*const TranslationResult, StringArrayPtr, Option<f32>);
+
+impl TryFrom<*const TranslationResult> for TranslationResultPtr {
+    type Error = Error;
+
+    fn try_from(ptr: *const TranslationResult) -> Result<Self> {
+        if ptr.is_null() {
+            bail!("empty result");
+        }
+        unsafe {
+            if (*ptr).hypothesis.is_null() {
+                bail!("empty hypothesis");
+            }
+            let score = if (*ptr).score.is_null() {
+                None
+            } else {
+                Some(*(*ptr).score)
+            };
+
+            Ok(Self(ptr, StringArrayPtr::from((*ptr).hypothesis), score))
+        }
+    }
+}
+
+impl TranslationResultPtr {
+    fn hypothesis(&self) -> &StringArrayPtr {
+        &self.1
+    }
+    fn score(&self) -> Option<f32> {
+        self.2
+    }
+}
+
+impl Drop for TranslationResultPtr {
+    fn drop(&mut self) {
+        unsafe {
+            release_translation_result(self.0);
+        }
+    }
+}
 
 pub struct Translator {
     translator: ctranslate2_sys::Translator,
@@ -38,7 +81,11 @@ impl Translator {
         })
     }
 
-    pub fn translate<'a, T, U>(&self, source: T, target_prefix: Vec<U>) -> Result<String>
+    pub fn translate<'a, T, U>(
+        &self,
+        source: T,
+        target_prefix: Vec<U>,
+    ) -> Result<(String, Option<f32>)>
     where
         T: Into<EncodeInput<'a>>,
         U: Into<Vec<u8>>,
@@ -51,21 +98,24 @@ impl Translator {
                 .to_vec(),
         );
         let target_prefix = StringArrayAux::from(target_prefix);
-        let res = StringArrayPtr::from(unsafe {
+        let res = TranslationResultPtr::try_from(unsafe {
             self.translator
                 .translate(source.as_ptr(), target_prefix.as_ptr())
-        });
-
-        self.tokenizer
-            .get_decoder()
-            .unwrap()
-            .decode(
-                res.to_vec()?
-                    .into_iter()
-                    .skip(target_prefix.len())
-                    .collect::<Vec<_>>(),
-            )
-            .map_err(|err| anyhow!("failed to decode: {err}"))
+        })?;
+        Ok((
+            self.tokenizer
+                .get_decoder()
+                .unwrap()
+                .decode(
+                    res.hypothesis()
+                        .to_vec()?
+                        .into_iter()
+                        .skip(target_prefix.len())
+                        .collect::<Vec<_>>(),
+                )
+                .map_err(|err| anyhow!("failed to decode: {err}"))?,
+            res.score(),
+        ))
     }
 }
 

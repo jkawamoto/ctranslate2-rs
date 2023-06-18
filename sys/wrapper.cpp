@@ -26,6 +26,15 @@ void release_string_array(StringArray const *a) {
   delete a;
 }
 
+void release_translation_result(TranslationResult const *r) {
+  // Note: r->hypothesis should be released by the user using
+  // release_string_array separately.
+  if (r->score != nullptr) {
+    delete r->score;
+  }
+  delete r;
+}
+
 Translator::Translator(char const *model_path) {
   const auto model = ctranslate2::models::Model::load(std::string(model_path));
   const ctranslate2::models::ModelLoader model_loader(model_path);
@@ -54,7 +63,7 @@ inline StringArray *string_vec_to_string_array(const vector<string> &vec) {
   return new StringArray{ss, vec.size()};
 }
 
-StringArray const *
+TranslationResult const *
 Translator::translate(const StringArray &source,
                       const StringArray &target_prefix) const {
   vector<vector<string>> ss;
@@ -65,6 +74,13 @@ Translator::translate(const StringArray &source,
 
   const auto res = static_cast<ctranslate2::Translator *>(this->impl)
                        ->translate_batch(ss, tps);
+  if (res.empty()) {
+    return nullptr;
+  }
 
-  return string_vec_to_string_array(res[0].output());
+  const auto &res0 = res[0];
+  return new TranslationResult{
+      res0.num_hypotheses() != 0 ? string_vec_to_string_array(res0.output())
+                                 : nullptr,
+      res0.has_scores() ? new float(res0.score()) : nullptr};
 }
