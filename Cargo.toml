@@ -1,9 +1,12 @@
 [package]
 name = "ctranslate2"
 version = "0.1.0"
+authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
+description = "Rust bindings for OpenNMT/CTranslate2"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
+license-file = "LICENSE"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 ctranslate2-sys = { path = "sys" }
