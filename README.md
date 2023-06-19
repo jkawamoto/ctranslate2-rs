@@ -30,11 +30,26 @@ use ctranslate2::Translator;
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
     let t = Translator::new(path)?;
-    let res = t.translate("Hello world!", vec!["deu_Latn"])?;
-    println!("{}", res);
+    let res = t.translate_batch(
+        vec![
+            "Hello world!",
+            "This library provides Rust bindings for CTranslate2.",
+        ],
+        vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+    )?;
+    for r in res {
+        println!("{}, (score: {:?})", r.0, r.1);
+    }
+
 
     Ok(())
 }
+```
+
+### Output
+```
+Hallo Welt!<unk>, (score: None)
+このライブラリでは,CTranslate2 の Rust バインディングが提供されています., (score: None)
 ```
 
 ## License

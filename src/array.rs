@@ -7,10 +7,11 @@
 // http://opensource.org/licenses/mit-license.php
 
 use std::ffi::{c_char, c_ulong, CStr, CString};
+use std::slice::Iter;
 
 use anyhow::Result;
 
-use ctranslate2_sys::{release_string_array, StringArray};
+use ctranslate2_sys::{release_string_array, StringArray, StringArrayArray};
 
 pub struct StringArrayAux(Vec<CString>, Vec<*const c_char>, StringArray);
 
@@ -36,6 +37,38 @@ impl StringArrayAux {
 
     pub fn as_ptr(&self) -> *const StringArray {
         &self.2 as *const StringArray
+    }
+}
+
+pub struct StringArrayArrayAux(
+    Vec<StringArrayAux>,
+    Vec<*const StringArray>,
+    StringArrayArray,
+);
+
+impl<T: Into<Vec<u8>>> From<Vec<Vec<T>>> for StringArrayArrayAux {
+    fn from(values: Vec<Vec<T>>) -> Self {
+        let auxes: Vec<_> = values.into_iter().map(StringArrayAux::from).collect();
+        let arrays: Vec<_> = auxes.iter().map(|aux| aux.as_ptr()).collect();
+        let a = StringArrayArray {
+            arrays: arrays.as_ptr(),
+            length: auxes.len() as c_ulong,
+        };
+        Self(auxes, arrays, a)
+    }
+}
+
+impl StringArrayArrayAux {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn as_ptr(&self) -> *const StringArrayArray {
+        &self.2 as *const StringArrayArray
+    }
+
+    pub fn iter(&self) -> Iter<'_, StringArrayAux> {
+        self.0.iter()
     }
 }
 
@@ -71,28 +104,62 @@ impl Drop for StringArrayPtr {
 mod tests {
     use std::ffi::CStr;
 
-    use crate::array::StringArrayAux;
+    use ctranslate2_sys::StringArray;
+
+    use crate::array::{StringArrayArrayAux, StringArrayAux};
+
+    fn assert_eq_string_array_aux(aux: &StringArrayAux, expect: &Vec<&str>) {
+        assert_eq!(aux.0.len(), expect.len());
+        for (s, expect) in aux.0.iter().zip(expect) {
+            assert_eq!(s.to_bytes(), expect.as_bytes());
+        }
+    }
+
+    unsafe fn assert_eq_string_array_ptr(p: *const StringArray, expect: &Vec<&str>) {
+        assert_eq!((*p).length as usize, expect.len());
+        for (v, expect) in std::slice::from_raw_parts((*p).strings, expect.len())
+            .iter()
+            .map(|s| CStr::from_ptr(*s))
+            .zip(expect)
+        {
+            assert_eq!(v.to_str().unwrap(), *expect);
+        }
+    }
 
     #[test]
     fn test_string_array_aux() {
         let data = vec!["a", "aa", "aaa"];
         let strings = StringArrayAux::from(data.clone());
 
-        assert_eq!(strings.0.len(), data.len());
-        for (s, expect) in strings.0.iter().zip(&data) {
-            assert_eq!(s.to_bytes(), expect.as_bytes());
+        assert_eq!(strings.len(), data.len());
+        assert_eq_string_array_aux(&strings, &data);
+        unsafe {
+            assert_eq_string_array_ptr(strings.as_ptr(), &data);
+        }
+    }
+
+    #[test]
+    fn test_string_array_array_aux() {
+        let data = vec![vec!["a"], vec!["bb", "b"], vec!["ccc", "cc", "c"]];
+        let aux = StringArrayArrayAux::from(data.clone());
+
+        assert_eq!(aux.len(), data.len());
+        for (a, v) in aux.0.iter().zip(&data) {
+            assert_eq_string_array_aux(a, v);
         }
 
-        let p = strings.as_ptr();
         unsafe {
-            assert_eq!((*p).length as usize, data.len());
-            for (v, expect) in std::slice::from_raw_parts((*p).strings, data.len())
+            assert_eq!((*aux.as_ptr()).length as usize, data.len());
+            for (a, v) in std::slice::from_raw_parts((*aux.as_ptr()).arrays, data.len())
                 .iter()
-                .map(|s| CStr::from_ptr(*s))
-                .zip(data)
+                .zip(&data)
             {
-                assert_eq!(v.to_str().unwrap(), expect);
+                assert_eq_string_array_ptr(*a, v);
             }
+        }
+
+        for (a, d) in aux.iter().zip(data.iter()) {
+            assert_eq!(a.len(), d.len());
         }
     }
 
