@@ -1,6 +1,6 @@
 [package]
 name = "ctranslate2"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
