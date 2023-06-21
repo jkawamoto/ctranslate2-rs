@@ -32,5 +32,6 @@ jobs:
         run: cargo build --verbose
         env:
           LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
+          CXXFLAGS: -std=c++17
       - name: Run tests
         run: cargo test --verbose
