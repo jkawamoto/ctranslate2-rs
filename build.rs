@@ -12,9 +12,11 @@ use std::path::{Path, PathBuf};
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/translator.rs");
+    println!("cargo:rerun-if-changed=src/translator.cpp");
+    println!("cargo:rerun-if-changed=include/convert.h");
+    println!("cargo:rerun-if-changed=include/translator.h");
     println!("cargo:rerun-if-changed=CTranslate2");
-    println!("cargo:rerun-if-changed=wrapper.h");
-    println!("cargo:rerun-if-changed=wrapper.cpp");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
@@ -50,31 +52,11 @@ fn main() {
     );
     println!("cargo:rustc-link-lib=static=cpu_features");
 
-    let bindings = bindgen::Builder::default()
-        .header("wrapper.h")
-        .clang_args([
-            "-x",
-            "c++",
-            "-std=c++17",
-            "-I",
-            "CTranslate2/include",
-            "-I",
-            "CTranslate2/third_party/spdlog/include",
-        ])
-        .derive_copy(false)
-        .generate()
-        .expect("Unable to generate bindings");
-    bindings
-        .write_to_file("src/bindings.rs")
-        .expect("Unable to write bindings.rs");
-
-    let mut builder = cc::Build::new();
-    builder
-        .cpp(true)
-        .flag("-std=c++17")
-        .file("wrapper.cpp")
+    cxx_build::bridge("src/translator.rs")
+        .file("src/translator.cpp")
+        .flag_if_supported("-std=c++17")
         .include("CTranslate2/include")
-        .compile("wrapper");
+        .compile("ctranslator2");
 }
 
 fn link_static_library<T: std::fmt::Display>(name: T) -> bool {
@@ -87,7 +69,7 @@ fn link_static_library<T: std::fmt::Display>(name: T) -> bool {
         println!("cargo:rustc-link-lib=static={name}");
         return true;
     }
-    return false;
+    false
 }
 
 fn find_library<T: AsRef<Path>>(name: T) -> Option<PathBuf> {
