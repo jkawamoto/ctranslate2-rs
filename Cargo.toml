@@ -17,3 +17,7 @@ tokenizers = "0.13.3"
 [build-dependencies]
 cmake = "0.1.50"
 cxx-build = "1.0.97"
+
+
+[workspace]
+members = ["sample"]
