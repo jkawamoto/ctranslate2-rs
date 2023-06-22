@@ -11,7 +11,7 @@ use std::env;
 use anyhow::{anyhow, Result};
 
 use ctranslate2::config::{Config, Device};
-use ctranslate2::Translator;
+use ctranslate2::{TranslationOptions, Translator};
 
 fn main() -> Result<()> {
     let path = env::args()
@@ -24,6 +24,10 @@ fn main() -> Result<()> {
             "This library provides Rust bindings for CTranslate2.",
         ],
         vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+        &TranslationOptions {
+            return_scores: true,
+            ..Default::default()
+        },
     )?;
     for r in res {
         println!("{}, (score: {:?})", r.0, r.1);

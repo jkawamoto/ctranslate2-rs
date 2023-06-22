@@ -17,10 +17,49 @@ using std::string;
 using std::vector;
 
 Vec<TranslationResult>
-Translator::translate_batch(Vec<VecStr> source,
-                            Vec<VecStr> target_prefix) const {
+Translator::translate_batch(Vec<VecStr> source, Vec<VecStr> target_prefix,
+                            TranslationOptions options) const {
+
+  ctranslate2::BatchType batch_type;
+  switch (options.batch_type) {
+  case BatchType::Examples:
+    batch_type = ctranslate2::BatchType::Examples;
+    break;
+  case BatchType::Tokens:
+    batch_type = ctranslate2::BatchType::Tokens;
+    break;
+  }
+
   const auto batch_result =
-      this->impl->translate_batch(from_rust(source), from_rust(target_prefix));
+      this->impl->translate_batch(from_rust(source), from_rust(target_prefix),
+                                  ctranslate2::TranslationOptions{
+                                      options.beam_size,
+                                      options.patience,
+                                      options.length_penalty,
+                                      options.coverage_penalty,
+                                      options.repetition_penalty,
+                                      options.no_repeat_ngram_size,
+                                      options.disable_unk,
+                                      from_rust(options.suppress_sequences),
+                                      options.prefix_bias_beta,
+                                      {},
+                                      options.return_end_token,
+                                      options.max_input_length,
+                                      options.max_decoding_length,
+                                      options.min_decoding_length,
+                                      options.sampling_topk,
+                                      options.sampling_topp,
+                                      options.sampling_temperature,
+                                      options.use_vmap,
+                                      options.num_hypotheses,
+                                      options.return_scores,
+                                      options.return_attention,
+                                      options.return_alternatives,
+                                      options.min_alternative_expansion_prob,
+                                      options.replace_unknowns,
+                                      nullptr,
+                                  },
+                                  options.max_batch_size, batch_type);
   Vec<TranslationResult> res;
   for (const auto &item : batch_result) {
     res.push_back(TranslationResult{

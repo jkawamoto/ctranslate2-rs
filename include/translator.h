@@ -15,6 +15,7 @@
 
 struct VecStr;
 struct TranslatorConfig;
+struct TranslationOptions;
 struct TranslationResult;
 
 class Translator {
@@ -25,8 +26,8 @@ public:
   Translator(std::shared_ptr<ctranslate2::Translator> impl) : impl(impl) {}
 
   rust::Vec<TranslationResult>
-  translate_batch(rust::Vec<VecStr> source,
-                  rust::Vec<VecStr> target_prefix) const;
+  translate_batch(rust::Vec<VecStr> source, rust::Vec<VecStr> target_prefix,
+                  TranslationOptions options) const;
 };
 
 std::unique_ptr<Translator> new_translator(rust::Str model_path, bool cuda,

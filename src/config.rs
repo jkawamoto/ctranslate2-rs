@@ -48,3 +48,10 @@ impl Default for Config {
         }
     }
 }
+
+#[derive(Debug, Default)]
+pub enum BatchType {
+    #[default]
+    Examples,
+    Tokens,
+}
