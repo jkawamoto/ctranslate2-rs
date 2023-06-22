@@ -26,7 +26,7 @@ The following example translates English to German using the previously converte
 ```rust
 use anyhow::Result;
 use ctranslate2::config::{Config, Device};
-use ctranslate2::Translator;
+use ctranslate2::{TranslationOptions, Translator};
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
@@ -37,6 +37,10 @@ fn main() -> Result<()> {
             "This library provides Rust bindings for CTranslate2.",
         ],
         vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+        &TranslationOptions {
+            return_scores: true,
+            ..Default::default()
+        },
     )?;
     for r in res {
         println!("{}, (score: {:?})", r.0, r.1);
@@ -49,8 +53,8 @@ fn main() -> Result<()> {
 
 ### Output
 ```
-Hallo Welt!<unk>, (score: None)
-このライブラリでは,CTranslate2 の Rust バインディングが提供されています., (score: None)
+Hallo Welt!<unk>, (score: Some(-0.5597002))
+このライブラリでは,CTranslate2 の Rust バインディングが提供されています., (score: Some(-0.56321025))
 ```
 
 ## License

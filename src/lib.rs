@@ -12,6 +12,7 @@ use anyhow::{anyhow, bail, Result};
 use tokenizers::{Decoder, EncodeInput};
 
 use crate::config::{Config, Device};
+pub use crate::translator::TranslationOptions;
 
 pub mod config;
 pub mod translator;
@@ -36,14 +37,16 @@ impl Translator {
         })
     }
 
-    pub fn translate_batch<'a, T, U>(
+    pub fn translate_batch<'a, T, U, V>(
         &self,
         sources: Vec<T>,
         target_prefixes: Vec<Vec<U>>,
+        options: &TranslationOptions<V>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         T: Into<EncodeInput<'a>>,
         U: AsRef<str>,
+        V: AsRef<str>,
     {
         let tokens = sources
             .into_iter()
@@ -55,7 +58,9 @@ impl Translator {
             })
             .collect::<Result<Vec<Vec<String>>>>()?;
 
-        let output = self.translator.translate_batch(&tokens, &target_prefixes)?;
+        let output = self
+            .translator
+            .translate_batch(&tokens, &target_prefixes, options)?;
 
         let decoder = self.tokenizer.get_decoder().unwrap();
         let mut res = Vec::new();
