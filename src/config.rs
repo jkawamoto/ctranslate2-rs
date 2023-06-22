@@ -6,6 +6,8 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! Configs and associated enums.
+
 /// Device to use.
 #[derive(Debug)]
 pub enum Device {
@@ -26,6 +28,7 @@ pub enum ComputeType {
     Float16,
 }
 
+/// Config of Translator.
 #[derive(Debug)]
 pub struct Config {
     /// Model computation type or a dictionary mapping a device name to the computation type.
@@ -49,6 +52,7 @@ impl Default for Config {
     }
 }
 
+/// Whether max_batch_size is the number of “examples” or “tokens”.
 #[derive(Debug, Default)]
 pub enum BatchType {
     #[default]

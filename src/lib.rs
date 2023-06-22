@@ -6,6 +6,10 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
+//!
+//! Please refer to the crate [ctranslate2-sample](https://github.com/jkawamoto/ctranslate2-rs/tree/main/sample) for the sample code.
+
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Result};
@@ -19,12 +23,14 @@ pub mod translator;
 
 const TOKENIZER_FILENAME: &str = "tokenizer.json";
 
+/// A text translator with a tokenizer.
 pub struct Translator {
     translator: translator::Translator,
     tokenizer: tokenizers::Tokenizer,
 }
 
 impl Translator {
+    /// Initializes the translator and tokenizer.
     pub fn new<T: AsRef<Path>>(path: T, device: Device, config: Config) -> Result<Translator> {
         Ok(Translator {
             translator: translator::Translator::new(
@@ -37,6 +43,7 @@ impl Translator {
         })
     }
 
+    /// Translates a batch of strings.
     pub fn translate_batch<'a, T, U, V>(
         &self,
         sources: Vec<T>,
