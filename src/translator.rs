@@ -8,6 +8,8 @@
 
 use cxx::UniquePtr;
 
+use crate::config::{ComputeType, Config, Device};
+
 #[cxx::bridge]
 mod ffi {
     struct VecString {
@@ -16,6 +18,24 @@ mod ffi {
 
     struct VecStr<'a> {
         v: Vec<&'a str>,
+    }
+
+    enum ComputeType {
+        Default,
+        Auto,
+        Float32,
+        Int8,
+        Int8Float16,
+        Int16,
+        Float16,
+    }
+
+    struct TranslatorConfig {
+        compute_type: ComputeType,
+        device_indices: Vec<i32>,
+        num_threads_per_replica: usize,
+        max_queued_batches: i64,
+        cpu_core_offset: i32,
     }
 
     struct TranslationResult {
@@ -29,10 +49,14 @@ mod ffi {
 
         type Translator;
 
-        fn new_translator(model_path: &str) -> Result<UniquePtr<Translator>>;
+        fn new_translator(
+            model_path: &str,
+            cuda: bool,
+            config: TranslatorConfig,
+        ) -> Result<UniquePtr<Translator>>;
 
         fn translate_batch(
-            &self,
+            self: &Translator,
             source: Vec<VecStr>,
             target_prefix: Vec<VecStr>,
         ) -> Result<Vec<TranslationResult>>;
@@ -44,9 +68,34 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new<T: AsRef<str>>(model_path: T) -> anyhow::Result<Translator> {
+    pub fn new<T: AsRef<str>>(
+        model_path: T,
+        device: Device,
+        config: Config,
+    ) -> anyhow::Result<Translator> {
         Ok(Translator {
-            ptr: ffi::new_translator(model_path.as_ref())?,
+            ptr: ffi::new_translator(
+                model_path.as_ref(),
+                match device {
+                    Device::CPU => false,
+                    Device::CUDA => true,
+                },
+                ffi::TranslatorConfig {
+                    compute_type: match config.compute_type {
+                        ComputeType::Default => ffi::ComputeType::Default,
+                        ComputeType::Auto => ffi::ComputeType::Auto,
+                        ComputeType::Float32 => ffi::ComputeType::Float32,
+                        ComputeType::Int8 => ffi::ComputeType::Int8,
+                        ComputeType::Int8Float16 => ffi::ComputeType::Int8Float16,
+                        ComputeType::Int16 => ffi::ComputeType::Int16,
+                        ComputeType::Float16 => ffi::ComputeType::Float16,
+                    },
+                    device_indices: config.device_indices,
+                    num_threads_per_replica: config.num_threads_per_replica,
+                    max_queued_batches: config.max_queued_batches,
+                    cpu_core_offset: config.cpu_core_offset,
+                },
+            )?,
         })
     }
 
@@ -71,6 +120,7 @@ impl Translator {
     }
 }
 
+#[derive(Debug)]
 pub struct TranslationResult {
     pub hypotheses: Vec<Vec<String>>,
     pub scores: Vec<f32>,

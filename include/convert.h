@@ -34,6 +34,14 @@ from_rust(const rust::Vec<VecStr> &v) {
   return res;
 }
 
+inline std::vector<int> from_rust(const rust::Vec<int> &v) {
+  std::vector<int> res;
+  for (const auto &item : v) {
+    res.push_back(item);
+  }
+  return res;
+}
+
 inline rust::String to_rust(const std::string &v) { return rust::String(v); }
 
 inline rust::Vec<rust::String> to_rust(const std::vector<std::string> &v) {

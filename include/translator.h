@@ -13,8 +13,9 @@
 #include <ctranslate2/translator.h>
 #include <memory>
 
-struct TranslationResult;
 struct VecStr;
+struct TranslatorConfig;
+struct TranslationResult;
 
 class Translator {
 private:
@@ -28,4 +29,5 @@ public:
                   rust::Vec<VecStr> target_prefix) const;
 };
 
-std::unique_ptr<Translator> new_translator(rust::Str model_path);
+std::unique_ptr<Translator> new_translator(rust::Str model_path, bool cuda,
+                                           TranslatorConfig config);

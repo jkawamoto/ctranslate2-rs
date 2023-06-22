@@ -10,13 +10,14 @@ use std::env;
 
 use anyhow::{anyhow, Result};
 
+use ctranslate2::config::{Config, Device};
 use ctranslate2::Translator;
 
 fn main() -> Result<()> {
     let path = env::args()
         .nth(1)
         .ok_or(anyhow!("no model path is given"))?;
-    let t = Translator::new(path)?;
+    let t = Translator::new(path, Device::CPU, Config::default())?;
     let res = t.translate_batch(
         vec![
             "Hello world!",

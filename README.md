@@ -25,11 +25,12 @@ The following example translates English to German using the previously converte
 
 ```rust
 use anyhow::Result;
+use ctranslate2::config::{Config, Device};
 use ctranslate2::Translator;
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::new(path)?;
+    let t = Translator::new(path, Device::CPU, Config::default())?;
     let res = t.translate_batch(
         vec![
             "Hello world!",
