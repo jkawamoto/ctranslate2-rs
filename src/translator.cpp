@@ -31,9 +31,39 @@ Translator::translate_batch(Vec<VecStr> source,
   return res;
 }
 
-std::unique_ptr<Translator> new_translator(const Str model_path) {
-  const ctranslate2::models::ModelLoader model_loader(
-      static_cast<string>(model_path));
-  return std::make_unique<Translator>(
-      std::make_shared<ctranslate2::Translator>(model_loader));
+std::unique_ptr<Translator> new_translator(const Str model_path,
+                                           const bool cuda,
+                                           const TranslatorConfig config) {
+  ctranslate2::ComputeType compute_type;
+  switch (config.compute_type) {
+  case ComputeType::Default:
+    compute_type = ctranslate2::ComputeType::DEFAULT;
+    break;
+  case ComputeType::Auto:
+    compute_type = ctranslate2::ComputeType::AUTO;
+    break;
+  case ComputeType::Float32:
+    compute_type = ctranslate2::ComputeType::FLOAT32;
+    break;
+  case ComputeType::Int8:
+    compute_type = ctranslate2::ComputeType::INT8;
+    break;
+  case ComputeType::Int8Float16:
+    compute_type = ctranslate2::ComputeType::INT8_FLOAT16;
+    break;
+  case ComputeType::Int16:
+    compute_type = ctranslate2::ComputeType::INT16;
+    break;
+  case ComputeType::Float16:
+    compute_type = ctranslate2::ComputeType::FLOAT16;
+    break;
+  };
+
+  return std::make_unique<Translator>(std::make_shared<ctranslate2::Translator>(
+      static_cast<string>(model_path),
+      cuda ? ctranslate2::Device::CUDA : ctranslate2::Device::CPU, compute_type,
+      from_rust(config.device_indices),
+      ctranslate2::ReplicaPoolConfig{config.num_threads_per_replica,
+                                     config.max_queued_batches,
+                                     config.cpu_core_offset}));
 }

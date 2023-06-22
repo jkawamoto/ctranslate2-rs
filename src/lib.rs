@@ -11,6 +11,9 @@ use std::path::Path;
 use anyhow::{anyhow, bail, Result};
 use tokenizers::{Decoder, EncodeInput};
 
+use crate::config::{Config, Device};
+
+pub mod config;
 pub mod translator;
 
 const TOKENIZER_FILENAME: &str = "tokenizer.json";
@@ -21,9 +24,13 @@ pub struct Translator {
 }
 
 impl Translator {
-    pub fn new<T: AsRef<Path>>(path: T) -> Result<Translator> {
+    pub fn new<T: AsRef<Path>>(path: T, device: Device, config: Config) -> Result<Translator> {
         Ok(Translator {
-            translator: translator::Translator::new(path.as_ref().to_str().unwrap())?,
+            translator: translator::Translator::new(
+                path.as_ref().to_str().unwrap(),
+                device,
+                config,
+            )?,
             tokenizer: tokenizers::Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
                 .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
         })
