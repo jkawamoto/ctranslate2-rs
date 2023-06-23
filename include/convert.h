@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "ctranslate2/src/translator.rs.h"
 #include "rust/cxx.h"
 #include <string>
 #include <vector>
@@ -25,6 +24,7 @@ inline std::vector<std::string> from_rust(const rust::Vec<rust::Str> &v) {
   return res;
 }
 
+template <typename VecStr>
 inline std::vector<std::vector<std::string>>
 from_rust(const rust::Vec<VecStr> &v) {
   std::vector<std::vector<std::string>> res;
@@ -52,11 +52,11 @@ inline rust::Vec<rust::String> to_rust(const std::vector<std::string> &v) {
   return res;
 }
 
-inline rust::Vec<VecString>
-to_rust(const std::vector<std::vector<std::string>> &v) {
-  rust::Vec<VecString> res;
+template <typename T>
+inline rust::Vec<T> to_rust(const std::vector<std::vector<std::string>> &v) {
+  rust::Vec<T> res;
   for (const auto &item : v) {
-    res.push_back(VecString{to_rust(item)});
+    res.push_back(T{to_rust(item)});
   }
   return res;
 }
@@ -83,6 +83,23 @@ to_rust(const std::vector<std::vector<std::vector<float>>> &v) {
   rust::Vec<rust::Vec<rust::Vec<float>>> res;
   for (const auto &item : v) {
     res.push_back(to_rust(item));
+  }
+  return res;
+}
+
+inline rust::Vec<size_t> to_rust(const std::vector<size_t> &v) {
+  rust::Vec<size_t> res;
+  for (const auto &item : v) {
+    res.push_back(item);
+  }
+  return res;
+}
+
+template <typename T>
+inline rust::Vec<T> to_rust(const std::vector<std::vector<size_t>> &v) {
+  rust::Vec<T> res;
+  for (const auto &item : v) {
+    res.push_back(T{to_rust(item)});
   }
   return res;
 }
