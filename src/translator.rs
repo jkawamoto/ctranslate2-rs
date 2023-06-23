@@ -6,6 +6,8 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! Bindings for ctranslate2::Translator.
+
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, ComputeType, Config, Device};
@@ -99,11 +101,12 @@ mod ffi {
     }
 }
 
+/// Options for translation.
 #[derive(Debug)]
 pub struct TranslationOptions<T: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search).
     pub beam_size: usize,
-    /// Beam search patience factor, as described in https://arxiv.org/abs/2204.05424.
+    /// Beam search patience factor, as described in <https://arxiv.org/abs/2204.05424>.
     /// The decoding will continue until beam_size*patience hypotheses are finished.
     pub patience: f32,
     /// Exponential penalty applied to the length during beam search.
@@ -113,7 +116,7 @@ pub struct TranslationOptions<T: AsRef<str>> {
     /// Coverage penalty weight applied during beam search.
     pub coverage_penalty: f32,
     /// Penalty applied to the score of previously generated tokens, as described in
-    /// https://arxiv.org/abs/1909.05858 (set > 1 to penalize).
+    /// <https://arxiv.org/abs/1909.05858> (set > 1 to penalize).
     pub repetition_penalty: f32,
     /// Prevent repetitions of ngrams with this size (set 0 to disable).
     pub no_repeat_ngram_size: usize,
@@ -121,7 +124,7 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub disable_unk: bool,
     /// Disable the generation of some sequences of tokens.
     pub suppress_sequences: Vec<Vec<T>>,
-    /// Biases decoding towards a given prefix, see https://arxiv.org/abs/1912.03393 --section 4.2
+    /// Biases decoding towards a given prefix, see <https://arxiv.org/abs/1912.03393> --section 4.2
     /// Only activates biased-decoding when beta is in range (0, 1) and SearchStrategy is set to BeamSearch.
     /// The closer beta is to 1, the stronger the bias is towards the given prefix.
     ///
@@ -163,7 +166,11 @@ pub struct TranslationOptions<T: AsRef<str>> {
     /// Function to call for each generated token in greedy search.
     // Returns true indicate the current generation is considered finished thus can be stopped early.
     // callback,
+    /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
+    /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
+    /// so that the number of padding positions is minimized.
     pub max_batch_size: usize,
+    /// Whether `max_batch_size` is the number of “examples” or “tokens”.
     pub batch_type: BatchType,
 }
 
@@ -234,11 +241,13 @@ impl<T: AsRef<str>> TranslationOptions<T> {
     }
 }
 
+/// A text translator.
 pub struct Translator {
     ptr: UniquePtr<ffi::Translator>,
 }
 
 impl Translator {
+    /// Initializes the translator.
     pub fn new<T: AsRef<str>>(
         model_path: T,
         device: Device,
@@ -270,6 +279,7 @@ impl Translator {
         })
     }
 
+    /// Translates a batch of tokens.
     pub fn translate_batch<T, U, V>(
         &self,
         source: &[Vec<T>],
@@ -294,9 +304,12 @@ impl Translator {
     }
 }
 
+/// A translation result.
 #[derive(Debug)]
 pub struct TranslationResult {
+    /// Translation hypotheses.
     pub hypotheses: Vec<Vec<String>>,
+    /// Score of each translation hypothesis (empty if return_scores was disabled).
     pub scores: Vec<f32>,
 }
 
@@ -310,18 +323,22 @@ impl From<ffi::TranslationResult> for TranslationResult {
 }
 
 impl TranslationResult {
+    /// Returns the first translation hypothesis if exists.
     pub fn output(&self) -> Option<&Vec<String>> {
         self.hypotheses.first()
     }
 
+    /// Returns the score of the first translation hypothesis if exists.
     pub fn score(&self) -> Option<f32> {
         self.scores.first().copied()
     }
 
+    /// Returns the number of translation hypotheses.
     pub fn num_hypotheses(&self) -> usize {
         self.hypotheses.len()
     }
 
+    /// Returns true if this result contains scores.
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }
