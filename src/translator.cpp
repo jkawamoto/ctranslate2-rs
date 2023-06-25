@@ -63,7 +63,7 @@ Translator::translate_batch(Vec<VecStr> source, Vec<VecStr> target_prefix,
   Vec<TranslationResult> res;
   for (const auto &item : batch_result) {
     res.push_back(TranslationResult{
-        to_rust(item.hypotheses), to_rust(item.scores),
+        to_rust<VecString>(item.hypotheses), to_rust(item.scores),
         //        to_rust(item.attention),
     });
   }

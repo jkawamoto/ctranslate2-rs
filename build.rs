@@ -14,8 +14,11 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/translator.rs");
     println!("cargo:rerun-if-changed=src/translator.cpp");
+    println!("cargo:rerun-if-changed=src/generator.rs");
+    println!("cargo:rerun-if-changed=src/generator.cpp");
     println!("cargo:rerun-if-changed=include/convert.h");
     println!("cargo:rerun-if-changed=include/translator.h");
+    println!("cargo:rerun-if-changed=include/generator.h");
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
 
@@ -52,8 +55,9 @@ fn main() {
     );
     println!("cargo:rustc-link-lib=static=cpu_features");
 
-    cxx_build::bridge("src/translator.rs")
+    cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
+        .file("src/generator.cpp")
         .flag_if_supported("-std=c++17")
         .include("CTranslate2/include")
         .compile("ctranslator2");

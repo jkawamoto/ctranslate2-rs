@@ -20,7 +20,7 @@ ct2-transformers-converter --model facebook/nllb-200-distilled-600M --output_dir
 Please do not forget to copy `tokenizer.json`.
 For more details, please refer to the [CTranslate2's docs](https://opennmt.net/CTranslate2/guides/transformers.html#nllb).
 
-## Example of Execution
+## Example of text translation
 The following example translates English to German using the previously converted model `nllb-200-distilled-600M`.
 
 ```rust
@@ -55,6 +55,24 @@ fn main() -> Result<()> {
 ```
 Hallo Welt!<unk>, (score: Some(-0.5597002))
 このライブラリでは,CTranslate2 の Rust バインディングが提供されています., (score: Some(-0.56321025))
+```
+
+## Example of text generation
+
+```rust
+fn main() -> Result<()> {
+    let path = "/path/to/model";
+    let g = Generator::new(path, Device::CPU, Config::default())?;
+    let res = g.generate_batch(
+        vec!["prompt"],
+        &GenerationOptions::default(),
+    )?;
+    for r in res {
+        println!("{:?}", r.0);
+    }
+
+    Ok(())
+}
 ```
 
 ## License
