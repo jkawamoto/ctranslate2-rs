@@ -13,7 +13,7 @@
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Result};
-use tokenizers::{Decoder, EncodeInput};
+use tokenizers::{Decoder, EncodeInput, Tokenizer};
 
 use crate::config::{Config, Device};
 pub use crate::generator::GenerationOptions;
@@ -28,20 +28,35 @@ const TOKENIZER_FILENAME: &str = "tokenizer.json";
 /// A text translator with a tokenizer.
 pub struct Translator {
     translator: translator::Translator,
-    tokenizer: tokenizers::Tokenizer,
+    tokenizer: Tokenizer,
 }
 
 impl Translator {
     /// Initializes the translator and tokenizer.
     pub fn new<T: AsRef<Path>>(path: T, device: Device, config: Config) -> Result<Translator> {
+        Translator::with_tokenizer(
+            &path,
+            device,
+            config,
+            Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
+                .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
+        )
+    }
+
+    /// Initializes the translator and tokenizer.
+    pub fn with_tokenizer<T: AsRef<Path>>(
+        path: T,
+        device: Device,
+        config: Config,
+        tokenizer: Tokenizer,
+    ) -> Result<Translator> {
         Ok(Translator {
             translator: translator::Translator::new(
                 path.as_ref().to_str().unwrap(),
                 device,
                 config,
             )?,
-            tokenizer: tokenizers::Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
-                .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
+            tokenizer,
         })
     }
 
@@ -94,7 +109,7 @@ impl Translator {
 /// A text generator with a tokenizer.
 pub struct Generator {
     generator: generator::Generator,
-    tokenizer: tokenizers::Tokenizer,
+    tokenizer: Tokenizer,
 }
 
 impl Generator {
@@ -104,7 +119,7 @@ impl Generator {
             &path,
             device,
             config,
-            tokenizers::Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
+            Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
                 .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
         )
     }
@@ -114,7 +129,7 @@ impl Generator {
         path: T,
         device: Device,
         config: Config,
-        tokenizer: tokenizers::Tokenizer,
+        tokenizer: Tokenizer,
     ) -> Result<Generator> {
         Ok(Generator {
             generator: generator::Generator::new(path.as_ref().to_str().unwrap(), device, config)?,
