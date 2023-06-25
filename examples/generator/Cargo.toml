@@ -1,0 +1,14 @@
+[package]
+name = "ctranslate2-example-generator"
+version = "0.3.0"
+authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
+edition = "2021"
+description = "Generate text using CTranslate2"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
+license-file = "../../LICENSE"
+
+
+[dependencies]
+ctranslate2 = { path = "../.." }
+anyhow = "1.0.71"
+clap = { version = "4.3.5", features = ["derive"] }

@@ -20,4 +20,4 @@ cxx-build = "1.0.97"
 
 
 [workspace]
-members = ["sample"]
+members = ["examples/nllb", "examples/generator"]

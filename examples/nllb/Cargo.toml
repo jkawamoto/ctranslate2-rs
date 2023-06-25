@@ -1,0 +1,16 @@
+[package]
+name = "ctranslate2-example-nllb"
+version = "0.3.0"
+authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
+edition = "2021"
+description = "Translate a file using NLLB"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
+license-file = "../../LICENSE"
+
+
+[dependencies]
+ctranslate2 = { path = "../.." }
+anyhow = "1.0.71"
+clap = { version = "4.3.5", features = ["derive"] }
+
+[build-dependencies]
