@@ -8,7 +8,7 @@
 
 //! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 //!
-//! Please refer to the crate [ctranslate2-sample](https://github.com/jkawamoto/ctranslate2-rs/tree/main/sample) for the sample code.
+//! Please refer to the crate [ctranslate2-sample](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples) for the sample code.
 
 use std::path::Path;
 
