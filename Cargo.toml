@@ -9,14 +9,14 @@ license-file = "LICENSE"
 
 
 [dependencies]
-cxx = { version = "1.0.97", features = ["c++17"] }
-anyhow = "1.0.71"
+cxx = { version = "1.0.102", features = ["c++17"] }
+anyhow = "1.0.72"
 tokenizers = "0.13.3"
 
 
 [build-dependencies]
 cmake = "0.1.50"
-cxx-build = "1.0.97"
+cxx-build = "1.0.102"
 
 
 [workspace]
