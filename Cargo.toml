@@ -6,7 +6,8 @@ edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
 license-file = "LICENSE"
-
+keywords = ["ctranslate2", "bindings", "llm"]
+categories = ["api-bindings"]
 
 [dependencies]
 cxx = { version = "1.0.121", features = ["c++17"] }
