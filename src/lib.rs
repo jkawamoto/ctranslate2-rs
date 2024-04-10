@@ -1,6 +1,6 @@
 // lib.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -67,10 +67,10 @@ impl Translator {
         target_prefixes: Vec<Vec<U>>,
         options: &TranslationOptions<V>,
     ) -> Result<Vec<(String, Option<f32>)>>
-    where
-        T: Into<EncodeInput<'a>>,
-        U: AsRef<str>,
-        V: AsRef<str>,
+        where
+            T: Into<EncodeInput<'a>>,
+            U: AsRef<str>,
+            V: AsRef<str>,
     {
         let tokens = sources
             .into_iter()
@@ -143,10 +143,10 @@ impl Generator {
         prompts: Vec<T>,
         options: &GenerationOptions<U, V>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
-    where
-        T: Into<EncodeInput<'a>>,
-        U: AsRef<str>,
-        V: AsRef<str>,
+        where
+            T: Into<EncodeInput<'a>>,
+            U: AsRef<str>,
+            V: AsRef<str>,
     {
         let tokens = prompts
             .into_iter()

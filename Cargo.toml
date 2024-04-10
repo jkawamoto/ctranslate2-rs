@@ -1,22 +1,23 @@
 [package]
 name = "ctranslate2"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
 license-file = "LICENSE"
-
+keywords = ["ctranslate2", "bindings", "llm"]
+categories = ["api-bindings"]
 
 [dependencies]
-cxx = { version = "1.0.102", features = ["c++17"] }
-anyhow = "1.0.72"
-tokenizers = "0.13.3"
+cxx = { version = "1.0.121", features = ["c++17"] }
+anyhow = "1.0.81"
+tokenizers = "0.15.2"
 
 
 [build-dependencies]
 cmake = "0.1.50"
-cxx-build = "1.0.102"
+cxx-build = "1.0.121"
 
 
 [workspace]
