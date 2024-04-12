@@ -1,6 +1,6 @@
 // build.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -23,6 +23,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
     let mut cmake = Config::new("CTranslate2");
     cmake
@@ -49,11 +50,17 @@ fn main() {
         ctranslate2.join("lib").display()
     );
     println!("cargo:rustc-link-lib=static=ctranslate2");
-    println!(
-        "cargo:rustc-link-search={}",
-        ctranslate2.join("build/third_party/cpu_features").display()
-    );
-    println!("cargo:rustc-link-lib=static=cpu_features");
+
+    match target_arch.as_str() {
+        "x86_64" => {
+            println!(
+                "cargo:rustc-link-search={}",
+                ctranslate2.join("build/third_party/cpu_features").display()
+            );
+            println!("cargo:rustc-link-lib=static=cpu_features");
+        }
+        _ => {}
+    }
 
     cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
