@@ -9,6 +9,6 @@ license-file = "../../LICENSE"
 
 
 [dependencies]
-ctranslate2 = { path = "../.." }
+ct2rs = { path = "../.." }
 anyhow = "1.0.81"
 clap = { version = "4.5.4", features = ["derive"] }

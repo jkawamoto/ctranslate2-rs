@@ -1,14 +1,14 @@
 // translator.cpp
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
 // http://opensource.org/licenses/mit-license.php
 
-#include "ctranslate2/include/translator.h"
-#include "ctranslate2/include/convert.h"
-#include "ctranslate2/src/translator.rs.h"
+#include "ct2rs/include/translator.h"
+#include "ct2rs/include/convert.h"
+#include "ct2rs/src/translator.rs.h"
 
 using rust::Str;
 using rust::String;

@@ -1,6 +1,6 @@
 // translator.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -82,7 +82,7 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ctranslate2/include/translator.h");
+        include!("ct2rs/include/translator.h");
 
         type Translator;
 
@@ -286,10 +286,10 @@ impl Translator {
         target_prefix: &[Vec<U>],
         options: &TranslationOptions<V>,
     ) -> anyhow::Result<Vec<TranslationResult>>
-    where
-        T: AsRef<str>,
-        U: AsRef<str>,
-        V: AsRef<str>,
+        where
+            T: AsRef<str>,
+            U: AsRef<str>,
+            V: AsRef<str>,
     {
         Ok(self
             .ptr
