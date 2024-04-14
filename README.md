@@ -1,5 +1,6 @@
 # ctranslate2-rs
 
+[![Latest version](https://img.shields.io/crates/v/ct2rs.svg)](https://crates.io/crates/ct2rs)
 [![Rust library](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml)
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
