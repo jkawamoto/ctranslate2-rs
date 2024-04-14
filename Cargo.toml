@@ -8,6 +8,20 @@ repository = "https://github.com/jkawamoto/ctranslate2-rs"
 license-file = "LICENSE"
 keywords = ["ctranslate2", "bindings", "llm"]
 categories = ["api-bindings"]
+include = [
+    "/include",
+    "/src",
+    "build.rs",
+    "/CTranslate2/CMakeLists.txt",
+    "/CTranslate2/LICENSE",
+    "/CTranslate2/cmake",
+    "/CTranslate2/cpp",
+    "/CTranslate2/include",
+    "/CTranslate2/python",
+    "/CTranslate2/src",
+    "/CTranslate2/third_party",
+    "!/CTranslate2/**/.*",
+]
 
 [dependencies]
 cxx = { version = "1.0.121", features = ["c++17"] }
