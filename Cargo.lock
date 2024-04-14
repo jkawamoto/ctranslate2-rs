@@ -194,7 +194,7 @@ checksum = "248e3bacc7dc6baa3b21e405ee045c3047101a49145e7e9eca583ab4c2ca5345"
 
 [[package]]
 name = "ct2rs"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "anyhow",
  "cmake",
@@ -205,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "ctranslate2-example-generator"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "anyhow",
  "clap",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "ctranslate2-example-nllb"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "anyhow",
  "clap",
