@@ -67,7 +67,7 @@ fn main() {
         .file("src/generator.cpp")
         .flag_if_supported("-std=c++17")
         .include("CTranslate2/include")
-        .compile("ctranslator2");
+        .compile("ct2rs");
 }
 
 fn link_static_library<T: std::fmt::Display>(name: T) -> bool {

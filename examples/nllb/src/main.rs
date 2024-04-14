@@ -1,6 +1,6 @@
 // main.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -13,8 +13,8 @@ use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
 use anyhow::Result;
 use clap::Parser;
 
-use ctranslate2::config::{Config, Device};
-use ctranslate2::Translator;
+use ct2rs::config::{Config, Device};
+use ct2rs::Translator;
 
 /// Translate a file using NLLB.
 #[derive(Parser, Debug)]

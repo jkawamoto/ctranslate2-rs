@@ -33,7 +33,7 @@ jobs:
           CXXFLAGS: -std=c++17
       - name: Fix missing index.html
         run: |
-          echo "<meta http-equiv=\"refresh\" content=\"0; url=ctranslate2-rs/index.html\">" > target/doc/index.html
+          echo "<meta http-equiv=\"refresh\" content=\"0; url=ct2rs/index.html\">" > target/doc/index.html
       - name: Archive artifact
         shell: sh
         run: |

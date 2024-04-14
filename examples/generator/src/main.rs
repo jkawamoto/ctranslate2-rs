@@ -1,6 +1,6 @@
 // main.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -13,8 +13,8 @@ use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
 use anyhow::Result;
 use clap::Parser;
 
-use ctranslate2::config::Device;
-use ctranslate2::{GenerationOptions, Generator};
+use ct2rs::config::Device;
+use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using CTranslate2.
 #[derive(Parser, Debug)]

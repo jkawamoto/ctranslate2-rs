@@ -1,6 +1,6 @@
 // generator.rs
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -81,7 +81,7 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ctranslate2/include/generator.h");
+        include!("ct2rs/include/generator.h");
 
         type Generator;
 
