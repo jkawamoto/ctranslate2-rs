@@ -5,7 +5,7 @@ authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Generate text using CTranslate2"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
-license-file = "../../LICENSE"
+license = "MIT"
 
 
 [dependencies]

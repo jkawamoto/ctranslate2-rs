@@ -5,13 +5,14 @@ authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["ctranslate2", "bindings", "llm"]
 categories = ["api-bindings"]
 include = [
     "/include",
     "/src",
-    "build.rs",
+    "/build.rs",
+    "/LICENSE",
     "/CTranslate2/CMakeLists.txt",
     "/CTranslate2/LICENSE",
     "/CTranslate2/cmake",
