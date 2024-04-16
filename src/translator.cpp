@@ -87,8 +87,14 @@ std::unique_ptr<Translator> new_translator(const Str model_path,
   case ComputeType::Int8:
     compute_type = ctranslate2::ComputeType::INT8;
     break;
+  case ComputeType::Int8Float32:
+    compute_type = ctranslate2::ComputeType::INT8_FLOAT32;
+    break;
   case ComputeType::Int8Float16:
     compute_type = ctranslate2::ComputeType::INT8_FLOAT16;
+    break;
+  case ComputeType::Int8BFloat16:
+    compute_type = ctranslate2::ComputeType::INT8_BFLOAT16;
     break;
   case ComputeType::Int16:
     compute_type = ctranslate2::ComputeType::INT16;
@@ -96,12 +102,15 @@ std::unique_ptr<Translator> new_translator(const Str model_path,
   case ComputeType::Float16:
     compute_type = ctranslate2::ComputeType::FLOAT16;
     break;
+  case ComputeType::BFloat16:
+    compute_type = ctranslate2::ComputeType::BFLOAT16;
+    break;
   };
 
   return std::make_unique<Translator>(std::make_shared<ctranslate2::Translator>(
       static_cast<string>(model_path),
       cuda ? ctranslate2::Device::CUDA : ctranslate2::Device::CPU, compute_type,
-      from_rust(config.device_indices),
+      from_rust(config.device_indices), config.tensor_parallel,
       ctranslate2::ReplicaPoolConfig{config.num_threads_per_replica,
                                      config.max_queued_batches,
                                      config.cpu_core_offset}));
