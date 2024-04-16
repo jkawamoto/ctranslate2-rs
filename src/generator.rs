@@ -6,7 +6,27 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-//! Bindings for ctranslate2::Generator.
+//! This module provides raw Rust bindings to the `ctranslate2::Generator`.
+//!
+//! # Example
+//!
+//! ```no_run
+//! # use anyhow::Result;
+//! use ct2rs::config::{Config, Device};
+//! use ct2rs::generator::{Generator, GenerationOptions};
+//!
+//! # fn main() -> Result<()> {
+//! let generator = Generator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let res = generator.generate_batch(
+//!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+//!     &GenerationOptions::default()
+//! )?;
+//! for r in res {
+//!     println!("{:?}", r);
+//! }
+//! # Ok(())
+//! # }
+//! ```
 
 use cxx::UniquePtr;
 

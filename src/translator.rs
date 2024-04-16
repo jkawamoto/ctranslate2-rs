@@ -6,7 +6,30 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-//! Bindings for ctranslate2::Translator.
+
+//! This module provides raw Rust bindings to the `ctranslate2::Translator`.
+//!
+//! # Example
+//! Below is an example where a given list of tokens is translated into Japanese:
+//!
+//! ```no_run
+//! # use anyhow::Result;
+//! use ct2rs::config::{Config, Device};
+//! use ct2rs::translator::Translator;
+//!
+//! # fn main() -> Result<()> {
+//! let translator = Translator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let res = translator.translate_batch(
+//!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+//!     &vec![vec!["jpn_Jpan"]],
+//!     &Default::default()
+//! )?;
+//! for r in res {
+//!     println!("{:?}", r);
+//! }
+//! # Ok(())
+//! # }
+//! ```
 
 use cxx::UniquePtr;
 

@@ -8,7 +8,54 @@
 
 //! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 //!
-//! Please refer to the crate [ctranslate2-sample](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples) for the sample code.
+//! # Examples
+//! The following example translates English to German and Japanese.
+//! ```no_run
+//! # use anyhow::Result;
+//! use ct2rs::config::{Config, Device};
+//! use ct2rs::{TranslationOptions, Translator};
+//!
+//! # fn main() -> Result<()> {
+//! let t = Translator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let res = t.translate_batch(
+//!     vec![
+//!         "Hello world!",
+//!         "This library provides Rust bindings for CTranslate2.",
+//!     ],
+//!     vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+//!     &TranslationOptions {
+//!         return_scores: true,
+//!         ..Default::default()
+//!     },
+//! )?;
+//! for r in res {
+//!     println!("{}, (score: {:?})", r.0, r.1);
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! The following example generates text.
+//! ```no_run
+//! # use anyhow::Result;
+//! use ct2rs::config::{Config, Device};
+//! use ct2rs::{Generator, GenerationOptions};
+//!
+//! # fn main() -> Result<()> {
+//! let g = Generator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let res = g.generate_batch(
+//!     vec!["prompt"],
+//!     &GenerationOptions::default(),
+//! )?;
+//! for r in res {
+//!     println!("{:?}", r.0);
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Please also see the other sample code available in the
+//! [examples directory](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples).
 
 use std::path::Path;
 
