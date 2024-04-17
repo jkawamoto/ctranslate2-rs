@@ -383,3 +383,40 @@ fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::VecStr> {
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::config::BatchType;
+    use crate::translator::TranslationOptions;
+
+    #[test]
+    fn default_translation_options() {
+        let options = TranslationOptions::default();
+
+        assert_eq!(options.beam_size, 2);
+        assert_eq!(options.patience, 1.);
+        assert_eq!(options.length_penalty, 1.);
+        assert_eq!(options.coverage_penalty, 0.);
+        assert_eq!(options.repetition_penalty, 1.);
+        assert_eq!(options.no_repeat_ngram_size, 0);
+        assert!(!options.disable_unk);
+        assert!(options.suppress_sequences.is_empty());
+        assert_eq!(options.prefix_bias_beta, 0.);
+        assert!(!options.return_end_token);
+        assert_eq!(options.max_input_length, 1024);
+        assert_eq!(options.max_decoding_length, 256);
+        assert_eq!(options.min_decoding_length, 1);
+        assert_eq!(options.sampling_topk, 1);
+        assert_eq!(options.sampling_topp, 1.);
+        assert_eq!(options.sampling_temperature, 1.);
+        assert!(!options.use_vmap);
+        assert_eq!(options.num_hypotheses, 1);
+        assert!(!options.return_scores);
+        assert!(!options.return_attention);
+        assert!(!options.return_alternatives);
+        assert_eq!(options.min_alternative_expansion_prob, 0.);
+        assert!(!options.replace_unknowns);
+        assert_eq!(options.max_batch_size, 0);
+        assert_eq!(options.batch_type, BatchType::default());
+    }
+}

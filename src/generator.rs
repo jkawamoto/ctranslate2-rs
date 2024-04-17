@@ -349,3 +349,37 @@ fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::GenVecStr> {
         })
         .collect()
 }
+
+
+#[cfg(test)]
+mod tests {
+    use crate::generator::GenerationOptions;
+
+    #[test]
+    fn default_generation_options() {
+        let options = GenerationOptions::default();
+
+        assert_eq!(options.beam_size, 1);
+        assert_eq!(options.patience, 1.);
+        assert_eq!(options.length_penalty, 1.);
+        assert_eq!(options.repetition_penalty, 1.);
+        assert_eq!(options.no_repeat_ngram_size, 0);
+        assert!(!options.disable_unk);
+        assert!(options.suppress_sequences.is_empty());
+        assert!(!options.return_end_token);
+        assert_eq!(options.max_length, 512);
+        assert_eq!(options.min_length, 0);
+        assert_eq!(options.sampling_topk, 1);
+        assert_eq!(options.sampling_topp, 1.);
+        assert_eq!(options.sampling_temperature, 1.);
+        assert_eq!(options.num_hypotheses, 1);
+        assert!(!options.return_scores);
+        assert!(!options.return_alternatives);
+        assert_eq!(options.min_alternative_expansion_prob, 0.);
+        assert!(options.static_prompt.is_empty());
+        assert!(options.cache_static_prompt);
+        assert!(options.include_prompt_in_result);
+        assert_eq!(options.max_batch_size, 0);
+        assert_eq!(options.batch_type, Default::default());
+    }
+}
