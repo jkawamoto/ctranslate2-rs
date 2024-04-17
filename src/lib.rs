@@ -57,6 +57,9 @@
 //! Please also see the other sample code available in the
 //! [examples directory](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples).
 
+#[cfg(feature = "mkl")]
+extern crate intel_mkl_src;
+
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Result};
