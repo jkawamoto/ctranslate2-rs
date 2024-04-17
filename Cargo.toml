@@ -22,6 +22,9 @@ include = [
     "/CTranslate2/src",
     "/CTranslate2/third_party",
     "!/CTranslate2/**/.*",
+    "!/CTranslate2/**/test",
+    "!/CTranslate2/**/docs",
+    "!/CTranslate2/**/media",
 ]
 
 [dependencies]
