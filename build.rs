@@ -29,7 +29,7 @@ fn main() {
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
-        .define("WITH_MKL", "OFF")
+        .define("WITH_MKL", if cfg!(feature = "mkl") { "ON" } else { "OFF" })
         .define("OPENMP_RUNTIME", "NONE");
 
     match target_os.as_str() {
