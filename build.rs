@@ -22,26 +22,24 @@ fn main() {
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
 
-    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-
     let mut cmake = Config::new("CTranslate2");
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
-        .define("WITH_MKL", if cfg!(feature = "mkl") { "ON" } else { "OFF" })
         .define("OPENMP_RUNTIME", "NONE");
 
-    match target_os.as_str() {
-        "macos" => {
+    if cfg!(feature = "mkl") {
+        cmake.define("WITH_MKL", "ON");
+    } else {
+        cmake.define("WITH_MKL", "OFF");
+        if cfg!(target_os = "macos") {
             println!("cargo:rustc-link-lib=framework=Accelerate");
+            cmake.define("WITH_ACCELERATE", "OFF");
             cmake.define("WITH_ACCELERATE", "ON");
-        }
-        "linux" => {
+        } else if cfg!(target_os = "linux") {
             link_static_library("openblas");
             cmake.define("WITH_OPENBLAS", "ON");
         }
-        _ => {}
     }
 
     let ctranslate2 = cmake.build();
@@ -50,16 +48,12 @@ fn main() {
         ctranslate2.join("lib").display()
     );
     println!("cargo:rustc-link-lib=static=ctranslate2");
-
-    match target_arch.as_str() {
-        "x86_64" => {
-            println!(
-                "cargo:rustc-link-search={}",
-                ctranslate2.join("build/third_party/cpu_features").display()
-            );
-            println!("cargo:rustc-link-lib=static=cpu_features");
-        }
-        _ => {}
+    if cfg!(target_arch = "x86_64") {
+        println!(
+            "cargo:rustc-link-search={}",
+            ctranslate2.join("build/third_party/cpu_features").display()
+        );
+        println!("cargo:rustc-link-lib=static=cpu_features");
     }
 
     cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
