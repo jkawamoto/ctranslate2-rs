@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "ct2rs"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "anyhow",
  "cmake",
@@ -320,7 +320,7 @@ dependencies = [
 
 [[package]]
 name = "ctranslate2-example-generator"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "anyhow",
  "clap",
@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "ctranslate2-example-nllb"
-version = "0.4.5"
+version = "0.4.6"
 dependencies = [
  "anyhow",
  "clap",
