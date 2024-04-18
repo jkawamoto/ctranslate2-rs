@@ -4,12 +4,20 @@
 [![Rust library](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/ci.yaml)
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
-At this time, it has only been tested and confirmed to work on Intel Mac and Linux.
+At this time, it has only been tested and confirmed to work on macOS and Linux.
 
-## Compilation
+# Compilation
 
-On Linux, [OpenBLAS](https://www.openblas.net/) is required.
-Please add the path to the directory containing `libopenblas.a` to `LIBRARY_PATH` environment variable.
+For macOS, users should utilize the built-in [Accelerate](https://developer.apple.com/documentation/accelerate)
+framework, eliminating the need for additional libraries.
+
+On Linux, users have the option to use either OpenBLAS or Intel MKL:
+
+- If using OpenBLAS, please add the path to the directory containing `libopenblas.a` to the `LIBRARY_PATH` environment
+  variable.
+- If using Intel MKL, ensure to enable the `mkl` feature.
+
+Both macOS and Linux require the installation of CMake to compile the library.
 
 ## Model Conversion for CTranslate2
 
