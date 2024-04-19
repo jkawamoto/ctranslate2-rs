@@ -33,20 +33,19 @@ fn main() {
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
+        .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE");
 
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
-    } else {
-        cmake.define("WITH_MKL", "OFF");
-        if cfg!(target_os = "macos") {
-            println!("cargo:rustc-link-lib=framework=Accelerate");
-            cmake.define("WITH_ACCELERATE", "OFF");
-            cmake.define("WITH_ACCELERATE", "ON");
-        } else if cfg!(target_os = "linux") {
-            cmake.define("WITH_OPENBLAS", "ON");
-            println!("cargo:rustc-link-lib=static=openblas");
-        }
+    } else if cfg!(feature = "openblas") {
+        cmake.define("WITH_OPENBLAS", "ON");
+        println!("cargo:rustc-link-lib=static=openblas");
+    } else if cfg!(feature = "ruy") || cfg!(target_os = "linux") {
+        cmake.define("WITH_RUY", "ON");
+    } else if cfg!(feature = "accelerate" ) || cfg!(target_os = "macos") {
+        println!("cargo:rustc-link-lib=framework=Accelerate");
+        cmake.define("WITH_ACCELERATE", "ON");
     }
 
     let ctranslate2 = cmake.build();

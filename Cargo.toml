@@ -39,10 +39,13 @@ cmake = "0.1.50"
 cxx-build = "1.0.121"
 walkdir = "2.5.0"
 
-[workspace]
-members = ["examples/nllb", "examples/generator"]
-
 
 [features]
 default = []
 mkl = ["dep:intel-mkl-src"]
+openblas = []
+ruy = []
+accelerate = []
+
+[workspace]
+members = ["examples/nllb", "examples/generator"]
