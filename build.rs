@@ -6,9 +6,11 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-use cmake::Config;
 use std::env;
 use std::path::{Path, PathBuf};
+
+use cmake::Config;
+use walkdir::WalkDir;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -48,18 +50,7 @@ fn main() {
     }
 
     let ctranslate2 = cmake.build();
-    println!(
-        "cargo:rustc-link-search={}",
-        ctranslate2.join("lib").display()
-    );
-    println!("cargo:rustc-link-lib=static=ctranslate2");
-    if cfg!(target_arch = "x86_64") {
-        println!(
-            "cargo:rustc-link-search={}",
-            ctranslate2.join("build/third_party/cpu_features").display()
-        );
-        println!("cargo:rustc-link-lib=static=cpu_features");
-    }
+    link_libraries(ctranslate2.join("build"));
 
     cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
@@ -67,4 +58,26 @@ fn main() {
         .flag_if_supported("-std=c++17")
         .include("CTranslate2/include")
         .compile("ct2rs");
+}
+
+fn link_libraries<T: AsRef<Path>>(root: T) {
+    let mut current_dir = None;
+    for entry in WalkDir::new(root).into_iter().filter_map(Result::ok) {
+        let path = entry.path();
+        if path.is_file() {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .filter(|name| name.starts_with("lib") && name.ends_with(".a"))
+                .iter()
+                .for_each(|name| {
+                    let parent = path.parent();
+                    if parent != current_dir.as_ref().map(|p: &PathBuf| p.as_path()) {
+                        let dir = parent.unwrap();
+                        println!("cargo:rustc-link-search={}", dir.display());
+                        current_dir = Some(dir.to_path_buf())
+                    }
+                    println!("cargo:rustc-link-lib=static={}", &name[3..name.len() - 2]);
+                });
+        }
+    }
 }

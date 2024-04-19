@@ -316,6 +316,7 @@ dependencies = [
  "cxx-build",
  "intel-mkl-src",
  "tokenizers",
+ "walkdir",
 ]
 
 [[package]]
