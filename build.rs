@@ -21,6 +21,11 @@ fn main() {
     println!("cargo:rerun-if-changed=include/generator.h");
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
+    if let Ok(library_path) = env::var("LIBRARY_PATH") {
+        library_path.split(':').for_each(|v| {
+            println!("cargo:rustc-link-search={}", v);
+        });
+    }
 
     let mut cmake = Config::new("CTranslate2");
     cmake
@@ -37,8 +42,8 @@ fn main() {
             cmake.define("WITH_ACCELERATE", "OFF");
             cmake.define("WITH_ACCELERATE", "ON");
         } else if cfg!(target_os = "linux") {
-            link_static_library("openblas");
             cmake.define("WITH_OPENBLAS", "ON");
+            println!("cargo:rustc-link-lib=static=openblas");
         }
     }
 
@@ -62,38 +67,4 @@ fn main() {
         .flag_if_supported("-std=c++17")
         .include("CTranslate2/include")
         .compile("ct2rs");
-}
-
-fn link_static_library<T: std::fmt::Display>(name: T) -> bool {
-    let libname = format!("lib{name}.a");
-    if find_system_library(&libname) {
-        println!("cargo:rustc-link-lib=static={name}");
-        return true;
-    } else if let Some(p) = find_library(&libname) {
-        println!("cargo:rustc-link-search={}", p.display());
-        println!("cargo:rustc-link-lib=static={name}");
-        return true;
-    }
-    false
-}
-
-fn find_library<T: AsRef<Path>>(name: T) -> Option<PathBuf> {
-    if let Ok(p) = env::var("LIBRARY_PATH") {
-        if let Some(path) = p
-            .split(':')
-            .map(Path::new)
-            .find(|p| p.join(name.as_ref()).exists())
-        {
-            return Some(PathBuf::from(path));
-        }
-    }
-    None
-}
-
-fn find_system_library<T: AsRef<Path>>(name: T) -> bool {
-    let default_paths = vec![".", "/lib", "/usr/lib", "/usr/local/lib"];
-    default_paths
-        .into_iter()
-        .map(|s| Path::new(s).join(name.as_ref()))
-        .any(|p| p.exists())
 }
