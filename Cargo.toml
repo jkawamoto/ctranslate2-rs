@@ -37,12 +37,15 @@ intel-mkl-src = { version = "0.8.1", optional = true }
 [build-dependencies]
 cmake = "0.1.50"
 cxx-build = "1.0.121"
-
-
-[workspace]
-members = ["examples/nllb", "examples/generator"]
+walkdir = "2.5.0"
 
 
 [features]
 default = []
 mkl = ["dep:intel-mkl-src"]
+openblas = []
+ruy = []
+accelerate = []
+
+[workspace]
+members = ["examples/nllb", "examples/generator"]

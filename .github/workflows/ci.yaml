@@ -15,20 +15,19 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-13, macos-14 ]
-        feature: [ "", mkl ]
+        feature: [ "", mkl, openblas ]
         exclude:
           - os: macos-13
             feature: mkl
           - os: macos-14
             feature: mkl
+          - os: macos-13
+            feature: openblas
+          - os: macos-14
+            feature: openblas
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Install OpenBLAS
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.feature == '' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libclang-dev libopenblas-dev
       - name: Install MKL
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.feature == 'mkl' }}
         run: |
@@ -37,6 +36,11 @@ jobs:
           sudo sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
           sudo apt-get update
           sudo apt-get install -y intel-mkl-64bit-2020.4-912
+      - name: Install OpenBLAS
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.feature == 'openblas' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libclang-dev libopenblas-dev
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -50,4 +54,5 @@ jobs:
       - name: Run tests
         run: cargo test -vv -F "${{ matrix.feature }}"
         env:
+          LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
           LD_LIBRARY_PATH: /opt/intel/lib/intel64
