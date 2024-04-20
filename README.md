@@ -8,14 +8,23 @@ At this time, it has only been tested and confirmed to work on macOS and Linux.
 
 # Compilation
 
-For macOS, users should utilize the built-in [Accelerate](https://developer.apple.com/documentation/accelerate)
-framework, eliminating the need for additional libraries.
+Several libraries are available for use:
+[OpenBLAS](https://www.openblas.net/),
+[Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html),
+[Ruy](https://github.com/google/ruy),
+and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 
-On Linux, users have the option to use either OpenBLAS or Intel MKL:
+- **OpenBLAS**: To use OpenBLAS, enable the `openblas` feature and add the path to the directory
+  containing `libopenblas.a` to the `LIBRARY_PATH` environment variable.
+- **Intel MKL**: To use Intel MKL, enable the `mkl` feature and set the path to the Intel libraries in the `MKLROOT`
+  environment variable (default is `/opt/intel`).
+- **Ruy**: To use Ruy, enable the `ruy` feature.
+- **Apple Accelerate**: Available only on macOS, enable the `accelerate` feature to use Apple Accelerate.
 
-- If using OpenBLAS, please add the path to the directory containing `libopenblas.a` to the `LIBRARY_PATH` environment
-  variable.
-- If using Intel MKL, ensure to enable the `mkl` feature.
+If no feature is specified:
+
+- On macOS, Apple Accelerate will be used by default.
+- On Linux, Ruy will be used by default.
 
 Both macOS and Linux require the installation of CMake to compile the library.
 

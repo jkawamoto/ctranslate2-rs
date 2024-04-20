@@ -4,6 +4,7 @@ version = "0.4.6"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
+documentation = "https://docs.rs/ct2rs"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
 license = "MIT"
 keywords = ["ctranslate2", "bindings", "llm"]
