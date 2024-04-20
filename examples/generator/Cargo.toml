@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs-example-generator"
-version = "0.4.6"
+version = "0.4.7"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Generate text using CTranslate2"
