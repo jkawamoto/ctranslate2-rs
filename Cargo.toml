@@ -30,8 +30,8 @@ include = [
 
 [dependencies]
 cxx = { version = "1.0.121", features = ["c++17"] }
-anyhow = "1.0.81"
-tokenizers = "0.15.2"
+anyhow = "1.0.82"
+tokenizers = "0.19.1"
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 
@@ -47,6 +47,7 @@ mkl = ["dep:intel-mkl-src"]
 openblas = []
 ruy = []
 accelerate = []
+
 
 [workspace]
 members = ["examples/nllb", "examples/generator"]

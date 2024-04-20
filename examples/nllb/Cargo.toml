@@ -1,5 +1,5 @@
 [package]
-name = "ctranslate2-example-nllb"
+name = "ct2rs-example-nllb"
 version = "0.4.6"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
@@ -10,5 +10,13 @@ license = "MIT"
 
 [dependencies]
 ct2rs = { path = "../.." }
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 clap = { version = "4.5.4", features = ["derive"] }
+
+
+[features]
+default = []
+mkl = ["ct2rs/mkl"]
+openblas = ["ct2rs/openblas"]
+ruy = ["ct2rs/ruy"]
+accelerate = ["ct2rs/accelerate"]

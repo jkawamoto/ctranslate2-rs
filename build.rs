@@ -54,7 +54,7 @@ fn main() {
     cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
         .file("src/generator.cpp")
-        .flag_if_supported("-std=c++17")
+        .std("c++17")
         .include("CTranslate2/include")
         .compile("ct2rs");
 }
