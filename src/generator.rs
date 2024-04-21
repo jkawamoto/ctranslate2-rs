@@ -16,10 +16,10 @@
 //! use ct2rs::generator::{Generator, GenerationOptions};
 //!
 //! # fn main() -> Result<()> {
-//! let generator = Generator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let generator = Generator::new("/path/to/model", Config::default())?;
 //! let res = generator.generate_batch(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
-//!     &GenerationOptions::default()
+//!     &GenerationOptions::default(),
 //! )?;
 //! for r in res {
 //!     println!("{:?}", r);
@@ -30,7 +30,7 @@
 
 use cxx::UniquePtr;
 
-use crate::config::{BatchType, ComputeType, Config, Device};
+use crate::config::{BatchType, Config};
 
 #[cxx::bridge]
 mod ffi {
@@ -44,28 +44,6 @@ mod ffi {
 
     struct GenVecUSize {
         v: Vec<usize>,
-    }
-
-    enum GenComputeType {
-        Default,
-        Auto,
-        Float32,
-        Int8,
-        Int8Float32,
-        Int8Float16,
-        Int8BFloat16,
-        Int16,
-        Float16,
-        BFloat16,
-    }
-
-    struct GeneratorConfig {
-        compute_type: GenComputeType,
-        device_indices: Vec<i32>,
-        tensor_parallel: bool,
-        num_threads_per_replica: usize,
-        max_queued_batches: i64,
-        cpu_core_offset: i32,
     }
 
     enum GenerationBatchType {
@@ -107,16 +85,17 @@ mod ffi {
     unsafe extern "C++" {
         include!("ct2rs/include/generator.h");
 
+        type Config = crate::config::ffi::Config;
+
         type Generator;
 
-        fn new_generator(
+        fn generator(
             model_path: &str,
-            cuda: bool,
-            config: GeneratorConfig,
+            config: UniquePtr<Config>,
         ) -> Result<UniquePtr<Generator>>;
 
         fn generate_batch(
-            &self,
+            self: &Generator,
             start_tokens: Vec<GenVecStr>,
             options: GenerationOptions,
         ) -> Result<Vec<GenerationResult>>;
@@ -131,36 +110,10 @@ pub struct Generator {
 impl Generator {
     pub fn new<T: AsRef<str>>(
         model_path: T,
-        device: Device,
         config: Config,
     ) -> anyhow::Result<Generator> {
         Ok(Generator {
-            ptr: ffi::new_generator(
-                model_path.as_ref(),
-                match device {
-                    Device::CPU => false,
-                    Device::CUDA => true,
-                },
-                ffi::GeneratorConfig {
-                    compute_type: match config.compute_type {
-                        ComputeType::Default => ffi::GenComputeType::Default,
-                        ComputeType::Auto => ffi::GenComputeType::Auto,
-                        ComputeType::Float32 => ffi::GenComputeType::Float32,
-                        ComputeType::Int8 => ffi::GenComputeType::Int8,
-                        ComputeType::Int8Float32 => ffi::GenComputeType::Int8Float32,
-                        ComputeType::Int8Float16 => ffi::GenComputeType::Int8Float16,
-                        ComputeType::Int8BFloat16 => ffi::GenComputeType::Int8BFloat16,
-                        ComputeType::Int16 => ffi::GenComputeType::Int16,
-                        ComputeType::Float16 => ffi::GenComputeType::Float16,
-                        ComputeType::BFloat16 => ffi::GenComputeType::BFloat16,
-                    },
-                    device_indices: config.device_indices,
-                    tensor_parallel: config.tensor_parallel,
-                    num_threads_per_replica: config.num_threads_per_replica,
-                    max_queued_batches: config.max_queued_batches,
-                    cpu_core_offset: config.cpu_core_offset,
-                },
-            )?,
+            ptr: ffi::generator(model_path.as_ref(), config.to_ffi())?,
         })
     }
 

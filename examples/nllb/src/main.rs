@@ -8,12 +8,12 @@
 
 use std::fs::File;
 use std::io;
-use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, stdout, Write};
 
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::config::{Config, Device};
+use ct2rs::config::Config;
 use ct2rs::Translator;
 
 /// Translate a file using NLLB.
@@ -35,7 +35,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let t = Translator::new(args.path, Device::CPU, Config::default())?;
+    let t = Translator::new(args.path, Config::default())?;
 
     let sources = BufReader::new(File::open(args.prompt)?)
         .lines()

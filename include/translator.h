@@ -1,6 +1,6 @@
 // translator.h
 //
-// Copyright (c) 2023 Junpei Kawamoto
+// Copyright (c) 2023-2024 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -10,25 +10,37 @@
 
 #include "rust/cxx.h"
 
+#include "config.h"
+
 #include <ctranslate2/translator.h>
 #include <memory>
 
 struct VecStr;
-struct TranslatorConfig;
 struct TranslationOptions;
 struct TranslationResult;
 
 class Translator {
 private:
-  std::shared_ptr<ctranslate2::Translator> impl;
+  std::unique_ptr<ctranslate2::Translator> impl;
 
 public:
-  Translator(std::shared_ptr<ctranslate2::Translator> impl) : impl(impl) {}
+  Translator(std::unique_ptr<ctranslate2::Translator> impl) : impl(std::move(impl)) {}
 
   rust::Vec<TranslationResult>
   translate_batch(rust::Vec<VecStr> source, rust::Vec<VecStr> target_prefix,
                   TranslationOptions options) const;
 };
 
-std::unique_ptr<Translator> new_translator(rust::Str model_path, bool cuda,
-                                           TranslatorConfig config);
+inline std::unique_ptr<Translator> translator(
+    rust::Str model_path,
+    std::unique_ptr<Config> config
+){
+    return std::make_unique<Translator>(std::make_unique<ctranslate2::Translator>(
+        static_cast<std::string>(model_path),
+        config->device,
+        config->compute_type,
+        std::vector<int>(config->device_indices.begin(), config->device_indices.end()),
+        config->tensor_parallel,
+        *config->replica_pool_config
+    ));
+}

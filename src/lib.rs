@@ -16,7 +16,7 @@
 //! use ct2rs::{TranslationOptions, Translator};
 //!
 //! # fn main() -> Result<()> {
-//! let t = Translator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let t = Translator::new("/path/to/model", Config::default())?;
 //! let res = t.translate_batch(
 //!     vec![
 //!         "Hello world!",
@@ -42,7 +42,7 @@
 //! use ct2rs::{Generator, GenerationOptions};
 //!
 //! # fn main() -> Result<()> {
-//! let g = Generator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let g = Generator::new("/path/to/model", Config::default())?;
 //! let res = g.generate_batch(
 //!     vec!["prompt"],
 //!     &GenerationOptions::default(),
@@ -65,7 +65,7 @@ use std::path::Path;
 use anyhow::{anyhow, bail, Result};
 use tokenizers::{Decoder, EncodeInput, Tokenizer};
 
-use crate::config::{Config, Device};
+use crate::config::Config;
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
 
@@ -83,10 +83,9 @@ pub struct Translator {
 
 impl Translator {
     /// Initializes the translator and tokenizer.
-    pub fn new<T: AsRef<Path>>(path: T, device: Device, config: Config) -> Result<Translator> {
+    pub fn new<T: AsRef<Path>>(path: T, config: Config) -> Result<Translator> {
         Translator::with_tokenizer(
             &path,
-            device,
             config,
             Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
                 .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
@@ -96,14 +95,12 @@ impl Translator {
     /// Initializes the translator and tokenizer.
     pub fn with_tokenizer<T: AsRef<Path>>(
         path: T,
-        device: Device,
         config: Config,
         tokenizer: Tokenizer,
     ) -> Result<Translator> {
         Ok(Translator {
             translator: translator::Translator::new(
                 path.as_ref().to_str().unwrap(),
-                device,
                 config,
             )?,
             tokenizer,
@@ -164,10 +161,9 @@ pub struct Generator {
 
 impl Generator {
     /// Initializes the generator and tokenizer.
-    pub fn new<T: AsRef<Path>>(path: T, device: Device, config: Config) -> Result<Generator> {
+    pub fn new<T: AsRef<Path>>(path: T, config: Config) -> Result<Generator> {
         Generator::with_tokenizer(
             &path,
-            device,
             config,
             Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
                 .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
@@ -177,12 +173,11 @@ impl Generator {
     /// Initializes the generator with the given tokenizer.
     pub fn with_tokenizer<T: AsRef<Path>>(
         path: T,
-        device: Device,
         config: Config,
         tokenizer: Tokenizer,
     ) -> Result<Generator> {
         Ok(Generator {
-            generator: generator::Generator::new(path.as_ref().to_str().unwrap(), device, config)?,
+            generator: generator::Generator::new(path.as_ref().to_str().unwrap(), config)?,
             tokenizer,
         })
     }
