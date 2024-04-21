@@ -34,12 +34,21 @@ pub(crate) mod ffi {
         BFLOAT16,
     }
 
+    #[derive(Debug)]
+    #[repr(i32)]
+    enum BatchType {
+        Examples,
+        Tokens,
+    }
+
+
     unsafe extern "C++" {
         include!("ct2rs/include/config.h");
 
         type Device;
         type ComputeType;
         type ReplicaPoolConfig;
+        pub type BatchType;
 
         fn replica_pool_config(
             num_threads_per_replica: usize,
@@ -233,9 +242,18 @@ pub enum BatchType {
     Tokens,
 }
 
+impl BatchType {
+    pub(crate) fn to_ffi(&self) -> ffi::BatchType {
+        match *self {
+            BatchType::Examples => ffi::BatchType::Examples,
+            BatchType::Tokens => ffi::BatchType::Tokens,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::config::{ComputeType, Config, Device, ffi};
+    use crate::config::{BatchType, ComputeType, Config, Device, ffi};
 
     fn test_device_to_ffi() {
         assert_eq!(Device::CPU.to_ffi(), ffi::Device::CPU);
@@ -260,5 +278,10 @@ mod tests {
         let res = config.to_ffi();
 
         assert!(res.is_null());
+    }
+
+    fn test_batch_type_to_ffi() {
+        assert_eq!(BatchType::Examples.to_ffi(), ffi::BatchType::Examples);
+        assert_eq!(BatchType::Tokens.to_ffi(), ffi::BatchType::Tokens);
     }
 }

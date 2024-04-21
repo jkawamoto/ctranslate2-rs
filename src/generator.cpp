@@ -19,16 +19,6 @@ Vec<GenerationResult>
 Generator::generate_batch(Vec<GenVecStr> start_tokens,
                           GenerationOptions options) const {
 
-  ctranslate2::BatchType batch_type;
-  switch (options.batch_type) {
-  case GenerationBatchType::Examples:
-    batch_type = ctranslate2::BatchType::Examples;
-    break;
-  case GenerationBatchType::Tokens:
-    batch_type = ctranslate2::BatchType::Tokens;
-    break;
-  }
-
   auto futures = this->impl->generate_batch_async(
       from_rust(start_tokens),
       ctranslate2::GenerationOptions{options.beam_size,
@@ -53,7 +43,7 @@ Generator::generate_batch(Vec<GenVecStr> start_tokens,
                                      options.cache_static_prompt,
                                      options.include_prompt_in_result,
                                      nullptr},
-      options.max_batch_size, batch_type);
+      options.max_batch_size, options.batch_type);
 
   Vec<GenerationResult> res;
   for (auto &future : futures) {

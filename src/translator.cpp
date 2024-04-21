@@ -20,16 +20,6 @@ Vec<TranslationResult>
 Translator::translate_batch(Vec<VecStr> source, Vec<VecStr> target_prefix,
                             TranslationOptions options) const {
 
-  ctranslate2::BatchType batch_type;
-  switch (options.batch_type) {
-  case BatchType::Examples:
-    batch_type = ctranslate2::BatchType::Examples;
-    break;
-  case BatchType::Tokens:
-    batch_type = ctranslate2::BatchType::Tokens;
-    break;
-  }
-
   const auto batch_result =
       this->impl->translate_batch(from_rust(source), from_rust(target_prefix),
                                   ctranslate2::TranslationOptions{
@@ -59,7 +49,7 @@ Translator::translate_batch(Vec<VecStr> source, Vec<VecStr> target_prefix,
                                       options.replace_unknowns,
                                       nullptr,
                                   },
-                                  options.max_batch_size, batch_type);
+                                  options.max_batch_size, options.batch_type);
   Vec<TranslationResult> res;
   for (const auto &item : batch_result) {
     res.push_back(TranslationResult{

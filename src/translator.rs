@@ -45,11 +45,6 @@ mod ffi {
         v: Vec<&'a str>,
     }
 
-    enum BatchType {
-        Examples,
-        Tokens,
-    }
-
     struct TranslationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -90,6 +85,7 @@ mod ffi {
         include!("ct2rs/include/translator.h");
 
         type Config = crate::config::ffi::Config;
+        type BatchType = crate::config::ffi::BatchType;
 
         type Translator;
 
@@ -239,10 +235,7 @@ impl<T: AsRef<str>> TranslationOptions<T> {
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
             replace_unknowns: self.replace_unknowns,
             max_batch_size: self.max_batch_size,
-            batch_type: match self.batch_type {
-                BatchType::Examples => ffi::BatchType::Examples,
-                BatchType::Tokens => ffi::BatchType::Tokens,
-            },
+            batch_type: self.batch_type.to_ffi(),
         }
     }
 }

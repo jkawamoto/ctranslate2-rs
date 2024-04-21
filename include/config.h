@@ -17,6 +17,7 @@
 using ctranslate2::Device;
 using ctranslate2::ComputeType;
 using ctranslate2::ReplicaPoolConfig;
+using ctranslate2::BatchType;
 
 inline std::unique_ptr<ReplicaPoolConfig> replica_pool_config(
     size_t num_threads_per_replica,

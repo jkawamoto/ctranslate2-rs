@@ -46,11 +46,6 @@ mod ffi {
         v: Vec<usize>,
     }
 
-    enum GenerationBatchType {
-        Examples,
-        Tokens,
-    }
-
     struct GenerationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -73,7 +68,7 @@ mod ffi {
         cache_static_prompt: bool,
         include_prompt_in_result: bool,
         max_batch_size: usize,
-        batch_type: GenerationBatchType,
+        batch_type: BatchType,
     }
 
     struct GenerationResult {
@@ -86,6 +81,7 @@ mod ffi {
         include!("ct2rs/include/generator.h");
 
         type Config = crate::config::ffi::Config;
+        type BatchType = crate::config::ffi::BatchType;
 
         type Generator;
 
@@ -253,10 +249,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             cache_static_prompt: self.cache_static_prompt,
             include_prompt_in_result: self.include_prompt_in_result,
             max_batch_size: self.max_batch_size,
-            batch_type: match self.batch_type {
-                BatchType::Examples => ffi::GenerationBatchType::Examples,
-                BatchType::Tokens => ffi::GenerationBatchType::Tokens,
-            },
+            batch_type: self.batch_type.to_ffi(),
         }
     }
 }
