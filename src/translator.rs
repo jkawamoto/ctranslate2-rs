@@ -235,7 +235,7 @@ impl<T: AsRef<str>> TranslationOptions<T> {
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
             replace_unknowns: self.replace_unknowns,
             max_batch_size: self.max_batch_size,
-            batch_type: self.batch_type.to_ffi(),
+            batch_type: self.batch_type,
         }
     }
 }

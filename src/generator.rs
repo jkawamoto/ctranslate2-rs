@@ -249,7 +249,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             cache_static_prompt: self.cache_static_prompt,
             include_prompt_in_result: self.include_prompt_in_result,
             max_batch_size: self.max_batch_size,
-            batch_type: self.batch_type.to_ffi(),
+            batch_type: self.batch_type,
         }
     }
 }

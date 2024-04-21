@@ -53,7 +53,7 @@ use ct2rs::{TranslationOptions, Translator};
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::new(path, Device::CPU, Config::default())?;
+    let t = Translator::new(path, Config::default())?;
     let res = t.translate_batch(
         vec![
             "Hello world!",
@@ -86,7 +86,7 @@ Hallo Welt!<unk>, (score: Some(-0.5597002))
 ```rust
 fn main() -> Result<()> {
     let path = "/path/to/model";
-    let g = Generator::new(path, Device::CPU, Config::default())?;
+    let g = Generator::new(path, Config::default())?;
     let res = g.generate_batch(
         vec!["prompt"],
         &GenerationOptions::default(),

@@ -10,8 +10,31 @@
 
 use cxx::UniquePtr;
 
+pub use ffi::BatchType;
+pub use ffi::ComputeType;
+pub use ffi::Device;
+
 #[cxx::bridge]
 pub(crate) mod ffi {
+    /// Represents the computing device to be used.
+    ///
+    /// This enum can take one of the following two values:
+    /// - `CPU`
+    /// - `CUDA`
+    ///
+    /// The default setting for this enum is `CPU`.
+    ///
+    /// # Examples
+    ///
+    /// Example of creating a default `Device`:
+    ///
+    /// ```
+    /// use ct2rs::config::Device;
+    ///
+    /// let device = Device::default();
+    /// assert_eq!(device, Device::CPU);
+    /// ```
+    ///
     #[derive(Debug)]
     #[repr(i32)]
     enum Device {
@@ -19,6 +42,45 @@ pub(crate) mod ffi {
         CUDA,
     }
 
+
+    /// Model computation type.
+    ///
+    /// This enum can take one of the following values:
+    /// - `DEFAULT`: Keeps the same quantization that was used during model conversion.
+    ///   This is the default setting.
+    /// - `AUTO`: Uses the fastest computation type that is supported on this system and device.
+    /// - `FLOAT32`: Utilizes 32-bit floating-point precision.
+    /// - `INT8`: Uses 8-bit integer precision.
+    /// - `INT8_FLOAT32`: Combines 8-bit integer quantization with 32-bit floating-point
+    ///   computation.
+    /// - `INT8_FLOAT16`: Combines 8-bit integer quantization with 16-bit floating-point
+    ///   computation.
+    /// - `INT8_BFLOAT16`: Combines 8-bit integer quantization with Brain Floating Point (16-bit)
+    ///   computation.
+    /// - `INT16`: Uses 16-bit integer precision.
+    /// - `FLOAT16`: Utilizes 16-bit floating-point precision (half precision).
+    /// - `BFLOAT16`: Uses Brain Floating Point (16-bit) precision.
+    ///
+    /// The default setting for this enum is `DEFAULT`, meaning that unless specified otherwise,
+    /// the computation will proceed with the same quantization level as was used during the model's
+    /// conversion.
+    ///
+    /// See also:
+    /// [Quantization](https://opennmt.net/CTranslate2/quantization.html#quantize-on-model-loading)
+    /// for more details on how quantization affects computation and how it can be applied during
+    /// model loading.
+    ///
+    /// # Examples
+    ///
+    /// Example of creating a default `ComputeType`:
+    ///
+    /// ```
+    /// use ct2rs::config::ComputeType;
+    ///
+    /// let compute_type = ComputeType::default();
+    /// assert_eq!(compute_type, ComputeType::DEFAULT);
+    /// ```
+    ///
     #[derive(Debug)]
     #[repr(i32)]
     enum ComputeType {
@@ -34,6 +96,27 @@ pub(crate) mod ffi {
         BFLOAT16,
     }
 
+
+    /// Specifies how the `max_batch_size` should be calculated,
+    /// whether by the number of "examples" or "tokens".
+    ///
+    /// This enum can take one of the following two values:
+    /// - `Examples`: The batch size is calculated based on the number of individual examples.
+    /// - `Tokens`: The batch size is calculated based on the total number of tokens across all
+    ///    examples.
+    ///
+    /// The default setting for this enum is `Examples`.
+    ///
+    /// # Examples
+    ///
+    /// Example of creating a default `BatchType`:
+    ///
+    /// ```
+    /// use ct2rs::config::BatchType;
+    ///
+    /// let batch_type = BatchType::default();
+    /// assert_eq!(batch_type, BatchType::Examples);
+    /// ```
     #[derive(Debug)]
     #[repr(i32)]
     enum BatchType {
@@ -68,83 +151,21 @@ pub(crate) mod ffi {
     }
 }
 
-/// Represents the computing device to be used.
-///
-/// # Examples
-///
-/// Example of creating a default `Device`:
-///
-/// ```
-/// use ct2rs::config::Device;
-///
-/// let device = Device::default();
-/// assert_eq!(device, Device::CPU);
-/// ```
-///
-#[derive(PartialEq, Eq, Default, Debug)]
-pub enum Device {
-    #[default]
-    CPU,
-    CUDA,
-}
-
-impl Device {
-    fn to_ffi(&self) -> ffi::Device {
-        match *self {
-            Device::CPU => ffi::Device::CPU,
-            Device::CUDA => ffi::Device::CPU,
-        }
+impl Default for Device {
+    fn default() -> Self {
+        Self::CPU
     }
 }
 
-/// Model computation type.
-///
-/// The default setting for this enum is `Default`.
-///
-/// See also [Quantization](https://opennmt.net/CTranslate2/quantization.html#quantize-on-model-loading).
-///
-/// # Examples
-///
-/// Example of creating a default `ComputeType`:
-///
-/// ```
-/// use ct2rs::config::ComputeType;
-///
-/// let compute_type = ComputeType::default();
-/// assert_eq!(compute_type, ComputeType::Default);
-/// ```
-///
-#[derive(PartialEq, Eq, Default, Debug)]
-pub enum ComputeType {
-    /// Keep the same quantization that was used during model conversion.
-    #[default]
-    Default,
-    /// Use the fastest computation type that is supported on this system and device.
-    Auto,
-    Float32,
-    Int8,
-    Int8Float32,
-    Int8Float16,
-    Int8BFloat16,
-    Int16,
-    Float16,
-    BFloat16,
+impl Default for ComputeType {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
 }
 
-impl ComputeType {
-    fn to_ffi(&self) -> ffi::ComputeType {
-        match *self {
-            ComputeType::Default => ffi::ComputeType::DEFAULT,
-            ComputeType::Auto => ffi::ComputeType::AUTO,
-            ComputeType::Float32 => ffi::ComputeType::FLOAT32,
-            ComputeType::Int8 => ffi::ComputeType::INT8,
-            ComputeType::Int8Float32 => ffi::ComputeType::INT8_FLOAT32,
-            ComputeType::Int8Float16 => ffi::ComputeType::INT8_FLOAT16,
-            ComputeType::Int8BFloat16 => ffi::ComputeType::INT8_BFLOAT16,
-            ComputeType::Int16 => ffi::ComputeType::INT16,
-            ComputeType::Float16 => ffi::ComputeType::FLOAT16,
-            ComputeType::BFloat16 => ffi::ComputeType::BFLOAT16,
-        }
+impl Default for BatchType {
+    fn default() -> Self {
+        Self::Examples
     }
 }
 
@@ -200,8 +221,8 @@ impl Default for Config {
 impl Config {
     pub(crate) fn to_ffi(&self) -> UniquePtr<ffi::Config> {
         ffi::config(
-            Device::CPU.to_ffi(),
-            self.compute_type.to_ffi(),
+            self.device,
+            self.compute_type,
             self.device_indices.as_slice(),
             false,
             ffi::replica_pool_config(
@@ -214,74 +235,15 @@ impl Config {
 }
 
 
-/// Specifies how the `max_batch_size` should be calculated,
-/// whether by the number of "examples" or "tokens".
-///
-/// The default setting for this enum is `Examples`,
-/// meaning that the batch size will typically be calculated based on the number of individual
-/// examples unless specified otherwise.
-///
-/// # Examples
-///
-/// Example of creating a default `BatchType`:
-///
-/// ```
-/// use ct2rs::config::BatchType;
-///
-/// let batch_type = BatchType::default();
-/// assert_eq!(batch_type, BatchType::Examples);
-/// ```
-#[derive(PartialEq, Eq, Default, Debug)]
-pub enum BatchType {
-    /// When selected, `max_batch_size` represents the number of individual examples.
-    /// This is the default behavior.
-    #[default]
-    Examples,
-    /// When selected, `max_batch_size` corresponds to the total number of tokens across all
-    /// examples.
-    Tokens,
-}
-
-impl BatchType {
-    pub(crate) fn to_ffi(&self) -> ffi::BatchType {
-        match *self {
-            BatchType::Examples => ffi::BatchType::Examples,
-            BatchType::Tokens => ffi::BatchType::Tokens,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::config::{BatchType, ComputeType, Config, Device, ffi};
+    use crate::config::Config;
 
-    fn test_device_to_ffi() {
-        assert_eq!(Device::CPU.to_ffi(), ffi::Device::CPU);
-        assert_eq!(Device::CUDA.to_ffi(), ffi::Device::CUDA);
-    }
-
-    fn test_compute_type_to_ffi() {
-        assert_eq!(ComputeType::Default.to_ffi(), ffi::ComputeType::DEFAULT);
-        assert_eq!(ComputeType::Auto.to_ffi(), ffi::ComputeType::AUTO);
-        assert_eq!(ComputeType::Float32.to_ffi(), ffi::ComputeType::FLOAT32);
-        assert_eq!(ComputeType::Int8.to_ffi(), ffi::ComputeType::INT8);
-        assert_eq!(ComputeType::Int8Float32.to_ffi(), ffi::ComputeType::INT8_FLOAT32);
-        assert_eq!(ComputeType::Int8Float16.to_ffi(), ffi::ComputeType::INT8_FLOAT16);
-        assert_eq!(ComputeType::Int8BFloat16.to_ffi(), ffi::ComputeType::INT8_BFLOAT16);
-        assert_eq!(ComputeType::Int16.to_ffi(), ffi::ComputeType::INT16);
-        assert_eq!(ComputeType::Float16.to_ffi(), ffi::ComputeType::FLOAT16);
-        assert_eq!(ComputeType::BFloat16.to_ffi(), ffi::ComputeType::BFLOAT16);
-    }
-
+    #[test]
     fn test_config_to_ffi() {
         let config = Config::default();
         let res = config.to_ffi();
 
-        assert!(res.is_null());
-    }
-
-    fn test_batch_type_to_ffi() {
-        assert_eq!(BatchType::Examples.to_ffi(), ffi::BatchType::Examples);
-        assert_eq!(BatchType::Tokens.to_ffi(), ffi::BatchType::Tokens);
+        assert!(!res.is_null());
     }
 }
