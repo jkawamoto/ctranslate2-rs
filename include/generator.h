@@ -21,19 +21,19 @@ struct GenerationResult;
 
 class Generator {
 private:
-  std::unique_ptr<ctranslate2::Generator> impl;
+    std::unique_ptr<ctranslate2::Generator> impl;
 
 public:
-  Generator(std::unique_ptr<ctranslate2::Generator> impl) : impl(std::move(impl)) {}
+    Generator(std::unique_ptr<ctranslate2::Generator> impl)
+        : impl(std::move(impl)) { }
 
-  rust::Vec<GenerationResult> generate_batch(rust::Vec<VecStr> start_tokens,
-                                             GenerationOptions options) const;
+    rust::Vec<GenerationResult> generate_batch(rust::Vec<VecStr> start_tokens, GenerationOptions options) const;
 };
 
 inline std::unique_ptr<Generator> generator(
     rust::Str model_path,
     std::unique_ptr<Config> config
-){
+) {
     return std::make_unique<Generator>(std::make_unique<ctranslate2::Generator>(
         static_cast<std::string>(model_path),
         config->device,

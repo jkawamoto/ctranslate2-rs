@@ -21,20 +21,20 @@ struct TranslationResult;
 
 class Translator {
 private:
-  std::unique_ptr<ctranslate2::Translator> impl;
+    std::unique_ptr<ctranslate2::Translator> impl;
 
 public:
-  Translator(std::unique_ptr<ctranslate2::Translator> impl) : impl(std::move(impl)) {}
+    Translator(std::unique_ptr<ctranslate2::Translator> impl)
+        : impl(std::move(impl)) { }
 
-  rust::Vec<TranslationResult>
-  translate_batch(rust::Vec<VecStr> source, rust::Vec<VecStr> target_prefix,
-                  TranslationOptions options) const;
+    rust::Vec<TranslationResult>
+    translate_batch(rust::Vec<VecStr> source, rust::Vec<VecStr> target_prefix, TranslationOptions options) const;
 };
 
 inline std::unique_ptr<Translator> translator(
     rust::Str model_path,
     std::unique_ptr<Config> config
-){
+) {
     return std::make_unique<Translator>(std::make_unique<ctranslate2::Translator>(
         static_cast<std::string>(model_path),
         config->device,

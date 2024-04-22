@@ -10,21 +10,20 @@
 
 #include "rust/cxx.h"
 
+#include <ctranslate2/replica_pool.h>
 #include <memory>
 
-#include <ctranslate2/replica_pool.h>
-
-using ctranslate2::Device;
-using ctranslate2::ComputeType;
-using ctranslate2::ReplicaPoolConfig;
 using ctranslate2::BatchType;
+using ctranslate2::ComputeType;
+using ctranslate2::Device;
+using ctranslate2::ReplicaPoolConfig;
 
 inline std::unique_ptr<ReplicaPoolConfig> replica_pool_config(
     size_t num_threads_per_replica,
     long max_queued_batches,
     int cpu_core_offset
-){
-    return std::make_unique<ReplicaPoolConfig>(ReplicaPoolConfig{
+) {
+    return std::make_unique<ReplicaPoolConfig>(ReplicaPoolConfig {
         num_threads_per_replica,
         max_queued_batches,
         cpu_core_offset,
@@ -45,8 +44,8 @@ inline std::unique_ptr<Config> config(
     rust::Slice<const int> device_indices,
     bool tensor_parallel,
     std::unique_ptr<ReplicaPoolConfig> replica_pool_config
-){
-    return std::make_unique<Config>(Config{
+) {
+    return std::make_unique<Config>(Config {
         device,
         compute_type,
         device_indices,
