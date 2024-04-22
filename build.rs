@@ -14,11 +14,14 @@ use walkdir::WalkDir;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/types.rs");
+    println!("cargo:rerun-if-changed=src/config.rs");
     println!("cargo:rerun-if-changed=src/translator.rs");
     println!("cargo:rerun-if-changed=src/translator.cpp");
     println!("cargo:rerun-if-changed=src/generator.rs");
     println!("cargo:rerun-if-changed=src/generator.cpp");
     println!("cargo:rerun-if-changed=include/convert.h");
+    println!("cargo:rerun-if-changed=include/config.h");
     println!("cargo:rerun-if-changed=include/translator.h");
     println!("cargo:rerun-if-changed=include/generator.h");
     println!("cargo:rerun-if-changed=CTranslate2");
@@ -51,7 +54,8 @@ fn main() {
     let ctranslate2 = cmake.build();
     link_libraries(ctranslate2.join("build"));
 
-    cxx_build::bridges(vec!["src/translator.rs", "src/generator.rs"])
+    cxx_build::bridges(vec![
+        "src/types.rs", "src/config.rs", "src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
         .file("src/generator.cpp")
         .std("c++17")

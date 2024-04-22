@@ -13,7 +13,6 @@ use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::config::Device;
 use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using CTranslate2.
@@ -32,7 +31,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let g = Generator::new(args.path, Device::CPU, Default::default())?;
+    let g = Generator::new(args.path, Default::default())?;
 
     let res = g.generate_batch(
         BufReader::new(File::open(args.prompt)?)

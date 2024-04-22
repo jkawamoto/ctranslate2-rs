@@ -16,10 +16,10 @@
 //! use ct2rs::generator::{Generator, GenerationOptions};
 //!
 //! # fn main() -> Result<()> {
-//! let generator = Generator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let generator = Generator::new("/path/to/model", Config::default())?;
 //! let res = generator.generate_batch(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
-//!     &GenerationOptions::default()
+//!     &GenerationOptions::default(),
 //! )?;
 //! for r in res {
 //!     println!("{:?}", r);
@@ -30,49 +30,10 @@
 
 use cxx::UniquePtr;
 
-use crate::config::{BatchType, ComputeType, Config, Device};
+use crate::config::{BatchType, Config};
 
 #[cxx::bridge]
 mod ffi {
-    struct GenVecStr<'a> {
-        v: Vec<&'a str>,
-    }
-
-    struct GenVecString {
-        v: Vec<String>,
-    }
-
-    struct GenVecUSize {
-        v: Vec<usize>,
-    }
-
-    enum GenComputeType {
-        Default,
-        Auto,
-        Float32,
-        Int8,
-        Int8Float32,
-        Int8Float16,
-        Int8BFloat16,
-        Int16,
-        Float16,
-        BFloat16,
-    }
-
-    struct GeneratorConfig {
-        compute_type: GenComputeType,
-        device_indices: Vec<i32>,
-        tensor_parallel: bool,
-        num_threads_per_replica: usize,
-        max_queued_batches: i64,
-        cpu_core_offset: i32,
-    }
-
-    enum GenerationBatchType {
-        Examples,
-        Tokens,
-    }
-
     struct GenerationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -80,7 +41,7 @@ mod ffi {
         repetition_penalty: f32,
         no_repeat_ngram_size: usize,
         disable_unk: bool,
-        suppress_sequences: Vec<GenVecStr<'a>>,
+        suppress_sequences: Vec<VecStr<'a>>,
         return_end_token: bool,
         max_length: usize,
         min_length: usize,
@@ -95,29 +56,36 @@ mod ffi {
         cache_static_prompt: bool,
         include_prompt_in_result: bool,
         max_batch_size: usize,
-        batch_type: GenerationBatchType,
+        batch_type: BatchType,
     }
 
     struct GenerationResult {
-        sequences: Vec<GenVecString>,
-        sequences_ids: Vec<GenVecUSize>,
+        sequences: Vec<VecString>,
+        sequences_ids: Vec<VecUSize>,
         scores: Vec<f32>,
     }
 
     unsafe extern "C++" {
+        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/generator.h");
+
+        type VecString = crate::types::ffi::VecString;
+        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
+        type VecUSize = crate::types::ffi::VecUSize;
+
+        type Config = crate::config::ffi::Config;
+        type BatchType = crate::config::ffi::BatchType;
 
         type Generator;
 
-        fn new_generator(
+        fn generator(
             model_path: &str,
-            cuda: bool,
-            config: GeneratorConfig,
+            config: UniquePtr<Config>,
         ) -> Result<UniquePtr<Generator>>;
 
         fn generate_batch(
-            &self,
-            start_tokens: Vec<GenVecStr>,
+            self: &Generator,
+            start_tokens: Vec<VecStr>,
             options: GenerationOptions,
         ) -> Result<Vec<GenerationResult>>;
     }
@@ -131,36 +99,10 @@ pub struct Generator {
 impl Generator {
     pub fn new<T: AsRef<str>>(
         model_path: T,
-        device: Device,
         config: Config,
     ) -> anyhow::Result<Generator> {
         Ok(Generator {
-            ptr: ffi::new_generator(
-                model_path.as_ref(),
-                match device {
-                    Device::CPU => false,
-                    Device::CUDA => true,
-                },
-                ffi::GeneratorConfig {
-                    compute_type: match config.compute_type {
-                        ComputeType::Default => ffi::GenComputeType::Default,
-                        ComputeType::Auto => ffi::GenComputeType::Auto,
-                        ComputeType::Float32 => ffi::GenComputeType::Float32,
-                        ComputeType::Int8 => ffi::GenComputeType::Int8,
-                        ComputeType::Int8Float32 => ffi::GenComputeType::Int8Float32,
-                        ComputeType::Int8Float16 => ffi::GenComputeType::Int8Float16,
-                        ComputeType::Int8BFloat16 => ffi::GenComputeType::Int8BFloat16,
-                        ComputeType::Int16 => ffi::GenComputeType::Int16,
-                        ComputeType::Float16 => ffi::GenComputeType::Float16,
-                        ComputeType::BFloat16 => ffi::GenComputeType::BFloat16,
-                    },
-                    device_indices: config.device_indices,
-                    tensor_parallel: config.tensor_parallel,
-                    num_threads_per_replica: config.num_threads_per_replica,
-                    max_queued_batches: config.max_queued_batches,
-                    cpu_core_offset: config.cpu_core_offset,
-                },
-            )?,
+            ptr: ffi::generator(model_path.as_ref(), config.to_ffi())?,
         })
     }
 
@@ -300,10 +242,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             cache_static_prompt: self.cache_static_prompt,
             include_prompt_in_result: self.include_prompt_in_result,
             max_batch_size: self.max_batch_size,
-            batch_type: match self.batch_type {
-                BatchType::Examples => ffi::GenerationBatchType::Examples,
-                BatchType::Tokens => ffi::GenerationBatchType::Tokens,
-            },
+            batch_type: self.batch_type,
         }
     }
 }
@@ -342,9 +281,9 @@ impl GenerationResult {
 }
 
 #[inline]
-fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::GenVecStr> {
+fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::VecStr> {
     src.iter()
-        .map(|v| ffi::GenVecStr {
+        .map(|v| ffi::VecStr {
             v: v.iter().map(|s| s.as_ref()).collect(),
         })
         .collect()

@@ -1,0 +1,8 @@
+Language: Cpp
+BasedOnStyle: WebKit
+IndentWidth: 4
+BreakBeforeBraces: Attach
+AlignAfterOpenBracket: BlockIndent
+BinPackArguments: false
+BinPackParameters: false
+PackConstructorInitializers: NextLine

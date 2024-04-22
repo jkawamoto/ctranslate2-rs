@@ -18,7 +18,7 @@
 //! use ct2rs::translator::Translator;
 //!
 //! # fn main() -> Result<()> {
-//! let translator = Translator::new("/path/to/model", Device::CPU, Config::default())?;
+//! let translator = Translator::new("/path/to/model", Config::default())?;
 //! let res = translator.translate_batch(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &vec![vec!["jpn_Jpan"]],
@@ -33,45 +33,10 @@
 
 use cxx::UniquePtr;
 
-use crate::config::{BatchType, ComputeType, Config, Device};
+use crate::config::{BatchType, Config};
 
 #[cxx::bridge]
 mod ffi {
-    struct VecString {
-        v: Vec<String>,
-    }
-
-    struct VecStr<'a> {
-        v: Vec<&'a str>,
-    }
-
-    enum ComputeType {
-        Default,
-        Auto,
-        Float32,
-        Int8,
-        Int8Float32,
-        Int8Float16,
-        Int8BFloat16,
-        Int16,
-        Float16,
-        BFloat16,
-    }
-
-    struct TranslatorConfig {
-        compute_type: ComputeType,
-        device_indices: Vec<i32>,
-        tensor_parallel: bool,
-        num_threads_per_replica: usize,
-        max_queued_batches: i64,
-        cpu_core_offset: i32,
-    }
-
-    enum BatchType {
-        Examples,
-        Tokens,
-    }
-
     struct TranslationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -109,14 +74,20 @@ mod ffi {
     }
 
     unsafe extern "C++" {
+        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/translator.h");
+
+        type VecString = crate::types::ffi::VecString;
+        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
+
+        type Config = crate::config::ffi::Config;
+        type BatchType = crate::config::ffi::BatchType;
 
         type Translator;
 
-        fn new_translator(
+        fn translator(
             model_path: &str,
-            cuda: bool,
-            config: TranslatorConfig,
+            config: UniquePtr<Config>,
         ) -> Result<UniquePtr<Translator>>;
 
         fn translate_batch(
@@ -260,10 +231,7 @@ impl<T: AsRef<str>> TranslationOptions<T> {
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
             replace_unknowns: self.replace_unknowns,
             max_batch_size: self.max_batch_size,
-            batch_type: match self.batch_type {
-                BatchType::Examples => ffi::BatchType::Examples,
-                BatchType::Tokens => ffi::BatchType::Tokens,
-            },
+            batch_type: self.batch_type,
         }
     }
 }
@@ -277,36 +245,10 @@ impl Translator {
     /// Initializes the translator.
     pub fn new<T: AsRef<str>>(
         model_path: T,
-        device: Device,
         config: Config,
     ) -> anyhow::Result<Translator> {
         Ok(Translator {
-            ptr: ffi::new_translator(
-                model_path.as_ref(),
-                match device {
-                    Device::CPU => false,
-                    Device::CUDA => true,
-                },
-                ffi::TranslatorConfig {
-                    compute_type: match config.compute_type {
-                        ComputeType::Default => ffi::ComputeType::Default,
-                        ComputeType::Auto => ffi::ComputeType::Auto,
-                        ComputeType::Float32 => ffi::ComputeType::Float32,
-                        ComputeType::Int8 => ffi::ComputeType::Int8,
-                        ComputeType::Int8Float32 => ffi::ComputeType::Int8Float32,
-                        ComputeType::Int8Float16 => ffi::ComputeType::Int8Float16,
-                        ComputeType::Int8BFloat16 => ffi::ComputeType::Int8BFloat16,
-                        ComputeType::Int16 => ffi::ComputeType::Int16,
-                        ComputeType::Float16 => ffi::ComputeType::Float16,
-                        ComputeType::BFloat16 => ffi::ComputeType::BFloat16,
-                    },
-                    device_indices: config.device_indices,
-                    tensor_parallel: config.tensor_parallel,
-                    num_threads_per_replica: config.num_threads_per_replica,
-                    max_queued_batches: config.max_queued_batches,
-                    cpu_core_offset: config.cpu_core_offset,
-                },
-            )?,
+            ptr: ffi::translator(model_path.as_ref(), config.to_ffi())?,
         })
     }
 
