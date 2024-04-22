@@ -16,7 +16,7 @@ using std::string;
 using std::vector;
 
 Vec<GenerationResult>
-Generator::generate_batch(Vec<GenVecStr> start_tokens,
+Generator::generate_batch(Vec<VecStr> start_tokens,
                           GenerationOptions options) const {
 
   auto futures = this->impl->generate_batch_async(
@@ -48,8 +48,8 @@ Generator::generate_batch(Vec<GenVecStr> start_tokens,
   Vec<GenerationResult> res;
   for (auto &future : futures) {
     const auto &r = future.get();
-    res.push_back(GenerationResult{to_rust<GenVecString>(r.sequences),
-                                   to_rust<GenVecUSize>(r.sequences_ids),
+    res.push_back(GenerationResult{to_rust<VecString>(r.sequences),
+                                   to_rust<VecUSize>(r.sequences_ids),
                                    to_rust(r.scores)});
   }
 

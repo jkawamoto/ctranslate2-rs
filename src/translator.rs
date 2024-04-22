@@ -37,14 +37,6 @@ use crate::config::{BatchType, Config};
 
 #[cxx::bridge]
 mod ffi {
-    struct VecString {
-        v: Vec<String>,
-    }
-
-    struct VecStr<'a> {
-        v: Vec<&'a str>,
-    }
-
     struct TranslationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -82,7 +74,11 @@ mod ffi {
     }
 
     unsafe extern "C++" {
+        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/translator.h");
+
+        type VecString = crate::types::ffi::VecString;
+        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;

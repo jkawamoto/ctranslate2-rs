@@ -72,6 +72,7 @@ pub use crate::translator::TranslationOptions;
 pub mod config;
 pub mod generator;
 pub mod translator;
+mod types;
 
 const TOKENIZER_FILENAME: &str = "tokenizer.json";
 

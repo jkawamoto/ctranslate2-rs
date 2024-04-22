@@ -15,7 +15,7 @@
 #include <ctranslate2/generator.h>
 #include <memory>
 
-struct GenVecStr;
+struct VecStr;
 struct GenerationOptions;
 struct GenerationResult;
 
@@ -26,7 +26,7 @@ private:
 public:
   Generator(std::unique_ptr<ctranslate2::Generator> impl) : impl(std::move(impl)) {}
 
-  rust::Vec<GenerationResult> generate_batch(rust::Vec<GenVecStr> start_tokens,
+  rust::Vec<GenerationResult> generate_batch(rust::Vec<VecStr> start_tokens,
                                              GenerationOptions options) const;
 };
 

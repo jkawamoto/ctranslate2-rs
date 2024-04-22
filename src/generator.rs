@@ -34,18 +34,6 @@ use crate::config::{BatchType, Config};
 
 #[cxx::bridge]
 mod ffi {
-    struct GenVecStr<'a> {
-        v: Vec<&'a str>,
-    }
-
-    struct GenVecString {
-        v: Vec<String>,
-    }
-
-    struct GenVecUSize {
-        v: Vec<usize>,
-    }
-
     struct GenerationOptions<'a> {
         beam_size: usize,
         patience: f32,
@@ -53,7 +41,7 @@ mod ffi {
         repetition_penalty: f32,
         no_repeat_ngram_size: usize,
         disable_unk: bool,
-        suppress_sequences: Vec<GenVecStr<'a>>,
+        suppress_sequences: Vec<VecStr<'a>>,
         return_end_token: bool,
         max_length: usize,
         min_length: usize,
@@ -72,13 +60,18 @@ mod ffi {
     }
 
     struct GenerationResult {
-        sequences: Vec<GenVecString>,
-        sequences_ids: Vec<GenVecUSize>,
+        sequences: Vec<VecString>,
+        sequences_ids: Vec<VecUSize>,
         scores: Vec<f32>,
     }
 
     unsafe extern "C++" {
+        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/generator.h");
+
+        type VecString = crate::types::ffi::VecString;
+        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
+        type VecUSize = crate::types::ffi::VecUSize;
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;
@@ -92,7 +85,7 @@ mod ffi {
 
         fn generate_batch(
             self: &Generator,
-            start_tokens: Vec<GenVecStr>,
+            start_tokens: Vec<VecStr>,
             options: GenerationOptions,
         ) -> Result<Vec<GenerationResult>>;
     }
@@ -288,9 +281,9 @@ impl GenerationResult {
 }
 
 #[inline]
-fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::GenVecStr> {
+fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::VecStr> {
     src.iter()
-        .map(|v| ffi::GenVecStr {
+        .map(|v| ffi::VecStr {
             v: v.iter().map(|s| s.as_ref()).collect(),
         })
         .collect()
