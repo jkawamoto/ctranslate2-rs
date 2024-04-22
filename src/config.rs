@@ -135,7 +135,7 @@ pub(crate) mod ffi {
 
         fn replica_pool_config(
             num_threads_per_replica: usize,
-            max_queued_batches: isize,
+            max_queued_batches: i32,
             cpu_core_offset: i32,
         ) -> UniquePtr<ReplicaPoolConfig>;
 
@@ -200,7 +200,7 @@ pub struct Config {
     pub num_threads_per_replica: usize,
     /// Maximum numbers of batches in the queue (-1 for unlimited, 0 for an automatic value).
     /// When the queue is full, future requests will block until a free slot is available.
-    pub max_queued_batches: isize,
+    pub max_queued_batches: i32,
     pub cpu_core_offset: i32,
 }
 

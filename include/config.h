@@ -20,12 +20,12 @@ using ctranslate2::ReplicaPoolConfig;
 
 inline std::unique_ptr<ReplicaPoolConfig> replica_pool_config(
     size_t num_threads_per_replica,
-    long max_queued_batches,
+    int32_t max_queued_batches,
     int cpu_core_offset
 ) {
     return std::make_unique<ReplicaPoolConfig>(ReplicaPoolConfig {
         num_threads_per_replica,
-        max_queued_batches,
+        static_cast<long>(max_queued_batches),
         cpu_core_offset,
     });
 }
