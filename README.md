@@ -5,6 +5,8 @@
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 At this time, it has only been tested and confirmed to work on macOS and Linux.
+Windows support is available experimentally, 
+but it has not been thoroughly tested and may have limitations or require additional configuration.
 
 # Compilation
 
@@ -24,9 +26,12 @@ and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 If no feature is specified:
 
 - On macOS, Apple Accelerate will be used by default.
-- On Linux, Ruy will be used by default.
+- On Linux and Windows, Ruy will be used by default.
 
-Both macOS and Linux require the installation of CMake to compile the library.
+The installation of CMake is required to compile the library.
+
+Additional notes for Windows:
+it is necessary to add `RUSTFLAGS=-C target-feature=+crt-static` to the environment variables for compilation.
 
 ## Model Conversion for CTranslate2
 
