@@ -113,6 +113,5 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
         }
     }
 
-    #[cfg(test)]
     println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
 }

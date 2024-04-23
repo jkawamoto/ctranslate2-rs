@@ -32,6 +32,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Set Environment variables
+        shell: bash
+        run: |
+          echo "RUSTFLAGS=-C target-feature=+crt-static" >> $GITHUB_ENV
+        if: ${{ matrix.os == 'windows-latest' }}
       - name: Install MKL
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.feature == 'mkl' }}
         run: |
