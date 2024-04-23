@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "ct2rs"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "cmake",
@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "ct2rs-example-generator"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "ct2rs-example-nllb"
-version = "0.4.7"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
