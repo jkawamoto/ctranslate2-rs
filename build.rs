@@ -34,17 +34,21 @@ fn main() {
 
     let mut cmake = Config::new("CTranslate2");
     cmake
+        .static_crt(true)
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE");
+    if cfg!(target_os = "windows") {
+        cmake.profile("Release");
+    }
 
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
     } else if cfg!(feature = "openblas") {
         cmake.define("WITH_OPENBLAS", "ON");
         println!("cargo:rustc-link-lib=static=openblas");
-    } else if cfg!(feature = "ruy") || cfg!(target_os = "linux") || cfg!(target_os = "windows"){
+    } else if cfg!(feature = "ruy") || cfg!(target_os = "linux") || cfg!(target_os = "windows") {
         cmake.define("WITH_RUY", "ON");
     } else if cfg!(feature = "accelerate" ) || cfg!(target_os = "macos") {
         println!("cargo:rustc-link-lib=framework=Accelerate");
@@ -58,8 +62,9 @@ fn main() {
         "src/types.rs", "src/config.rs", "src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
         .file("src/generator.cpp")
-        .std("c++17")
         .include("CTranslate2/include")
+        .std("c++17")
+        .static_crt(true)
         .compile("ct2rs");
 }
 
@@ -107,4 +112,7 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
                 });
         }
     }
+
+    #[cfg(test)]
+    println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
 }
