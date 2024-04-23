@@ -34,17 +34,21 @@ fn main() {
 
     let mut cmake = Config::new("CTranslate2");
     cmake
+        .static_crt(true)
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE");
+    if cfg!(target_os = "windows") {
+        cmake.profile("Release");
+    }
 
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
     } else if cfg!(feature = "openblas") {
         cmake.define("WITH_OPENBLAS", "ON");
         println!("cargo:rustc-link-lib=static=openblas");
-    } else if cfg!(feature = "ruy") || cfg!(target_os = "linux") {
+    } else if cfg!(feature = "ruy") || cfg!(target_os = "linux") || cfg!(target_os = "windows") {
         cmake.define("WITH_RUY", "ON");
     } else if cfg!(feature = "accelerate" ) || cfg!(target_os = "macos") {
         println!("cargo:rustc-link-lib=framework=Accelerate");
@@ -58,11 +62,13 @@ fn main() {
         "src/types.rs", "src/config.rs", "src/translator.rs", "src/generator.rs"])
         .file("src/translator.cpp")
         .file("src/generator.cpp")
-        .std("c++17")
         .include("CTranslate2/include")
+        .std("c++17")
+        .static_crt(true)
         .compile("ct2rs");
 }
 
+#[cfg(not(target_os = "windows"))]
 fn link_libraries<T: AsRef<Path>>(root: T) {
     let mut current_dir = None;
     for entry in WalkDir::new(root).into_iter().filter_map(Result::ok) {
@@ -83,4 +89,29 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
                 });
         }
     }
+}
+
+#[cfg(target_os = "windows")]
+fn link_libraries<T: AsRef<Path>>(root: T) {
+    let mut current_dir = None;
+    for entry in WalkDir::new(root).into_iter().filter_map(Result::ok) {
+        let path = entry.path();
+        if path.is_file() {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .filter(|name| name.ends_with(".lib"))
+                .iter()
+                .for_each(|name| {
+                    let parent = path.parent();
+                    if parent != current_dir.as_ref().map(|p: &PathBuf| p.as_path()) {
+                        let dir = parent.unwrap();
+                        println!("cargo:rustc-link-search={}", dir.display());
+                        current_dir = Some(dir.to_path_buf())
+                    }
+                    println!("cargo:rustc-link-lib=static={}", &name[0..name.len() - 4]);
+                });
+        }
+    }
+
+    println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
 }
