@@ -49,6 +49,9 @@ fn main() {
         cmake.define("WITH_CUDA", "ON");
         cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
         link_libraries(Path::new(&cuda).join("lib64"));
+        if cfg!(feature = "cudnn"){
+            cmake.define("WITH_CUDNN", "ON");
+        }
     }
 
     if cfg!(feature = "mkl") {

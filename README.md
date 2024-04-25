@@ -9,8 +9,8 @@ Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
 # Compilation
-If you plan to use GPU acceleration, CUDA is required. Please enable the `cuda` feature
-and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
+If you plan to use GPU acceleration, CUDA and cuDNN are available. 
+Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
 Several backends are available for use:
 [OpenBLAS](https://www.openblas.net/),
