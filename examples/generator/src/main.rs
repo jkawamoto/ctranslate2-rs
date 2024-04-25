@@ -14,6 +14,7 @@ use anyhow::Result;
 use clap::Parser;
 
 use ct2rs::{GenerationOptions, Generator};
+use ct2rs::config::{Config, Device};
 
 /// Generate text using CTranslate2.
 #[derive(Parser, Debug)]
@@ -25,13 +26,25 @@ struct Args {
     /// Path to the file contains prompts.
     #[arg(short, long, value_name = "FILE", default_value = "prompt.txt")]
     prompt: String,
+    /// Use CUDA.
+    #[arg(short, long)]
+    cuda: bool,
     /// Path to the directory that contains model.bin.
     path: String,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let g = Generator::new(args.path, Default::default())?;
+    let cfg = if args.cuda {
+        Config {
+            device: Device::CUDA,
+            device_indices: vec![0],
+            ..Config::default()
+        }
+    } else {
+        Config::default()
+    };
+    let g = Generator::new(args.path, cfg)?;
 
     let res = g.generate_batch(
         BufReader::new(File::open(args.prompt)?)
