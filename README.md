@@ -9,8 +9,10 @@ Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
 # Compilation
+If you plan to use GPU acceleration, CUDA is required. Please enable the `cuda` feature
+and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
-Several libraries are available for use:
+Several backends are available for use:
 [OpenBLAS](https://www.openblas.net/),
 [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html),
 [Ruy](https://github.com/google/ruy),

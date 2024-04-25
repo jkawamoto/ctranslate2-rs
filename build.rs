@@ -43,6 +43,14 @@ fn main() {
         cmake.profile("Release");
     }
 
+    if cfg!(feature = "cuda") {
+        let cuda = env::var(
+            "CUDA_TOOLKIT_ROOT_DIR").expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
+        cmake.define("WITH_CUDA", "ON");
+        cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
+        link_libraries(Path::new(&cuda).join("lib64"));
+    }
+
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
     } else if cfg!(feature = "openblas") {

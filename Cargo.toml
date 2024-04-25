@@ -47,6 +47,7 @@ mkl = ["dep:intel-mkl-src"]
 openblas = []
 ruy = []
 accelerate = []
+cuda = []
 
 
 [workspace]
