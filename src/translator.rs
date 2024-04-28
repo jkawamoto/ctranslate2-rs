@@ -34,6 +34,7 @@
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
+use crate::types::vec_ffi_vecstr;
 
 #[cxx::bridge]
 mod ffi {
@@ -255,8 +256,8 @@ impl Translator {
     /// Translates a batch of tokens.
     pub fn translate_batch<T, U, V>(
         &self,
-        source: &[Vec<T>],
-        target_prefix: &[Vec<U>],
+        source: &Vec<Vec<T>>,
+        target_prefix: &Vec<Vec<U>>,
         options: &TranslationOptions<V>,
     ) -> anyhow::Result<Vec<TranslationResult>>
         where
@@ -315,15 +316,6 @@ impl TranslationResult {
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }
-}
-
-#[inline]
-fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::VecStr> {
-    src.iter()
-        .map(|v| ffi::VecStr {
-            v: v.iter().map(|s| s.as_ref()).collect(),
-        })
-        .collect()
 }
 
 #[cfg(test)]
