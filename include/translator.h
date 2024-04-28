@@ -28,7 +28,14 @@ public:
         : impl(std::move(impl)) { }
 
     rust::Vec<TranslationResult>
-    translate_batch(rust::Vec<VecStr> source, rust::Vec<VecStr> target_prefix, TranslationOptions options) const;
+    translate_batch(rust::Vec<VecStr> source, TranslationOptions options) const;
+
+    rust::Vec<TranslationResult>
+    translate_batch_with_target_prefix(
+        rust::Vec<VecStr> source,
+        rust::Vec<VecStr> target_prefix,
+        TranslationOptions options
+    ) const;
 };
 
 inline std::unique_ptr<Translator> translator(
