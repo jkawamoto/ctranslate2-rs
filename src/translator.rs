@@ -6,7 +6,6 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-
 //! This module provides raw Rust bindings to the `ctranslate2::Translator`.
 //!
 //! # Example
@@ -19,7 +18,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let translator = Translator::new("/path/to/model", Config::default())?;
-//! let res = translator.translate_batch(
+//! let res = translator.translate_batch_with_target_prefix(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &vec![vec!["jpn_Jpan"]],
 //!     &Default::default()
@@ -31,6 +30,7 @@
 //! # }
 //! ```
 
+use anyhow::Result;
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -86,12 +86,16 @@ mod ffi {
 
         type Translator;
 
-        fn translator(
-            model_path: &str,
-            config: UniquePtr<Config>,
-        ) -> Result<UniquePtr<Translator>>;
+        fn translator(model_path: &str, config: UniquePtr<Config>)
+            -> Result<UniquePtr<Translator>>;
 
         fn translate_batch(
+            self: &Translator,
+            source: Vec<VecStr>,
+            options: TranslationOptions,
+        ) -> Result<Vec<TranslationResult>>;
+
+        fn translate_batch_with_target_prefix(
             self: &Translator,
             source: Vec<VecStr>,
             target_prefix: Vec<VecStr>,
@@ -244,30 +248,44 @@ pub struct Translator {
 
 impl Translator {
     /// Initializes the translator.
-    pub fn new<T: AsRef<str>>(
-        model_path: T,
-        config: Config,
-    ) -> anyhow::Result<Translator> {
+    pub fn new<T: AsRef<str>>(model_path: T, config: Config) -> anyhow::Result<Translator> {
         Ok(Translator {
             ptr: ffi::translator(model_path.as_ref(), config.to_ffi())?,
         })
     }
 
     /// Translates a batch of tokens.
-    pub fn translate_batch<T, U, V>(
+    pub fn translate_batch<T, V>(
+        &self,
+        source: &Vec<Vec<T>>,
+        options: &TranslationOptions<V>,
+    ) -> Result<Vec<TranslationResult>>
+    where
+        T: AsRef<str>,
+        V: AsRef<str>,
+    {
+        Ok(self
+            .ptr
+            .translate_batch(vec_ffi_vecstr(source), options.to_ffi())?
+            .into_iter()
+            .map(TranslationResult::from)
+            .collect())
+    }
+
+    pub fn translate_batch_with_target_prefix<T, U, V>(
         &self,
         source: &Vec<Vec<T>>,
         target_prefix: &Vec<Vec<U>>,
         options: &TranslationOptions<V>,
-    ) -> anyhow::Result<Vec<TranslationResult>>
-        where
-            T: AsRef<str>,
-            U: AsRef<str>,
-            V: AsRef<str>,
+    ) -> Result<Vec<TranslationResult>>
+    where
+        T: AsRef<str>,
+        U: AsRef<str>,
+        V: AsRef<str>,
     {
         Ok(self
             .ptr
-            .translate_batch(
+            .translate_batch_with_target_prefix(
                 vec_ffi_vecstr(source),
                 vec_ffi_vecstr(target_prefix),
                 options.to_ffi(),

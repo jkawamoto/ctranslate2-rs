@@ -5,11 +5,11 @@
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 At this time, it has only been tested and confirmed to work on macOS and Linux.
-Windows support is available experimentally, 
+Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
 # Compilation
-If you plan to use GPU acceleration, CUDA and cuDNN are available. 
+If you plan to use GPU acceleration, CUDA and cuDNN are available.
 Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
 Several backends are available for use:
@@ -61,7 +61,7 @@ use ct2rs::{TranslationOptions, Translator};
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
     let t = Translator::new(path, Config::default())?;
-    let res = t.translate_batch(
+    let res = t.translate_batch_with_target_prefix(
         vec![
             "Hello world!",
             "This library provides Rust bindings for CTranslate2.",

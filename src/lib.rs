@@ -17,7 +17,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let t = Translator::new("/path/to/model", Config::default())?;
-//! let res = t.translate_batch(
+//! let res = t.translate_batch_with_target_prefix(
 //!     vec![
 //!         "Hello world!",
 //!         "This library provides Rust bindings for CTranslate2.",
@@ -100,10 +100,7 @@ impl Translator {
         tokenizer: Tokenizer,
     ) -> Result<Translator> {
         Ok(Translator {
-            translator: translator::Translator::new(
-                path.as_ref().to_str().unwrap(),
-                config,
-            )?,
+            translator: translator::Translator::new(path.as_ref().to_str().unwrap(), config)?,
             tokenizer,
         })
     }
@@ -112,27 +109,53 @@ impl Translator {
     pub fn translate_batch<'a, T, U, V>(
         &self,
         sources: Vec<T>,
+        options: &TranslationOptions<V>,
+    ) -> Result<Vec<(String, Option<f32>)>>
+    where
+        T: Into<EncodeInput<'a>>,
+        V: AsRef<str>,
+    {
+        let output = self
+            .translator
+            .translate_batch(&self.encode(sources)?, options)?;
+
+        let decoder = self.tokenizer.get_decoder().unwrap();
+        let mut res = Vec::new();
+        for r in output.into_iter() {
+            let score = r.score();
+            match r.hypotheses.into_iter().next() {
+                None => bail!("no results are returned"),
+                Some(h) => {
+                    res.push((
+                        decoder
+                            .decode(h.into_iter().collect())
+                            .map_err(|err| anyhow!("failed to decode: {err}"))?,
+                        score,
+                    ));
+                }
+            }
+        }
+        Ok(res)
+    }
+
+    /// Translates a batch of strings using target prefixes.
+    pub fn translate_batch_with_target_prefix<'a, T, U, V>(
+        &self,
+        sources: Vec<T>,
         target_prefixes: Vec<Vec<U>>,
         options: &TranslationOptions<V>,
     ) -> Result<Vec<(String, Option<f32>)>>
-        where
-            T: Into<EncodeInput<'a>>,
-            U: AsRef<str>,
-            V: AsRef<str>,
+    where
+        T: Into<EncodeInput<'a>>,
+        U: AsRef<str>,
+        V: AsRef<str>,
     {
-        let tokens = sources
-            .into_iter()
-            .map(|s| {
-                self.tokenizer
-                    .encode(s, true)
-                    .map(|r| r.get_tokens().to_vec())
-                    .map_err(|err| anyhow!("failed to encode the given input: {err}"))
-            })
-            .collect::<Result<Vec<Vec<String>>>>()?;
-
-        let output = self
-            .translator
-            .translate_batch(&tokens, &target_prefixes, options)?;
+        let tokens = self.encode(sources)?;
+        let output = self.translator.translate_batch_with_target_prefix(
+            &tokens,
+            &target_prefixes,
+            options,
+        )?;
 
         let decoder = self.tokenizer.get_decoder().unwrap();
         let mut res = Vec::new();
@@ -151,6 +174,18 @@ impl Translator {
             }
         }
         Ok(res)
+    }
+
+    fn encode<'a, T: Into<EncodeInput<'a>>>(&self, sources: Vec<T>) -> Result<Vec<Vec<String>>> {
+        sources
+            .into_iter()
+            .map(|s| {
+                self.tokenizer
+                    .encode(s, true)
+                    .map(|r| r.get_tokens().to_vec())
+                    .map_err(|err| anyhow!("failed to encode the given input: {err}"))
+            })
+            .collect::<Result<Vec<Vec<String>>>>()
     }
 }
 
@@ -189,10 +224,10 @@ impl Generator {
         prompts: Vec<T>,
         options: &GenerationOptions<U, V>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
-        where
-            T: Into<EncodeInput<'a>>,
-            U: AsRef<str>,
-            V: AsRef<str>,
+    where
+        T: Into<EncodeInput<'a>>,
+        U: AsRef<str>,
+        V: AsRef<str>,
     {
         let tokens = prompts
             .into_iter()
