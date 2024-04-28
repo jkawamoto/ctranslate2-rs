@@ -31,6 +31,7 @@
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
+use crate::types::vec_ffi_vecstr;
 
 #[cxx::bridge]
 mod ffi {
@@ -112,7 +113,7 @@ impl Generator {
     /// like `<s>`, this token should be added to this input.
     pub fn generate_batch<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,
-        start_tokens: &[Vec<T>],
+        start_tokens: &Vec<Vec<T>>,
         options: &GenerationOptions<U, V>,
     ) -> anyhow::Result<Vec<GenerationResult>> {
         Ok(self
@@ -279,16 +280,6 @@ impl GenerationResult {
         !self.scores.is_empty()
     }
 }
-
-#[inline]
-fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<ffi::VecStr> {
-    src.iter()
-        .map(|v| ffi::VecStr {
-            v: v.iter().map(|s| s.as_ref()).collect(),
-        })
-        .collect()
-}
-
 
 #[cfg(test)]
 mod tests {
