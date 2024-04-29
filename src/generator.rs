@@ -28,6 +28,9 @@
 //! # }
 //! ```
 
+use std::path::Path;
+
+use anyhow::anyhow;
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -79,10 +82,7 @@ mod ffi {
 
         type Generator;
 
-        fn generator(
-            model_path: &str,
-            config: UniquePtr<Config>,
-        ) -> Result<UniquePtr<Generator>>;
+        fn generator(model_path: &str, config: UniquePtr<Config>) -> Result<UniquePtr<Generator>>;
 
         fn generate_batch(
             self: &Generator,
@@ -98,12 +98,15 @@ pub struct Generator {
 }
 
 impl Generator {
-    pub fn new<T: AsRef<str>>(
-        model_path: T,
-        config: Config,
-    ) -> anyhow::Result<Generator> {
+    pub fn new<T: AsRef<Path>>(model_path: T, config: Config) -> anyhow::Result<Generator> {
         Ok(Generator {
-            ptr: ffi::generator(model_path.as_ref(), config.to_ffi())?,
+            ptr: ffi::generator(
+                model_path
+                    .as_ref()
+                    .to_str()
+                    .ok_or(anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                config.to_ffi(),
+            )?,
         })
     }
 

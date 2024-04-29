@@ -100,7 +100,7 @@ impl Translator {
         tokenizer: Tokenizer,
     ) -> Result<Translator> {
         Ok(Translator {
-            translator: translator::Translator::new(path.as_ref().to_str().unwrap(), config)?,
+            translator: translator::Translator::new(path, config)?,
             tokenizer,
         })
     }
@@ -213,7 +213,7 @@ impl Generator {
         tokenizer: Tokenizer,
     ) -> Result<Generator> {
         Ok(Generator {
-            generator: generator::Generator::new(path.as_ref().to_str().unwrap(), config)?,
+            generator: generator::Generator::new(path, config)?,
             tokenizer,
         })
     }
