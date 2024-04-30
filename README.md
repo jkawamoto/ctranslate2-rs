@@ -63,7 +63,7 @@ use ct2rs::tokenizers::Tokenizer;
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+    let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
     let res = t.translate_batch_with_target_prefix(
         &vec![
             "Hello world!",
@@ -102,7 +102,7 @@ use ct2rs::sentencepiece::Tokenizer;
 
 fn main() -> Result<()> {
     let path = "/path/to/model";
-    let g = Generator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+    let g = Generator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
     let res = g.generate_batch(
         &vec!["prompt"],
         &GenerationOptions::default(),

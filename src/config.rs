@@ -42,7 +42,6 @@ pub(crate) mod ffi {
         CUDA,
     }
 
-
     /// Model computation type.
     ///
     /// This enum can take one of the following values:
@@ -96,7 +95,6 @@ pub(crate) mod ffi {
         BFLOAT16,
     }
 
-
     /// Specifies how the `max_batch_size` should be calculated,
     /// whether by the number of "examples" or "tokens".
     ///
@@ -123,7 +121,6 @@ pub(crate) mod ffi {
         Examples,
         Tokens,
     }
-
 
     unsafe extern "C++" {
         include!("ct2rs/include/config.h");
@@ -187,7 +184,7 @@ impl Default for BatchType {
 /// assert_eq!(config.max_queued_batches, 0);
 /// assert_eq!(config.cpu_core_offset, -1);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Config {
     /// Device to use.
     pub device: Device,
@@ -233,7 +230,6 @@ impl Config {
         )
     }
 }
-
 
 #[cfg(test)]
 mod tests {

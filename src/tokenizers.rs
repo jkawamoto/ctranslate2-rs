@@ -19,13 +19,14 @@
 //!
 //! ```no_run
 //! # use anyhow::Result;
+//!
 //! use ct2rs::config::Config;
 //! use ct2rs::tokenizers::Tokenizer;
 //! use ct2rs::Translator;
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+//! let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! # Ok(())
 //! # }
 //! ```

@@ -27,7 +27,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Generator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+//! let t = Generator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! # Ok(())
 //! # }
 //! ```
