@@ -12,17 +12,20 @@
 //! The following example translates English to German and Japanese.
 //! ```no_run
 //! # use anyhow::Result;
-//! use ct2rs::config::{Config, Device};
+//!
 //! use ct2rs::{TranslationOptions, Translator};
+//! use ct2rs::config::Config;
+//! use ct2rs::tokenizers::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
-//! let t = Translator::new("/path/to/model", Config::default())?;
+//! let path = "/path/to/model";
+//! let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
 //! let res = t.translate_batch_with_target_prefix(
-//!     vec![
+//!     &vec![
 //!         "Hello world!",
 //!         "This library provides Rust bindings for CTranslate2.",
 //!     ],
-//!     vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+//!     &vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
 //!     &TranslationOptions {
 //!         return_scores: true,
 //!         ..Default::default()
@@ -40,11 +43,13 @@
 //! # use anyhow::Result;
 //! use ct2rs::config::{Config, Device};
 //! use ct2rs::{Generator, GenerationOptions};
+//! use ct2rs::sentencepiece::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
-//! let g = Generator::new("/path/to/model", Config::default())?;
+//! let path = "/path/to/model";
+//! let g = Generator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
 //! let res = g.generate_batch(
-//!     vec!["prompt"],
+//!     &vec!["prompt"],
 //!     &GenerationOptions::default(),
 //! )?;
 //! for r in res {
@@ -63,7 +68,6 @@ extern crate intel_mkl_src;
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Result};
-use tokenizers::{Decoder, EncodeInput, Tokenizer};
 
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
@@ -71,34 +75,67 @@ pub use crate::translator::TranslationOptions;
 
 pub mod config;
 pub mod generator;
+pub mod sentencepiece;
+pub mod tokenizers;
 pub mod translator;
 mod types;
 
-const TOKENIZER_FILENAME: &str = "tokenizer.json";
+/// Defines the necessary functions for a tokenizer.
+///
+/// This trait provides the core functionality needed to convert strings to sequences of tokens
+/// and vice versa. It is essential for text processing tasks such as natural language processing,
+/// where text needs to be broken down into manageable pieces or reconstructed from tokenized forms.
+///
+/// Currently, this crate implements two tokenizers:
+/// * [`tokenizers::Tokenizer`]: the tokenizer provided by the Hugging Face's
+///   [`tokenizers` crate](https://docs.rs/tokenizers/),
+/// * [`sentencepiece::Tokenizer`]: the tokenizer based on
+///   [Sentencepiece crate](https://docs.rs/sentencepiece/).
+pub trait Tokenizer {
+    /// Encodes a given string into a sequence of tokens.
+    ///
+    /// This function takes a reference to a string and returns a vector of token strings
+    /// resulting from the tokenization process.
+    ///
+    /// # Arguments
+    /// * `input` - A reference to the string to be tokenized.
+    ///
+    /// # Returns
+    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
+    fn encode<T: AsRef<str>>(&self, input: &T) -> Result<Vec<String>>;
 
-/// A text translator with a tokenizer.
-pub struct Translator {
-    translator: translator::Translator,
-    tokenizer: Tokenizer,
+    /// Decodes a given sequence of tokens back into a single string.
+    ///
+    /// This function takes a vector of token strings and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `tokens` - A vector of strings representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
+    fn decode(&self, tokens: Vec<String>) -> Result<String>;
 }
 
-impl Translator {
-    /// Initializes the translator and tokenizer.
-    pub fn new<T: AsRef<Path>>(path: T, config: Config) -> Result<Translator> {
-        Translator::with_tokenizer(
-            &path,
-            config,
-            Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
-                .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
-        )
-    }
+#[inline]
+fn encode_strings<T: Tokenizer, U: AsRef<str>>(
+    tokenizer: &T,
+    sources: &Vec<U>,
+) -> Result<Vec<Vec<String>>> {
+    sources
+        .into_iter()
+        .map(|s| tokenizer.encode(s))
+        .collect::<Result<Vec<Vec<String>>>>()
+}
 
-    /// Initializes the translator and tokenizer.
-    pub fn with_tokenizer<T: AsRef<Path>>(
-        path: T,
-        config: Config,
-        tokenizer: Tokenizer,
-    ) -> Result<Translator> {
+/// A text translator with a tokenizer.
+pub struct Translator<T: Tokenizer> {
+    translator: translator::Translator,
+    tokenizer: T,
+}
+
+impl<T: Tokenizer> Translator<T> {
+    /// Initializes the translator with the given tokenizer.
+    pub fn new<U: AsRef<Path>>(path: U, config: Config, tokenizer: T) -> Result<Self> {
         Ok(Translator {
             translator: translator::Translator::new(path, config)?,
             tokenizer,
@@ -106,20 +143,19 @@ impl Translator {
     }
 
     /// Translates a batch of strings.
-    pub fn translate_batch<'a, T, U, V>(
+    pub fn translate_batch<U, V>(
         &self,
-        sources: Vec<T>,
+        sources: &Vec<U>,
         options: &TranslationOptions<V>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
-        T: Into<EncodeInput<'a>>,
+        U: AsRef<str>,
         V: AsRef<str>,
     {
         let output = self
             .translator
-            .translate_batch(&self.encode(sources)?, options)?;
+            .translate_batch(&encode_strings(&self.tokenizer, sources)?, options)?;
 
-        let decoder = self.tokenizer.get_decoder().unwrap();
         let mut res = Vec::new();
         for r in output.into_iter() {
             let score = r.score();
@@ -127,7 +163,7 @@ impl Translator {
                 None => bail!("no results are returned"),
                 Some(h) => {
                     res.push((
-                        decoder
+                        self.tokenizer
                             .decode(h.into_iter().collect())
                             .map_err(|err| anyhow!("failed to decode: {err}"))?,
                         score,
@@ -139,25 +175,23 @@ impl Translator {
     }
 
     /// Translates a batch of strings using target prefixes.
-    pub fn translate_batch_with_target_prefix<'a, T, U, V>(
+    pub fn translate_batch_with_target_prefix<U, V, W>(
         &self,
-        sources: Vec<T>,
-        target_prefixes: Vec<Vec<U>>,
-        options: &TranslationOptions<V>,
+        sources: &Vec<U>,
+        target_prefixes: &Vec<Vec<V>>,
+        options: &TranslationOptions<W>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
-        T: Into<EncodeInput<'a>>,
         U: AsRef<str>,
         V: AsRef<str>,
+        W: AsRef<str>,
     {
-        let tokens = self.encode(sources)?;
         let output = self.translator.translate_batch_with_target_prefix(
-            &tokens,
+            &encode_strings(&self.tokenizer, sources)?,
             &target_prefixes,
             options,
         )?;
 
-        let decoder = self.tokenizer.get_decoder().unwrap();
         let mut res = Vec::new();
         for (r, prefix) in output.into_iter().zip(target_prefixes) {
             let score = r.score();
@@ -165,7 +199,7 @@ impl Translator {
                 None => bail!("no results are returned"),
                 Some(h) => {
                     res.push((
-                        decoder
+                        self.tokenizer
                             .decode(h.into_iter().skip(prefix.len()).collect())
                             .map_err(|err| anyhow!("failed to decode: {err}"))?,
                         score,
@@ -175,43 +209,17 @@ impl Translator {
         }
         Ok(res)
     }
-
-    fn encode<'a, T: Into<EncodeInput<'a>>>(&self, sources: Vec<T>) -> Result<Vec<Vec<String>>> {
-        sources
-            .into_iter()
-            .map(|s| {
-                self.tokenizer
-                    .encode(s, true)
-                    .map(|r| r.get_tokens().to_vec())
-                    .map_err(|err| anyhow!("failed to encode the given input: {err}"))
-            })
-            .collect::<Result<Vec<Vec<String>>>>()
-    }
 }
 
 /// A text generator with a tokenizer.
-pub struct Generator {
+pub struct Generator<T: Tokenizer> {
     generator: generator::Generator,
-    tokenizer: Tokenizer,
+    tokenizer: T,
 }
 
-impl Generator {
-    /// Initializes the generator and tokenizer.
-    pub fn new<T: AsRef<Path>>(path: T, config: Config) -> Result<Generator> {
-        Generator::with_tokenizer(
-            &path,
-            config,
-            Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
-                .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
-        )
-    }
-
+impl<T: Tokenizer> Generator<T> {
     /// Initializes the generator with the given tokenizer.
-    pub fn with_tokenizer<T: AsRef<Path>>(
-        path: T,
-        config: Config,
-        tokenizer: Tokenizer,
-    ) -> Result<Generator> {
+    pub fn new<U: AsRef<Path>>(path: U, config: Config, tokenizer: T) -> Result<Self> {
         Ok(Generator {
             generator: generator::Generator::new(path, config)?,
             tokenizer,
@@ -219,35 +227,26 @@ impl Generator {
     }
 
     /// Generate texts with the given prompts.
-    pub fn generate_batch<'a, T, U, V>(
+    pub fn generate_batch<U, V, W>(
         &self,
-        prompts: Vec<T>,
-        options: &GenerationOptions<U, V>,
+        prompts: &Vec<U>,
+        options: &GenerationOptions<V, W>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
-        T: Into<EncodeInput<'a>>,
         U: AsRef<str>,
         V: AsRef<str>,
+        W: AsRef<str>,
     {
-        let tokens = prompts
-            .into_iter()
-            .map(|s| {
-                self.tokenizer
-                    .encode(s, false)
-                    .map(|r| r.get_tokens().to_vec())
-                    .map_err(|err| anyhow!("failed to encode the given input: {err}"))
-            })
-            .collect::<Result<Vec<Vec<String>>>>()?;
+        let output = self
+            .generator
+            .generate_batch(&encode_strings(&self.tokenizer, prompts)?, options)?;
 
-        let output = self.generator.generate_batch(&tokens, options)?;
-
-        let decoder = self.tokenizer.get_decoder().unwrap();
         let mut res = Vec::new();
         for r in output.into_iter() {
             let sequence = r
                 .sequences
                 .into_iter()
-                .map(|seq| decoder.decode(seq))
+                .map(|seq| self.tokenizer.decode(seq))
                 .collect::<Result<Vec<_>, _>>()
                 .map_err(|err| anyhow!("failed to decode: {err}"))?;
             let scores = r.scores;
