@@ -8,13 +8,14 @@
 
 use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, BufWriter, stdout, Write};
+use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
 use std::time;
 
 use anyhow::Result;
 use clap::Parser;
 
 use ct2rs::config::{Config, Device};
+use ct2rs::tokenizers::Tokenizer;
 use ct2rs::Translator;
 
 /// Translate a file using NLLB.
@@ -48,7 +49,7 @@ fn main() -> Result<()> {
     } else {
         Config::default()
     };
-    let t = Translator::new(args.path, cfg)?;
+    let t = Translator::new(&args.path, cfg, Tokenizer::new(&args.path)?)?;
 
     let sources = BufReader::new(File::open(args.prompt)?)
         .lines()
@@ -56,7 +57,8 @@ fn main() -> Result<()> {
     let target_prefixes = vec![vec![args.target]; sources.len()];
 
     let now = time::Instant::now();
-    let res = t.translate_batch_with_target_prefix(sources, target_prefixes, &Default::default())?;
+    let res =
+        t.translate_batch_with_target_prefix(&sources, &target_prefixes, &Default::default())?;
     let elapsed = now.elapsed();
 
     let mut out: BufWriter<Box<dyn Write>> = BufWriter::new(match args.output {

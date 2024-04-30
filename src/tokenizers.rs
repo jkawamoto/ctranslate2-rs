@@ -1,0 +1,107 @@
+// tokenizers.rs
+//
+// Copyright (c) 2023-2024 Junpei Kawamoto
+//
+// This software is released under the MIT License.
+//
+// http://opensource.org/licenses/mit-license.php
+
+//! A module for utilizing the tokenizer provided by the Hugging Face's
+//! [`tokenizers` crate](https://docs.rs/tokenizers/).
+//!
+//! This module allows the creation of a [`Tokenizer`] structure instance by specifying
+//! the path to a directory containing `tokenizer.json`. The created instance can then be
+//! used in [`Translator`](crate::Translator) and [`Generator`](crate::Generator).
+//!
+//! # Example
+//! Here is an example of how to create an instance of the [`Tokenizer`] structure
+//! and then use it to create an instance of the [`Translator`](crate::Translator):
+//!
+//! ```no_run
+//! # use anyhow::Result;
+//! use ct2rs::config::Config;
+//! use ct2rs::tokenizers::Tokenizer;
+//! use ct2rs::Translator;
+//!
+//! # fn main() -> Result<()> {
+//! let path = "/path/to/model";
+//! let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+//! # Ok(())
+//! # }
+//! ```
+
+use std::path::Path;
+
+use anyhow::{anyhow, bail};
+use tokenizers::Decoder;
+
+const TOKENIZER_FILENAME: &str = "tokenizer.json";
+
+/// Tokenizer that utilize the tokenizer provided by the Hugging Face's `tokenizers` crate.
+pub struct Tokenizer {
+    tokenizer: tokenizers::tokenizer::Tokenizer,
+    special_token: bool,
+}
+
+impl Tokenizer {
+    /// Create a tokenizer instance by specifying the path to a directory containing `tokenizer.json`.
+    pub fn new<T: AsRef<Path>>(path: T) -> anyhow::Result<Self> {
+        Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
+    }
+
+    /// Create a tokenizer instance by specifying the path to `tokenizer.json`.
+    pub fn from_file<T: AsRef<Path>>(path: T) -> anyhow::Result<Self> {
+        Ok(Self {
+            tokenizer: tokenizers::tokenizer::Tokenizer::from_file(path)
+                .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
+            special_token: true,
+        })
+    }
+
+    /// Disable adding special tokens.
+    ///
+    /// See also [Special tokens in translation](https://opennmt.net/CTranslate2/guides/transformers.html#special-tokens-in-translation).
+    pub fn disable_spacial_token(&mut self) -> &mut Self {
+        self.special_token = false;
+        self
+    }
+}
+
+impl crate::Tokenizer for Tokenizer {
+    /// Encodes a given string into a sequence of tokens.
+    ///
+    /// This function takes a reference to a string and returns a vector of token strings
+    /// resulting from the tokenization process.
+    ///
+    /// # Arguments
+    /// * `input` - A reference to the string to be tokenized.
+    ///
+    /// # Returns
+    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
+    fn encode<T: AsRef<str>>(&self, input: &T) -> anyhow::Result<Vec<String>> {
+        self.tokenizer
+            .encode(input.as_ref(), self.special_token)
+            .map(|r| r.get_tokens().to_vec())
+            .map_err(|err| anyhow!("failed to encode the given input: {err}"))
+    }
+
+    /// Decodes a given sequence of tokens back into a single string.
+    ///
+    /// This function takes a vector of token strings and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `tokens` - A vector of strings representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
+    fn decode(&self, tokens: Vec<String>) -> anyhow::Result<String> {
+        let decoder = match self.tokenizer.get_decoder() {
+            None => bail!("no decoder is provided"),
+            Some(decoder) => decoder,
+        };
+
+        decoder
+            .decode(tokens)
+            .map_err(|err| anyhow!("failed to decode: {err}"))
+    }
+}

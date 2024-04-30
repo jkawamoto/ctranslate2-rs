@@ -9,6 +9,7 @@ Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
 # Compilation
+
 If you plan to use GPU acceleration, CUDA and cuDNN are available.
 Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
@@ -55,18 +56,20 @@ model `nllb-200-distilled-600M`.
 
 ```rust
 use anyhow::Result;
+
 use ct2rs::config::{Config, Device};
 use ct2rs::{TranslationOptions, Translator};
+use ct2rs::tokenizers::Tokenizer;
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::new(path, Config::default())?;
+    let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
     let res = t.translate_batch_with_target_prefix(
-        vec![
+        &vec![
             "Hello world!",
             "This library provides Rust bindings for CTranslate2.",
         ],
-        vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
+        &vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
         &TranslationOptions {
             return_scores: true,
             ..Default::default()
@@ -91,11 +94,17 @@ Hallo Welt!<unk>, (score: Some(-0.5597002))
 ## Example of text generation
 
 ```rust
+use anyhow::Result;
+
+use ct2rs::config::{Config, Device};
+use ct2rs::{Generator, GenerationOptions};
+use ct2rs::sentencepiece::Tokenizer;
+
 fn main() -> Result<()> {
     let path = "/path/to/model";
-    let g = Generator::new(path, Config::default())?;
+    let g = Generator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
     let res = g.generate_batch(
-        vec!["prompt"],
+        &vec!["prompt"],
         &GenerationOptions::default(),
     )?;
     for r in res {

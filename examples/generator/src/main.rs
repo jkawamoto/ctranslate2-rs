@@ -13,8 +13,9 @@ use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::{GenerationOptions, Generator};
 use ct2rs::config::{Config, Device};
+use ct2rs::sentencepiece::Tokenizer;
+use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using CTranslate2.
 #[derive(Parser, Debug)]
@@ -44,10 +45,10 @@ fn main() -> Result<()> {
     } else {
         Config::default()
     };
-    let g = Generator::new(args.path, cfg)?;
+    let g = Generator::new(&args.path, cfg, Tokenizer::new(&args.path)?)?;
 
     let res = g.generate_batch(
-        BufReader::new(File::open(args.prompt)?)
+        &BufReader::new(File::open(args.prompt)?)
             .lines()
             .collect::<Result<Vec<String>, io::Error>>()?,
         &GenerationOptions {

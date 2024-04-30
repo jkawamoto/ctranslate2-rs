@@ -30,7 +30,9 @@
 //! # }
 //! ```
 
-use anyhow::Result;
+use std::path::Path;
+
+use anyhow::{anyhow, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -248,9 +250,15 @@ pub struct Translator {
 
 impl Translator {
     /// Initializes the translator.
-    pub fn new<T: AsRef<str>>(model_path: T, config: Config) -> anyhow::Result<Translator> {
+    pub fn new<T: AsRef<Path>>(model_path: T, config: Config) -> Result<Translator> {
         Ok(Translator {
-            ptr: ffi::translator(model_path.as_ref(), config.to_ffi())?,
+            ptr: ffi::translator(
+                model_path
+                    .as_ref()
+                    .to_str()
+                    .ok_or(anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                config.to_ffi(),
+            )?,
         })
     }
 
