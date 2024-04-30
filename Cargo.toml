@@ -36,6 +36,10 @@ sentencepiece = "0.11.2"
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 
+[dev-dependencies]
+clap = { version = "4.5.4", features = ["derive"] }
+
+
 [build-dependencies]
 cmake = "0.1.50"
 cxx-build = "1.0.121"
@@ -52,5 +56,12 @@ cuda = []
 cudnn = ["cuda"]
 
 
-[workspace]
-members = ["examples/nllb", "examples/generator"]
+[[example]]
+name = "nllb"
+
+[[example]]
+name = "marian-mt"
+
+[[example]]
+name = "generator"
+

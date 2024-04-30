@@ -317,6 +317,7 @@ name = "ct2rs"
 version = "0.6.0"
 dependencies = [
  "anyhow",
+ "clap",
  "cmake",
  "cxx",
  "cxx-build",
@@ -324,24 +325,6 @@ dependencies = [
  "sentencepiece",
  "tokenizers",
  "walkdir",
-]
-
-[[package]]
-name = "ct2rs-example-generator"
-version = "0.6.0"
-dependencies = [
- "anyhow",
- "clap",
- "ct2rs",
-]
-
-[[package]]
-name = "ct2rs-example-nllb"
-version = "0.6.0"
-dependencies = [
- "anyhow",
- "clap",
- "ct2rs",
 ]
 
 [[package]]
