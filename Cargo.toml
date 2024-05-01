@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
@@ -64,4 +64,3 @@ name = "marian-mt"
 
 [[example]]
 name = "generator"
-
