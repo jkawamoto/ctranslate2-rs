@@ -17,7 +17,7 @@
 //! use ct2rs::translator::Translator;
 //!
 //! # fn main() -> Result<()> {
-//! let translator = Translator::new("/path/to/model", Config::default())?;
+//! let translator = Translator::new("/path/to/model", &Config::default())?;
 //! let res = translator.translate_batch_with_target_prefix(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &vec![vec!["jpn_Jpan"]],
@@ -250,7 +250,7 @@ pub struct Translator {
 
 impl Translator {
     /// Initializes the translator.
-    pub fn new<T: AsRef<Path>>(model_path: T, config: Config) -> Result<Translator> {
+    pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Translator> {
         Ok(Translator {
             ptr: ffi::translator(
                 model_path

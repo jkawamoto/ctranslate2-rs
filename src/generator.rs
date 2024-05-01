@@ -16,7 +16,7 @@
 //! use ct2rs::generator::{Generator, GenerationOptions};
 //!
 //! # fn main() -> Result<()> {
-//! let generator = Generator::new("/path/to/model", Config::default())?;
+//! let generator = Generator::new("/path/to/model", &Config::default())?;
 //! let res = generator.generate_batch(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &GenerationOptions::default(),
@@ -98,7 +98,7 @@ pub struct Generator {
 }
 
 impl Generator {
-    pub fn new<T: AsRef<Path>>(model_path: T, config: Config) -> anyhow::Result<Generator> {
+    pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> anyhow::Result<Generator> {
         Ok(Generator {
             ptr: ffi::generator(
                 model_path

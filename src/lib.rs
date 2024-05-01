@@ -9,7 +9,8 @@
 //! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 //!
 //! # Examples
-//! The following example translates English to German and Japanese.
+//! The following example translates English to German and Japanese using the tokenizer provided by
+//! the Hugging Face's [`tokenizers` crate](https://docs.rs/tokenizers/).
 //! ```no_run
 //! # use anyhow::Result;
 //!
@@ -19,7 +20,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Translator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+//! let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! let res = t.translate_batch_with_target_prefix(
 //!     &vec![
 //!         "Hello world!",
@@ -38,7 +39,8 @@
 //! # }
 //! ```
 //!
-//! The following example generates text.
+//! The following example generates text using the tokenizer provided by
+//! [Sentencepiece crate](https://docs.rs/sentencepiece/).
 //! ```no_run
 //! # use anyhow::Result;
 //! use ct2rs::config::{Config, Device};
@@ -47,7 +49,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let g = Generator::new(&path, Config::default(), Tokenizer::new(&path)?)?;
+//! let g = Generator::new(&path,  Tokenizer::new(&path)?, &Config::default())?;
 //! let res = g.generate_batch(
 //!     &vec!["prompt"],
 //!     &GenerationOptions::default(),
@@ -135,7 +137,7 @@ pub struct Translator<T: Tokenizer> {
 
 impl<T: Tokenizer> Translator<T> {
     /// Initializes the translator with the given tokenizer.
-    pub fn new<U: AsRef<Path>>(path: U, config: Config, tokenizer: T) -> Result<Self> {
+    pub fn new<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Translator {
             translator: translator::Translator::new(path, config)?,
             tokenizer,
@@ -219,7 +221,7 @@ pub struct Generator<T: Tokenizer> {
 
 impl<T: Tokenizer> Generator<T> {
     /// Initializes the generator with the given tokenizer.
-    pub fn new<U: AsRef<Path>>(path: U, config: Config, tokenizer: T) -> Result<Self> {
+    pub fn new<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Generator {
             generator: generator::Generator::new(path, config)?,
             tokenizer,

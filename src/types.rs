@@ -59,19 +59,18 @@ mod tests {
 
     #[test]
     fn empty_inner_vectors() {
-        let data:Vec<Vec<&str>> = vec![vec![], vec![]];
+        let data: Vec<Vec<&str>> = vec![vec![], vec![]];
         let res = vec_ffi_vecstr(&data);
 
         assert_eq!(res.len(), data.len());
-        for (i, list) in data.iter().enumerate() {
-            let v = &res.get(i).unwrap().v;
-            assert_eq!(v.len(), 0);
+        for item in res.iter() {
+            assert_eq!(item.v.len(), 0);
         }
     }
 
     #[test]
     fn empty_vectors() {
-        let data:Vec<Vec<&str>> = vec![];
+        let data: Vec<Vec<&str>> = vec![];
         let res = vec_ffi_vecstr(&data);
 
         assert_eq!(res.len(), 0);
