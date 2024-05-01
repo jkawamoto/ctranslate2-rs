@@ -16,7 +16,7 @@ using std::string;
 using std::vector;
 
 Vec<GenerationResult>
-Generator::generate_batch(Vec<VecStr> start_tokens, GenerationOptions options) const {
+Generator::generate_batch(const Vec<VecStr>& start_tokens, const GenerationOptions& options) const {
 
     auto futures = this->impl->generate_batch_async(
         from_rust(start_tokens),

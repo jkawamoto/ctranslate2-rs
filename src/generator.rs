@@ -86,8 +86,8 @@ mod ffi {
 
         fn generate_batch(
             self: &Generator,
-            start_tokens: Vec<VecStr>,
-            options: GenerationOptions,
+            start_tokens: &Vec<VecStr>,
+            options: &GenerationOptions,
         ) -> Result<Vec<GenerationResult>>;
     }
 }
@@ -121,7 +121,7 @@ impl Generator {
     ) -> anyhow::Result<Vec<GenerationResult>> {
         Ok(self
             .ptr
-            .generate_batch(vec_ffi_vecstr(start_tokens), options.to_ffi())?
+            .generate_batch(&vec_ffi_vecstr(start_tokens), &options.to_ffi())?
             .into_iter()
             .map(GenerationResult::from)
             .collect())

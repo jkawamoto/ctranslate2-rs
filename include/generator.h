@@ -27,7 +27,7 @@ public:
     Generator(std::unique_ptr<ctranslate2::Generator> impl)
         : impl(std::move(impl)) { }
 
-    rust::Vec<GenerationResult> generate_batch(rust::Vec<VecStr> start_tokens, GenerationOptions options) const;
+    rust::Vec<GenerationResult> generate_batch(const rust::Vec<VecStr>& start_tokens, const GenerationOptions& options) const;
 };
 
 inline std::unique_ptr<Generator> generator(

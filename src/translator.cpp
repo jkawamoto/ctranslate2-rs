@@ -60,8 +60,8 @@ inline Vec<TranslationResult> convert_results(const std::vector<ctranslate2::Tra
 }
 
 Vec<TranslationResult> Translator::translate_batch(
-    Vec<VecStr> source,
-    TranslationOptions options
+    const Vec<VecStr>& source,
+    const TranslationOptions& options
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),
@@ -72,9 +72,9 @@ Vec<TranslationResult> Translator::translate_batch(
 }
 
 Vec<TranslationResult> Translator::translate_batch_with_target_prefix(
-    Vec<VecStr> source,
-    Vec<VecStr> target_prefix,
-    TranslationOptions options
+    const Vec<VecStr>& source,
+    const Vec<VecStr>& target_prefix,
+    const TranslationOptions& options
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),

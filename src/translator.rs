@@ -93,15 +93,15 @@ mod ffi {
 
         fn translate_batch(
             self: &Translator,
-            source: Vec<VecStr>,
-            options: TranslationOptions,
+            source: &Vec<VecStr>,
+            options: &TranslationOptions,
         ) -> Result<Vec<TranslationResult>>;
 
         fn translate_batch_with_target_prefix(
             self: &Translator,
-            source: Vec<VecStr>,
-            target_prefix: Vec<VecStr>,
-            options: TranslationOptions,
+            source: &Vec<VecStr>,
+            target_prefix: &Vec<VecStr>,
+            options: &TranslationOptions,
         ) -> Result<Vec<TranslationResult>>;
     }
 }
@@ -274,7 +274,7 @@ impl Translator {
     {
         Ok(self
             .ptr
-            .translate_batch(vec_ffi_vecstr(source), options.to_ffi())?
+            .translate_batch(&vec_ffi_vecstr(source), &options.to_ffi())?
             .into_iter()
             .map(TranslationResult::from)
             .collect())
@@ -294,9 +294,9 @@ impl Translator {
         Ok(self
             .ptr
             .translate_batch_with_target_prefix(
-                vec_ffi_vecstr(source),
-                vec_ffi_vecstr(target_prefix),
-                options.to_ffi(),
+                &vec_ffi_vecstr(source),
+                &vec_ffi_vecstr(target_prefix),
+                &options.to_ffi(),
             )?
             .into_iter()
             .map(TranslationResult::from)
