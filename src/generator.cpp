@@ -7,6 +7,7 @@
 // http://opensource.org/licenses/mit-license.php
 
 #include "ct2rs/include/generator.h"
+
 #include "ct2rs/include/convert.h"
 #include "ct2rs/src/generator.rs.h"
 
@@ -16,8 +17,12 @@ using std::string;
 using std::vector;
 
 Vec<GenerationResult>
-Generator::generate_batch(const Vec<VecStr>& start_tokens, const GenerationOptions& options) const {
-
+Generator::generate_batch(
+    const Vec<VecStr>& start_tokens,
+    const GenerationOptions& options,
+    bool has_callback,
+    rust::Fn<bool(GenerationStepResult)> callback
+) const {
     auto futures = this->impl->generate_batch_async(
         from_rust(start_tokens),
         ctranslate2::GenerationOptions {
@@ -42,7 +47,7 @@ Generator::generate_batch(const Vec<VecStr>& start_tokens, const GenerationOptio
             from_rust(options.static_prompt),
             options.cache_static_prompt,
             options.include_prompt_in_result,
-            nullptr,
+            from_rust(has_callback, callback),
         },
         options.max_batch_size,
         options.batch_type
