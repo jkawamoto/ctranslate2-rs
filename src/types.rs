@@ -10,6 +10,27 @@
 
 #[cxx::bridge]
 pub(crate) mod ffi {
+    /// The result for a single generation step.
+    #[derive(Debug)]
+    pub struct GenerationStepResult<'a> {
+        /// The decoding step.
+        pub step: usize,
+        /// The batch index.
+        pub batch_id: usize,
+        /// ID of the generated token.
+        pub token_id: usize,
+        /// Index of the hypothesis in the batch.
+        pub hypothesis_id: usize,
+        /// String value of the generated token.
+        pub token: &'a str,
+        /// true if return_log_prob was enabled
+        pub has_log_prob: bool,
+        /// Log probability of the token.
+        pub log_prob: f32,
+        /// Whether this step is the last decoding step for this batch.
+        pub is_last: bool,
+    }
+
     pub struct VecString {
         v: Vec<String>,
     }
@@ -37,6 +58,11 @@ pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<ffi::VecSt
         })
         .collect()
 }
+
+pub(crate) fn noop_callback(_r: ffi::GenerationStepResult) -> bool {
+    false
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -34,7 +34,8 @@ use anyhow::anyhow;
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-use crate::types::vec_ffi_vecstr;
+pub use crate::translator::GenerationStepResult;
+use crate::types::{noop_callback, vec_ffi_vecstr};
 
 #[cxx::bridge]
 mod ffi {
@@ -79,6 +80,7 @@ mod ffi {
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;
+        type GenerationStepResult<'a> = crate::types::ffi::GenerationStepResult<'a>;
 
         type Generator;
 
@@ -86,8 +88,10 @@ mod ffi {
 
         fn generate_batch(
             self: &Generator,
-            start_tokens: Vec<VecStr>,
-            options: GenerationOptions,
+            start_tokens: &Vec<VecStr>,
+            options: &GenerationOptions,
+            has_callback: bool,
+            callback: fn(GenerationStepResult) -> bool,
         ) -> Result<Vec<GenerationResult>>;
     }
 }
@@ -121,7 +125,15 @@ impl Generator {
     ) -> anyhow::Result<Vec<GenerationResult>> {
         Ok(self
             .ptr
-            .generate_batch(vec_ffi_vecstr(start_tokens), options.to_ffi())?
+            .generate_batch(
+                &vec_ffi_vecstr(start_tokens),
+                &options.to_ffi(),
+                options.callback.is_some(),
+                match options.callback {
+                    None => noop_callback,
+                    Some(callback) => callback,
+                },
+            )?
             .into_iter()
             .map(GenerationResult::from)
             .collect())
@@ -190,6 +202,9 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub max_batch_size: usize,
     /// Whether `max_batch_size` is the number of `examples` or `tokens`.
     pub batch_type: BatchType,
+    /// Optional function that is called for each generated token when `beam_size` is 1.
+    /// If the callback function returns `true`, the decoding will stop for this batch.
+    pub callback: Option<fn(GenerationStepResult) -> bool>,
 }
 
 impl Default for GenerationOptions<String, String> {
@@ -217,6 +232,7 @@ impl Default for GenerationOptions<String, String> {
             include_prompt_in_result: true,
             max_batch_size: 0,
             batch_type: Default::default(),
+            callback: None,
         }
     }
 }
@@ -314,5 +330,6 @@ mod tests {
         assert!(options.include_prompt_in_result);
         assert_eq!(options.max_batch_size, 0);
         assert_eq!(options.batch_type, Default::default());
+        assert_eq!(options.callback, None);
     }
 }

@@ -11,13 +11,18 @@
 #include "ct2rs/include/convert.h"
 #include "ct2rs/src/translator.rs.h"
 
+using rust::Fn;
 using rust::Str;
 using rust::String;
 using rust::Vec;
 using std::string;
 using std::vector;
 
-inline ctranslate2::TranslationOptions convert_options(const TranslationOptions& options) {
+inline ctranslate2::TranslationOptions convert_options(
+    const TranslationOptions& options,
+    bool has_callback,
+    Fn<bool(GenerationStepResult)> callback
+) {
     return ctranslate2::TranslationOptions {
         options.beam_size,
         options.patience,
@@ -43,7 +48,7 @@ inline ctranslate2::TranslationOptions convert_options(const TranslationOptions&
         options.return_alternatives,
         options.min_alternative_expansion_prob,
         options.replace_unknowns,
-        nullptr,
+        from_rust(has_callback, callback),
     };
 }
 
@@ -60,26 +65,32 @@ inline Vec<TranslationResult> convert_results(const std::vector<ctranslate2::Tra
 }
 
 Vec<TranslationResult> Translator::translate_batch(
-    Vec<VecStr> source,
-    TranslationOptions options
+    const Vec<VecStr>& source,
+    const TranslationOptions& options,
+    bool has_callback,
+    Fn<bool(GenerationStepResult)> callback
 ) const {
+    callback(GenerationStepResult {});
+
     return convert_results(this->impl->translate_batch(
         from_rust(source),
-        convert_options(options),
+        convert_options(options, has_callback, callback),
         options.max_batch_size,
         options.batch_type
     ));
 }
 
 Vec<TranslationResult> Translator::translate_batch_with_target_prefix(
-    Vec<VecStr> source,
-    Vec<VecStr> target_prefix,
-    TranslationOptions options
+    const Vec<VecStr>& source,
+    const Vec<VecStr>& target_prefix,
+    const TranslationOptions& options,
+    bool has_callback,
+    Fn<bool(GenerationStepResult)> callback
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),
         from_rust(target_prefix),
-        convert_options(options),
+        convert_options(options, has_callback, callback),
         options.max_batch_size,
         options.batch_type
     ));

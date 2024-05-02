@@ -18,6 +18,7 @@
 struct VecStr;
 struct TranslationOptions;
 struct TranslationResult;
+struct GenerationStepResult;
 
 class Translator {
 private:
@@ -28,13 +29,20 @@ public:
         : impl(std::move(impl)) { }
 
     rust::Vec<TranslationResult>
-    translate_batch(rust::Vec<VecStr> source, TranslationOptions options) const;
+    translate_batch(
+        const rust::Vec<VecStr>& source,
+        const TranslationOptions& options,
+        bool has_callback,
+        rust::Fn<bool(GenerationStepResult)> callback
+    ) const;
 
     rust::Vec<TranslationResult>
     translate_batch_with_target_prefix(
-        rust::Vec<VecStr> source,
-        rust::Vec<VecStr> target_prefix,
-        TranslationOptions options
+        const rust::Vec<VecStr>& source,
+        const rust::Vec<VecStr>& target_prefix,
+        const TranslationOptions& options,
+        bool has_callback,
+        rust::Fn<bool(GenerationStepResult)> callback
     ) const;
 };
 
