@@ -36,8 +36,8 @@ use anyhow::{anyhow, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-pub use crate::types::ffi::GenerationStepResult;
 use crate::types::{noop_callback, vec_ffi_vecstr};
+pub use crate::types::ffi::GenerationStepResult;
 
 #[cxx::bridge]
 mod ffi {
@@ -110,6 +110,9 @@ mod ffi {
         ) -> Result<Vec<TranslationResult>>;
     }
 }
+
+unsafe impl Send for ffi::Translator {}
+unsafe impl Sync for ffi::Translator {}
 
 /// Options for translation.
 #[derive(Clone, Debug)]
@@ -318,7 +321,7 @@ impl Translator {
 }
 
 /// A translation result.
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct TranslationResult {
     /// Translation hypotheses.
     pub hypotheses: Vec<Vec<String>>,

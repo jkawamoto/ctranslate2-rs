@@ -96,6 +96,9 @@ mod ffi {
     }
 }
 
+unsafe impl Send for ffi::Generator {}
+unsafe impl Sync for ffi::Generator {}
+
 /// A text translator.
 pub struct Generator {
     ptr: UniquePtr<ffi::Generator>,
@@ -138,7 +141,7 @@ impl Generator {
 }
 
 /// The set of generation options.
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search).
     pub beam_size: usize,
