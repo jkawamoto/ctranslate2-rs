@@ -112,7 +112,7 @@ mod ffi {
 }
 
 /// Options for translation.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TranslationOptions<T: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search).
     pub beam_size: usize,
@@ -173,18 +173,15 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub min_alternative_expansion_prob: f32,
     /// Replace unknown target tokens by the original source token with the highest attention.
     pub replace_unknowns: bool,
-    /// Function to call for each generated token in greedy search.
-    // Returns true indicate the current generation is considered finished thus can be stopped early.
-    // callback,
+    /// Optional function that is called for each generated token when `beam_size` is 1.
+    /// If the callback function returns `true`, the decoding will stop for this batch.
+    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
     pub max_batch_size: usize,
     /// Whether `max_batch_size` is the number of “examples” or “tokens”.
     pub batch_type: BatchType,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
 }
 
 impl Default for TranslationOptions<String> {
@@ -287,10 +284,7 @@ impl Translator {
                 &vec_ffi_vecstr(source),
                 &options.to_ffi(),
                 options.callback.is_some(),
-                match options.callback {
-                    None => noop_callback,
-                    Some(callback) => callback,
-                },
+                options.callback.unwrap_or(noop_callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -315,10 +309,7 @@ impl Translator {
                 &vec_ffi_vecstr(target_prefix),
                 &options.to_ffi(),
                 options.callback.is_some(),
-                match options.callback {
-                    None => noop_callback,
-                    Some(callback) => callback,
-                },
+                options.callback.unwrap_or(noop_callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -327,7 +318,7 @@ impl Translator {
 }
 
 /// A translation result.
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct TranslationResult {
     /// Translation hypotheses.
     pub hypotheses: Vec<Vec<String>>,
