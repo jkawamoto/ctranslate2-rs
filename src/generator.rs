@@ -30,7 +30,7 @@
 
 use std::path::Path;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Error};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -93,6 +93,12 @@ mod ffi {
             has_callback: bool,
             callback: fn(GenerationStepResult) -> bool,
         ) -> Result<Vec<GenerationResult>>;
+
+        fn num_queued_batches(self: &Generator) -> Result<usize>;
+
+        fn num_active_batches(self: &Generator) -> Result<usize>;
+
+        fn num_replicas(self: &Generator) -> Result<usize>;
     }
 }
 
@@ -137,6 +143,21 @@ impl Generator {
             .into_iter()
             .map(GenerationResult::from)
             .collect())
+    }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> anyhow::Result<usize> {
+        self.ptr.num_queued_batches().map_err(Error::from)
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> anyhow::Result<usize> {
+        self.ptr.num_active_batches().map_err(Error::from)
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> anyhow::Result<usize> {
+        self.ptr.num_replicas().map_err(Error::from)
     }
 }
 

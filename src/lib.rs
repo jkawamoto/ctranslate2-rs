@@ -211,6 +211,21 @@ impl<T: Tokenizer> Translator<T> {
         }
         Ok(res)
     }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.translator.num_queued_batches()
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.translator.num_active_batches()
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.translator.num_replicas()
+    }
 }
 
 /// A text generator with a tokenizer.
@@ -255,5 +270,20 @@ impl<T: Tokenizer> Generator<T> {
             res.push((sequence, scores))
         }
         Ok(res)
+    }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.generator.num_queued_batches()
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.generator.num_active_batches()
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.generator.num_replicas()
     }
 }

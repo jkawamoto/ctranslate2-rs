@@ -32,7 +32,7 @@
 
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -108,6 +108,12 @@ mod ffi {
             has_callback: bool,
             callback: fn(GenerationStepResult) -> bool,
         ) -> Result<Vec<TranslationResult>>;
+
+        fn num_queued_batches(self: &Translator) -> Result<usize>;
+
+        fn num_active_batches(self: &Translator) -> Result<usize>;
+
+        fn num_replicas(self: &Translator) -> Result<usize>;
     }
 }
 
@@ -294,6 +300,7 @@ impl Translator {
             .collect())
     }
 
+    /// Translates a batch of tokens with target prefixes.
     pub fn translate_batch_with_target_prefix<T, U, V>(
         &self,
         source: &Vec<Vec<T>>,
@@ -317,6 +324,21 @@ impl Translator {
             .into_iter()
             .map(TranslationResult::from)
             .collect())
+    }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.ptr.num_queued_batches().map_err(Error::from)
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.ptr.num_active_batches().map_err(Error::from)
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.ptr.num_replicas().map_err(Error::from)
     }
 }
 
