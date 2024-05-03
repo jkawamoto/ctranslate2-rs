@@ -69,7 +69,7 @@ extern crate intel_mkl_src;
 
 use std::path::Path;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
@@ -161,17 +161,17 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for r in output.into_iter() {
             let score = r.score();
-            match r.hypotheses.into_iter().next() {
-                None => bail!("no results are returned"),
-                Some(h) => {
-                    res.push((
-                        self.tokenizer
-                            .decode(h.into_iter().collect())
-                            .map_err(|err| anyhow!("failed to decode: {err}"))?,
-                        score,
-                    ));
-                }
-            }
+            let h = r
+                .hypotheses
+                .into_iter()
+                .next()
+                .ok_or(anyhow!("no results are returned"))?;
+            res.push((
+                self.tokenizer
+                    .decode(h.into_iter().collect())
+                    .map_err(|err| anyhow!("failed to decode: {err}"))?,
+                score,
+            ));
         }
         Ok(res)
     }
@@ -197,19 +197,34 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for (r, prefix) in output.into_iter().zip(target_prefixes) {
             let score = r.score();
-            match r.hypotheses.into_iter().next() {
-                None => bail!("no results are returned"),
-                Some(h) => {
-                    res.push((
-                        self.tokenizer
-                            .decode(h.into_iter().skip(prefix.len()).collect())
-                            .map_err(|err| anyhow!("failed to decode: {err}"))?,
-                        score,
-                    ));
-                }
-            }
+            let h = r
+                .hypotheses
+                .into_iter()
+                .next()
+                .ok_or(anyhow!("no results are returned"))?;
+            res.push((
+                self.tokenizer
+                    .decode(h.into_iter().skip(prefix.len()).collect())
+                    .map_err(|err| anyhow!("failed to decode: {err}"))?,
+                score,
+            ));
         }
         Ok(res)
+    }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.translator.num_queued_batches()
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.translator.num_active_batches()
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.translator.num_replicas()
     }
 }
 
@@ -255,5 +270,20 @@ impl<T: Tokenizer> Generator<T> {
             res.push((sequence, scores))
         }
         Ok(res)
+    }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.generator.num_queued_batches()
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.generator.num_active_batches()
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.generator.num_replicas()
     }
 }

@@ -30,7 +30,7 @@
 
 use std::path::Path;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Error};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
@@ -93,8 +93,17 @@ mod ffi {
             has_callback: bool,
             callback: fn(GenerationStepResult) -> bool,
         ) -> Result<Vec<GenerationResult>>;
+
+        fn num_queued_batches(self: &Generator) -> Result<usize>;
+
+        fn num_active_batches(self: &Generator) -> Result<usize>;
+
+        fn num_replicas(self: &Generator) -> Result<usize>;
     }
 }
+
+unsafe impl Send for ffi::Generator {}
+unsafe impl Sync for ffi::Generator {}
 
 /// A text translator.
 pub struct Generator {
@@ -129,19 +138,31 @@ impl Generator {
                 &vec_ffi_vecstr(start_tokens),
                 &options.to_ffi(),
                 options.callback.is_some(),
-                match options.callback {
-                    None => noop_callback,
-                    Some(callback) => callback,
-                },
+                options.callback.unwrap_or(noop_callback),
             )?
             .into_iter()
             .map(GenerationResult::from)
             .collect())
     }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> anyhow::Result<usize> {
+        self.ptr.num_queued_batches().map_err(Error::from)
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> anyhow::Result<usize> {
+        self.ptr.num_active_batches().map_err(Error::from)
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> anyhow::Result<usize> {
+        self.ptr.num_replicas().map_err(Error::from)
+    }
 }
 
 /// The set of generation options.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search).
     pub beam_size: usize,
@@ -193,18 +214,15 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub cache_static_prompt: bool,
     /// Include the input tokens in the generation result.
     pub include_prompt_in_result: bool,
-    // Function to call for each generated token in greedy search.
-    // Returns true indicate the current generation is considered finished thus can be stopped early.
-    //std::function<bool(GenerationStepResult)> callback = nullptr;
+    /// Optional function that is called for each generated token when `beam_size` is 1.
+    /// If the callback function returns `true`, the decoding will stop for this batch.
+    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
     pub max_batch_size: usize,
     /// Whether `max_batch_size` is the number of `examples` or `tokens`.
     pub batch_type: BatchType,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
 }
 
 impl Default for GenerationOptions<String, String> {
@@ -268,7 +286,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
 }
 
 /// A generation result.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct GenerationResult {
     /// Generated sequences of tokens.
     pub sequences: Vec<Vec<String>>,

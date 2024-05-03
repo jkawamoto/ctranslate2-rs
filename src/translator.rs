@@ -32,12 +32,12 @@
 
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-pub use crate::types::ffi::GenerationStepResult;
 use crate::types::{noop_callback, vec_ffi_vecstr};
+pub use crate::types::ffi::GenerationStepResult;
 
 #[cxx::bridge]
 mod ffi {
@@ -108,11 +108,20 @@ mod ffi {
             has_callback: bool,
             callback: fn(GenerationStepResult) -> bool,
         ) -> Result<Vec<TranslationResult>>;
+
+        fn num_queued_batches(self: &Translator) -> Result<usize>;
+
+        fn num_active_batches(self: &Translator) -> Result<usize>;
+
+        fn num_replicas(self: &Translator) -> Result<usize>;
     }
 }
 
+unsafe impl Send for ffi::Translator {}
+unsafe impl Sync for ffi::Translator {}
+
 /// Options for translation.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TranslationOptions<T: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search).
     pub beam_size: usize,
@@ -173,18 +182,15 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub min_alternative_expansion_prob: f32,
     /// Replace unknown target tokens by the original source token with the highest attention.
     pub replace_unknowns: bool,
-    /// Function to call for each generated token in greedy search.
-    // Returns true indicate the current generation is considered finished thus can be stopped early.
-    // callback,
+    /// Optional function that is called for each generated token when `beam_size` is 1.
+    /// If the callback function returns `true`, the decoding will stop for this batch.
+    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
     pub max_batch_size: usize,
     /// Whether `max_batch_size` is the number of “examples” or “tokens”.
     pub batch_type: BatchType,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
 }
 
 impl Default for TranslationOptions<String> {
@@ -287,16 +293,14 @@ impl Translator {
                 &vec_ffi_vecstr(source),
                 &options.to_ffi(),
                 options.callback.is_some(),
-                match options.callback {
-                    None => noop_callback,
-                    Some(callback) => callback,
-                },
+                options.callback.unwrap_or(noop_callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
             .collect())
     }
 
+    /// Translates a batch of tokens with target prefixes.
     pub fn translate_batch_with_target_prefix<T, U, V>(
         &self,
         source: &Vec<Vec<T>>,
@@ -315,19 +319,31 @@ impl Translator {
                 &vec_ffi_vecstr(target_prefix),
                 &options.to_ffi(),
                 options.callback.is_some(),
-                match options.callback {
-                    None => noop_callback,
-                    Some(callback) => callback,
-                },
+                options.callback.unwrap_or(noop_callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
             .collect())
     }
+
+    /// Number of batches in the work queue.
+    pub fn num_queued_batches(&self) -> Result<usize> {
+        self.ptr.num_queued_batches().map_err(Error::from)
+    }
+
+    /// Number of batches in the work queue or currently processed by a worker.
+    pub fn num_active_batches(&self) -> Result<usize> {
+        self.ptr.num_active_batches().map_err(Error::from)
+    }
+
+    /// Number of parallel replicas.
+    pub fn num_replicas(&self) -> Result<usize> {
+        self.ptr.num_replicas().map_err(Error::from)
+    }
 }
 
 /// A translation result.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TranslationResult {
     /// Translation hypotheses.
     pub hypotheses: Vec<Vec<String>>,

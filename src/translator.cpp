@@ -70,8 +70,6 @@ Vec<TranslationResult> Translator::translate_batch(
     bool has_callback,
     Fn<bool(GenerationStepResult)> callback
 ) const {
-    callback(GenerationStepResult {});
-
     return convert_results(this->impl->translate_batch(
         from_rust(source),
         convert_options(options, has_callback, callback),

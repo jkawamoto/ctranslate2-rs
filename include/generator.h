@@ -34,6 +34,18 @@ public:
         bool has_callback,
         rust::Fn<bool(GenerationStepResult)> callback
     ) const;
+
+    size_t num_queued_batches() const {
+        return this->impl->num_queued_batches();
+    }
+
+    size_t num_active_batches() const {
+        return this->impl->num_active_batches();
+    }
+
+    size_t num_replicas() const {
+        return this->impl->num_replicas();
+    }
 };
 
 inline std::unique_ptr<Generator> generator(

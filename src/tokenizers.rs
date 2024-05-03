@@ -33,7 +33,7 @@
 
 use std::path::Path;
 
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, Result};
 use tokenizers::Decoder;
 
 const TOKENIZER_FILENAME: &str = "tokenizer.json";
@@ -46,12 +46,12 @@ pub struct Tokenizer {
 
 impl Tokenizer {
     /// Create a tokenizer instance by specifying the path to a directory containing `tokenizer.json`.
-    pub fn new<T: AsRef<Path>>(path: T) -> anyhow::Result<Self> {
+    pub fn new<T: AsRef<Path>>(path: T) -> Result<Self> {
         Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
     }
 
     /// Create a tokenizer instance by specifying the path to `tokenizer.json`.
-    pub fn from_file<T: AsRef<Path>>(path: T) -> anyhow::Result<Self> {
+    pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Self> {
         Ok(Self {
             tokenizer: tokenizers::tokenizer::Tokenizer::from_file(path)
                 .map_err(|err| anyhow!("failed to load a tokenizer: {err}"))?,
@@ -79,7 +79,7 @@ impl crate::Tokenizer for Tokenizer {
     ///
     /// # Returns
     /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
-    fn encode<T: AsRef<str>>(&self, input: &T) -> anyhow::Result<Vec<String>> {
+    fn encode<T: AsRef<str>>(&self, input: &T) -> Result<Vec<String>> {
         self.tokenizer
             .encode(input.as_ref(), self.special_token)
             .map(|r| r.get_tokens().to_vec())
@@ -95,11 +95,11 @@ impl crate::Tokenizer for Tokenizer {
     ///
     /// # Returns
     /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
-    fn decode(&self, tokens: Vec<String>) -> anyhow::Result<String> {
-        let decoder = match self.tokenizer.get_decoder() {
-            None => bail!("no decoder is provided"),
-            Some(decoder) => decoder,
-        };
+    fn decode(&self, tokens: Vec<String>) -> Result<String> {
+        let decoder = self
+            .tokenizer
+            .get_decoder()
+            .ok_or(anyhow!("no decoder is provided"))?;
 
         decoder
             .decode(tokens)
