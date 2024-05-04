@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
