@@ -26,11 +26,6 @@ and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 - **Ruy**: To use Ruy, enable the `ruy` feature.
 - **Apple Accelerate**: Available only on macOS, enable the `accelerate` feature to use Apple Accelerate.
 
-If no feature is specified:
-
-- On macOS, Apple Accelerate will be used by default.
-- On Linux and Windows, Ruy will be used by default.
-
 The installation of CMake is required to compile the library.
 
 Additional notes for Windows:
