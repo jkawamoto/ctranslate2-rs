@@ -48,7 +48,7 @@ walkdir = "2.5.0"
 
 
 [features]
-default = []
+default = ["ruy", "accelerate"]
 mkl = ["dep:intel-mkl-src"]
 openblas = []
 ruy = []
