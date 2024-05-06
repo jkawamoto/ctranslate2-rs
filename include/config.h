@@ -10,13 +10,21 @@
 
 #include "rust/cxx.h"
 
+#include <ctranslate2/logging.h>
+#include <ctranslate2/random.h>
 #include <ctranslate2/replica_pool.h>
 #include <memory>
 
 using ctranslate2::BatchType;
 using ctranslate2::ComputeType;
 using ctranslate2::Device;
+using ctranslate2::get_device_count;
+using ctranslate2::get_log_level;
+using ctranslate2::get_random_seed;
+using ctranslate2::LogLevel;
 using ctranslate2::ReplicaPoolConfig;
+using ctranslate2::set_log_level;
+using ctranslate2::set_random_seed;
 
 inline std::unique_ptr<ReplicaPoolConfig> replica_pool_config(
     size_t num_threads_per_replica,

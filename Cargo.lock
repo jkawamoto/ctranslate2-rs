@@ -322,6 +322,7 @@ dependencies = [
  "cxx",
  "cxx-build",
  "intel-mkl-src",
+ "rand",
  "sentencepiece",
  "tokenizers",
  "walkdir",

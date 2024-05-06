@@ -10,9 +10,10 @@
 
 use cxx::UniquePtr;
 
-pub use ffi::BatchType;
-pub use ffi::ComputeType;
-pub use ffi::Device;
+pub use ffi::{
+    get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
+    ComputeType, Device, LogLevel,
+};
 
 #[cxx::bridge]
 pub(crate) mod ffi {
@@ -122,6 +123,30 @@ pub(crate) mod ffi {
         Tokens,
     }
 
+    /// Logging level.
+    ///
+    /// This enum can take one of the following two values:
+    /// - `Off`
+    /// - `Critical`
+    /// - `Error`
+    /// - `Warning`
+    /// - `Info`
+    /// - `Debug`
+    /// - `Trace`
+    ///
+    /// The default setting for this enum is `Warning`.
+    #[derive(Debug)]
+    #[repr(i32)]
+    enum LogLevel {
+        Off = -3,
+        Critical = -2,
+        Error = -1,
+        Warning = 0,
+        Info = 1,
+        Debug = 2,
+        Trace = 3,
+    }
+
     unsafe extern "C++" {
         include!("ct2rs/include/config.h");
 
@@ -145,6 +170,23 @@ pub(crate) mod ffi {
             tensor_parallel: bool,
             replica_pool_config: UniquePtr<ReplicaPoolConfig>,
         ) -> UniquePtr<Config>;
+
+        /// Returns the number of devices.
+        fn get_device_count(device: Device) -> i32;
+
+        type LogLevel;
+
+        /// Sets the CTranslate2 logging level.
+        fn set_log_level(level: LogLevel);
+
+        /// Returns the current logging level.
+        fn get_log_level() -> LogLevel;
+
+        /// Sets the seed of random generators.
+        fn set_random_seed(seed: u32);
+
+        /// Returns the current seed of random generators.
+        fn get_random_seed() -> u32;
     }
 }
 
@@ -163,6 +205,12 @@ impl Default for ComputeType {
 impl Default for BatchType {
     fn default() -> Self {
         Self::Examples
+    }
+}
+
+impl Default for LogLevel {
+    fn default() -> Self {
+        Self::Warning
     }
 }
 
@@ -233,7 +281,12 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Config;
+    use rand::random;
+
+    use crate::config::{
+        get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, Config,
+        Device, LogLevel,
+    };
 
     #[test]
     fn test_config_to_ffi() {
@@ -241,5 +294,40 @@ mod tests {
         let res = config.to_ffi();
 
         assert!(!res.is_null());
+    }
+
+    #[test]
+    fn test_get_device_count() {
+        assert_eq!(get_device_count(Device::CPU), 1);
+        assert_eq!(get_device_count(Device::CUDA), 0);
+    }
+
+    #[test]
+    fn test_default_log_level() {
+        assert_eq!(LogLevel::default(), LogLevel::Warning);
+    }
+
+    #[test]
+    fn test_log_level() {
+        for l in vec![
+            LogLevel::Off,
+            LogLevel::Critical,
+            LogLevel::Error,
+            LogLevel::Warning,
+            LogLevel::Info,
+            LogLevel::Debug,
+            LogLevel::Trace,
+        ] {
+            println!("{:?}", l);
+            set_log_level(l);
+            assert_eq!(get_log_level(), l);
+        }
+    }
+
+    #[test]
+    fn test_random_seed() {
+        let r = random::<u32>();
+        set_random_seed(r);
+        assert_eq!(get_random_seed(), r);
     }
 }
