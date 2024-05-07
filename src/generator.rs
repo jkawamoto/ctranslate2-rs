@@ -80,7 +80,7 @@ mod ffi {
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;
-        type GenerationStepResult<'a> = crate::types::ffi::GenerationStepResult<'a>;
+        type GenerationStepResult = crate::types::ffi::GenerationStepResult;
 
         type Generator;
 
