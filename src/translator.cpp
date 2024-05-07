@@ -18,10 +18,35 @@ using rust::Vec;
 using std::string;
 using std::vector;
 
+inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
+    bool has_callback,
+    DynCallback& callback
+) {
+    if (!has_callback) {
+        return nullptr;
+    }
+
+    return [&](ctranslate2::GenerationStepResult res) -> bool {
+        return execute_dyn_callback(
+            callback,
+            GenerationStepResult {
+                res.step,
+                res.batch_id,
+                res.token_id,
+                res.hypothesis_id,
+                rust::String(res.token),
+                res.log_prob.has_value(),
+                res.log_prob.value_or(0),
+                res.is_last,
+            }
+        );
+    };
+}
+
 inline ctranslate2::TranslationOptions convert_options(
     const TranslationOptions& options,
     bool has_callback,
-    Fn<bool(GenerationStepResult)> callback
+    DynCallback& callback
 ) {
     return ctranslate2::TranslationOptions {
         options.beam_size,
@@ -48,7 +73,7 @@ inline ctranslate2::TranslationOptions convert_options(
         options.return_alternatives,
         options.min_alternative_expansion_prob,
         options.replace_unknowns,
-        from_rust(has_callback, callback),
+        convert_callback(has_callback, callback),
     };
 }
 
@@ -68,7 +93,7 @@ Vec<TranslationResult> Translator::translate_batch(
     const Vec<VecStr>& source,
     const TranslationOptions& options,
     bool has_callback,
-    Fn<bool(GenerationStepResult)> callback
+    DynCallback& callback
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),
@@ -83,7 +108,7 @@ Vec<TranslationResult> Translator::translate_batch_with_target_prefix(
     const Vec<VecStr>& target_prefix,
     const TranslationOptions& options,
     bool has_callback,
-    Fn<bool(GenerationStepResult)> callback
+    DynCallback& callback
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),

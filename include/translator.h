@@ -19,6 +19,7 @@ struct VecStr;
 struct TranslationOptions;
 struct TranslationResult;
 struct GenerationStepResult;
+struct DynCallback;
 
 class Translator {
 private:
@@ -33,7 +34,7 @@ public:
         const rust::Vec<VecStr>& source,
         const TranslationOptions& options,
         bool has_callback,
-        rust::Fn<bool(GenerationStepResult)> callback
+        DynCallback& callback
     ) const;
 
     rust::Vec<TranslationResult>
@@ -42,7 +43,7 @@ public:
         const rust::Vec<VecStr>& target_prefix,
         const TranslationOptions& options,
         bool has_callback,
-        rust::Fn<bool(GenerationStepResult)> callback
+        DynCallback& callback
     ) const;
 
     size_t num_queued_batches() const {

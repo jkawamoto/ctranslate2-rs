@@ -116,7 +116,7 @@ inline std::function<bool(ctranslate2::GenerationStepResult)> from_rust(bool has
             res.batch_id,
             res.token_id,
             res.hypothesis_id,
-            rust::Str(res.token),
+            rust::String(res.token),
             res.log_prob.has_value(),
             res.log_prob.value_or(0),
             res.is_last,

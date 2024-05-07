@@ -21,7 +21,8 @@
 //! let res = translator.translate_batch_with_target_prefix(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &vec![vec!["jpn_Jpan"]],
-//!     &Default::default()
+//!     &Default::default(),
+//!     None,
 //! )?;
 //! for r in res {
 //!     println!("{:?}", r);
@@ -36,8 +37,23 @@ use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-use crate::types::{noop_callback, vec_ffi_vecstr};
+use crate::types::{GenerationCallback, vec_ffi_vecstr};
 pub use crate::types::ffi::GenerationStepResult;
+
+type DynCallback<'a> = Box<dyn GenerationCallback + 'a>;
+
+impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>> for DynCallback<'a>{
+    fn from(opt: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>) -> Self {
+        match opt {
+            None => Box::new(|_| false) as DynCallback,
+            Some(c) => Box::new(c) as DynCallback,
+        }
+    }
+}
+
+fn execute_dyn_callback(f: &mut DynCallback, arg: GenerationStepResult) -> bool {
+    f.execute(arg)
+}
 
 #[cxx::bridge]
 mod ffi {
@@ -76,6 +92,11 @@ mod ffi {
         // attention: Vec<Vec<Vec<f32>>>,
     }
 
+    extern "Rust" {
+        type DynCallback<'a>;
+        fn execute_dyn_callback(f: &mut DynCallback, arg: GenerationStepResult) -> bool;
+    }
+
     unsafe extern "C++" {
         include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/translator.h");
@@ -97,7 +118,7 @@ mod ffi {
             source: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut DynCallback,
         ) -> Result<Vec<TranslationResult>>;
 
         fn translate_batch_with_target_prefix(
@@ -106,7 +127,7 @@ mod ffi {
             target_prefix: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut DynCallback,
         ) -> Result<Vec<TranslationResult>>;
 
         fn num_queued_batches(self: &Translator) -> Result<usize>;
@@ -182,9 +203,6 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub min_alternative_expansion_prob: f32,
     /// Replace unknown target tokens by the original source token with the highest attention.
     pub replace_unknowns: bool,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
@@ -221,7 +239,6 @@ impl Default for TranslationOptions<String> {
             replace_unknowns: false,
             max_batch_size: 0,
             batch_type: BatchType::default(),
-            callback: None,
         }
     }
 }
@@ -278,10 +295,14 @@ impl Translator {
     }
 
     /// Translates a batch of tokens.
-    pub fn translate_batch<T, V>(
+    ///
+    /// `callback` is an optional function that is called for each generated token when `beam_size`
+    /// is 1. If the callback function returns `true`, the decoding will stop for this batch.
+    pub fn translate_batch<'a, T, V>(
         &self,
         source: &Vec<Vec<T>>,
         options: &TranslationOptions<V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
@@ -292,8 +313,8 @@ impl Translator {
             .translate_batch(
                 &vec_ffi_vecstr(source),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut DynCallback::from(callback)
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -301,11 +322,15 @@ impl Translator {
     }
 
     /// Translates a batch of tokens with target prefixes.
-    pub fn translate_batch_with_target_prefix<T, U, V>(
+    ///
+    /// `callback` is an optional function that is called for each generated token when `beam_size`
+    /// is 1. If the callback function returns `true`, the decoding will stop for this batch.
+    pub fn translate_batch_with_target_prefix<'a, T, U, V>(
         &self,
         source: &Vec<Vec<T>>,
         target_prefix: &Vec<Vec<U>>,
         options: &TranslationOptions<V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
@@ -318,8 +343,8 @@ impl Translator {
                 &vec_ffi_vecstr(source),
                 &vec_ffi_vecstr(target_prefix),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut DynCallback::from(callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -416,6 +441,5 @@ mod tests {
         assert!(!options.replace_unknowns);
         assert_eq!(options.max_batch_size, 0);
         assert_eq!(options.batch_type, BatchType::default());
-        assert_eq!(options.callback, None);
     }
 }

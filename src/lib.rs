@@ -31,6 +31,7 @@
 //!         return_scores: true,
 //!         ..Default::default()
 //!     },
+//!     None
 //! )?;
 //! for r in res {
 //!     println!("{}, (score: {:?})", r.0, r.1);
@@ -74,6 +75,7 @@ use anyhow::{anyhow, Result};
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
+pub use crate::types::ffi::GenerationStepResult;
 
 pub mod config;
 pub mod generator;
@@ -145,18 +147,21 @@ impl<T: Tokenizer> Translator<T> {
     }
 
     /// Translates a batch of strings.
-    pub fn translate_batch<U, V>(
+    pub fn translate_batch<'a, U, V>(
         &self,
         sources: &Vec<U>,
         options: &TranslationOptions<V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
         V: AsRef<str>,
     {
-        let output = self
-            .translator
-            .translate_batch(&encode_strings(&self.tokenizer, sources)?, options)?;
+        let output = self.translator.translate_batch(
+            &encode_strings(&self.tokenizer, sources)?,
+            options,
+            callback,
+        )?;
 
         let mut res = Vec::new();
         for r in output.into_iter() {
@@ -177,11 +182,12 @@ impl<T: Tokenizer> Translator<T> {
     }
 
     /// Translates a batch of strings using target prefixes.
-    pub fn translate_batch_with_target_prefix<U, V, W>(
+    pub fn translate_batch_with_target_prefix<'a, U, V, W>(
         &self,
         sources: &Vec<U>,
         target_prefixes: &Vec<Vec<V>>,
         options: &TranslationOptions<W>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -192,6 +198,7 @@ impl<T: Tokenizer> Translator<T> {
             &encode_strings(&self.tokenizer, sources)?,
             &target_prefixes,
             options,
+            callback,
         )?;
 
         let mut res = Vec::new();
