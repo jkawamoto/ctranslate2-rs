@@ -16,12 +16,37 @@ using rust::Vec;
 using std::string;
 using std::vector;
 
+inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
+    bool has_callback,
+    GenerationCallbackBox& callback
+) {
+    if (!has_callback) {
+        return nullptr;
+    }
+
+    return [&](ctranslate2::GenerationStepResult res) -> bool {
+        return execute_generation_callback(
+            callback,
+            GenerationStepResult {
+                res.step,
+                res.batch_id,
+                res.token_id,
+                res.hypothesis_id,
+                rust::String(res.token),
+                res.log_prob.has_value(),
+                res.log_prob.value_or(0),
+                res.is_last,
+            }
+        );
+    };
+}
+
 Vec<GenerationResult>
 Generator::generate_batch(
     const Vec<VecStr>& start_tokens,
     const GenerationOptions& options,
     bool has_callback,
-    rust::Fn<bool(GenerationStepResult)> callback
+    GenerationCallbackBox& callback
 ) const {
     auto futures = this->impl->generate_batch_async(
         from_rust(start_tokens),
@@ -47,7 +72,7 @@ Generator::generate_batch(
             from_rust(options.static_prompt),
             options.cache_static_prompt,
             options.include_prompt_in_result,
-            from_rust(has_callback, callback),
+            convert_callback(has_callback, callback),
         },
         options.max_batch_size,
         options.batch_type

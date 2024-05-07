@@ -54,6 +54,7 @@
 //! let res = g.generate_batch(
 //!     &vec!["prompt"],
 //!     &GenerationOptions::default(),
+//!     None,
 //! )?;
 //! for r in res {
 //!     println!("{:?}", r.0);
@@ -251,19 +252,22 @@ impl<T: Tokenizer> Generator<T> {
     }
 
     /// Generate texts with the given prompts.
-    pub fn generate_batch<U, V, W>(
+    pub fn generate_batch<'a, U, V, W>(
         &self,
         prompts: &Vec<U>,
         options: &GenerationOptions<V, W>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
         U: AsRef<str>,
         V: AsRef<str>,
         W: AsRef<str>,
     {
-        let output = self
-            .generator
-            .generate_batch(&encode_strings(&self.tokenizer, prompts)?, options)?;
+        let output = self.generator.generate_batch(
+            &encode_strings(&self.tokenizer, prompts)?,
+            options,
+            callback,
+        )?;
 
         let mut res = Vec::new();
         for r in output.into_iter() {

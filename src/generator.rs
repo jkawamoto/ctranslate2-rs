@@ -20,6 +20,7 @@
 //! let res = generator.generate_batch(
 //!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 //!     &GenerationOptions::default(),
+//!     None
 //! )?;
 //! for r in res {
 //!     println!("{:?}", r);
@@ -35,7 +36,34 @@ use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
 pub use crate::translator::GenerationStepResult;
-use crate::types::{noop_callback, vec_ffi_vecstr};
+use crate::types::vec_ffi_vecstr;
+
+trait GenerationCallback {
+    fn execute(&mut self, res: GenerationStepResult) -> bool;
+}
+
+impl<F: FnMut(GenerationStepResult) -> bool> GenerationCallback for F {
+    fn execute(&mut self, args: GenerationStepResult) -> bool {
+        self(args)
+    }
+}
+
+type GenerationCallbackBox<'a> = Box<dyn GenerationCallback + 'a>;
+
+impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>>
+    for GenerationCallbackBox<'a>
+{
+    fn from(opt: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>) -> Self {
+        match opt {
+            None => Box::new(|_| false) as GenerationCallbackBox,
+            Some(c) => Box::new(c) as GenerationCallbackBox,
+        }
+    }
+}
+
+fn execute_generation_callback(f: &mut GenerationCallbackBox, arg: GenerationStepResult) -> bool {
+    f.execute(arg)
+}
 
 #[cxx::bridge]
 mod ffi {
@@ -70,6 +98,11 @@ mod ffi {
         scores: Vec<f32>,
     }
 
+    extern "Rust" {
+        type GenerationCallbackBox<'a>;
+        fn execute_generation_callback(f: &mut GenerationCallbackBox, arg: GenerationStepResult) -> bool;
+    }
+
     unsafe extern "C++" {
         include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/generator.h");
@@ -91,7 +124,7 @@ mod ffi {
             start_tokens: &Vec<VecStr>,
             options: &GenerationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut GenerationCallbackBox,
         ) -> Result<Vec<GenerationResult>>;
 
         fn num_queued_batches(self: &Generator) -> Result<usize>;
@@ -127,18 +160,22 @@ impl Generator {
     ///
     /// `start_tokens` are Batch of start tokens. If the decoder starts from a special start token
     /// like `<s>`, this token should be added to this input.
-    pub fn generate_batch<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
+    ///
+    /// `callback` is an optional function that is called for each generated token when `beam_size`
+    /// is 1. If the callback function returns `true`, the decoding will stop for this batch.
+    pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,
         start_tokens: &Vec<Vec<T>>,
         options: &GenerationOptions<U, V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> anyhow::Result<Vec<GenerationResult>> {
         Ok(self
             .ptr
             .generate_batch(
                 &vec_ffi_vecstr(start_tokens),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut GenerationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(GenerationResult::from)
@@ -214,9 +251,6 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub cache_static_prompt: bool,
     /// Include the input tokens in the generation result.
     pub include_prompt_in_result: bool,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
@@ -250,7 +284,6 @@ impl Default for GenerationOptions<String, String> {
             include_prompt_in_result: true,
             max_batch_size: 0,
             batch_type: Default::default(),
-            callback: None,
         }
     }
 }
@@ -348,6 +381,5 @@ mod tests {
         assert!(options.include_prompt_in_result);
         assert_eq!(options.max_batch_size, 0);
         assert_eq!(options.batch_type, Default::default());
-        assert_eq!(options.callback, None);
     }
 }

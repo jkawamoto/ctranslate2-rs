@@ -20,14 +20,14 @@ using std::vector;
 
 inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
     bool has_callback,
-    DynCallback& callback
+    TranslationCallbackBox& callback
 ) {
     if (!has_callback) {
         return nullptr;
     }
 
     return [&](ctranslate2::GenerationStepResult res) -> bool {
-        return execute_dyn_callback(
+        return execute_translation_callback(
             callback,
             GenerationStepResult {
                 res.step,
@@ -46,7 +46,7 @@ inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
 inline ctranslate2::TranslationOptions convert_options(
     const TranslationOptions& options,
     bool has_callback,
-    DynCallback& callback
+    TranslationCallbackBox& callback
 ) {
     return ctranslate2::TranslationOptions {
         options.beam_size,
@@ -93,7 +93,7 @@ Vec<TranslationResult> Translator::translate_batch(
     const Vec<VecStr>& source,
     const TranslationOptions& options,
     bool has_callback,
-    DynCallback& callback
+    TranslationCallbackBox& callback
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),
@@ -108,7 +108,7 @@ Vec<TranslationResult> Translator::translate_batch_with_target_prefix(
     const Vec<VecStr>& target_prefix,
     const TranslationOptions& options,
     bool has_callback,
-    DynCallback& callback
+    TranslationCallbackBox& callback
 ) const {
     return convert_results(this->impl->translate_batch(
         from_rust(source),

@@ -104,22 +104,3 @@ inline rust::Vec<T> to_rust(const std::vector<std::vector<size_t>>& v) {
     }
     return res;
 }
-
-inline std::function<bool(ctranslate2::GenerationStepResult)> from_rust(bool has_callback, const rust::Fn<bool(GenerationStepResult)>& callback) {
-    if (!has_callback) {
-        return nullptr;
-    }
-
-    return [=](ctranslate2::GenerationStepResult res) -> bool {
-        return callback(GenerationStepResult {
-            res.step,
-            res.batch_id,
-            res.token_id,
-            res.hypothesis_id,
-            rust::String(res.token),
-            res.log_prob.has_value(),
-            res.log_prob.value_or(0),
-            res.is_last,
-        });
-    };
-}

@@ -37,21 +37,30 @@ use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-use crate::types::{GenerationCallback, vec_ffi_vecstr};
 pub use crate::types::ffi::GenerationStepResult;
+use crate::types::vec_ffi_vecstr;
 
-type DynCallback<'a> = Box<dyn GenerationCallback + 'a>;
+trait GenerationCallback {
+    fn execute(&mut self, res: GenerationStepResult) -> bool;
+}
 
-impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>> for DynCallback<'a>{
+impl<F: FnMut(GenerationStepResult) -> bool> GenerationCallback for F {
+    fn execute(&mut self, args: GenerationStepResult) -> bool {
+        self(args)
+    }
+}
+type TranslationCallbackBox<'a> = Box<dyn GenerationCallback + 'a>;
+
+impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>> for TranslationCallbackBox<'a> {
     fn from(opt: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>) -> Self {
         match opt {
-            None => Box::new(|_| false) as DynCallback,
-            Some(c) => Box::new(c) as DynCallback,
+            None => Box::new(|_| false) as TranslationCallbackBox,
+            Some(c) => Box::new(c) as TranslationCallbackBox,
         }
     }
 }
 
-fn execute_dyn_callback(f: &mut DynCallback, arg: GenerationStepResult) -> bool {
+fn execute_translation_callback(f: &mut TranslationCallbackBox, arg: GenerationStepResult) -> bool {
     f.execute(arg)
 }
 
@@ -93,8 +102,8 @@ mod ffi {
     }
 
     extern "Rust" {
-        type DynCallback<'a>;
-        fn execute_dyn_callback(f: &mut DynCallback, arg: GenerationStepResult) -> bool;
+        type TranslationCallbackBox<'a>;
+        fn execute_translation_callback(f: &mut TranslationCallbackBox, arg: GenerationStepResult) -> bool;
     }
 
     unsafe extern "C++" {
@@ -118,7 +127,7 @@ mod ffi {
             source: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: &mut DynCallback,
+            callback: &mut TranslationCallbackBox,
         ) -> Result<Vec<TranslationResult>>;
 
         fn translate_batch_with_target_prefix(
@@ -127,7 +136,7 @@ mod ffi {
             target_prefix: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: &mut DynCallback,
+            callback: &mut TranslationCallbackBox,
         ) -> Result<Vec<TranslationResult>>;
 
         fn num_queued_batches(self: &Translator) -> Result<usize>;
@@ -314,7 +323,7 @@ impl Translator {
                 &vec_ffi_vecstr(source),
                 &options.to_ffi(),
                 callback.is_some(),
-                &mut DynCallback::from(callback)
+                &mut TranslationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -344,7 +353,7 @@ impl Translator {
                 &vec_ffi_vecstr(target_prefix),
                 &options.to_ffi(),
                 callback.is_some(),
-                &mut DynCallback::from(callback),
+                &mut TranslationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(TranslationResult::from)

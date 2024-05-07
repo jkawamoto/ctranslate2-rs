@@ -12,7 +12,7 @@
 pub(crate) mod ffi {
     /// The result for a single generation step.
     #[derive(Clone, Debug)]
-    pub struct GenerationStepResult{
+    pub struct GenerationStepResult {
         /// The decoding step.
         pub step: usize,
         /// The batch index.
@@ -50,16 +50,6 @@ pub(crate) mod ffi {
     }
 }
 
-pub(crate) trait GenerationCallback {
-    fn execute(&mut self, res: ffi::GenerationStepResult) -> bool;
-}
-
-impl<F: FnMut(ffi::GenerationStepResult) -> bool> GenerationCallback for F {
-    fn execute(&mut self, args: ffi::GenerationStepResult) -> bool {
-        self(args)
-    }
-}
-
 #[inline]
 pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<ffi::VecStr> {
     src.iter()
@@ -67,10 +57,6 @@ pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<ffi::VecSt
             v: v.iter().map(|s| s.as_ref()).collect(),
         })
         .collect()
-}
-
-pub(crate) fn noop_callback(_r: ffi::GenerationStepResult) -> bool {
-    false
 }
 
 #[cfg(test)]
