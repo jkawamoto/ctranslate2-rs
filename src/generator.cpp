@@ -8,7 +8,7 @@
 
 #include "ct2rs/include/generator.h"
 
-#include "ct2rs/include/convert.h"
+#include "ct2rs/include/types.h"
 #include "ct2rs/src/generator.rs.h"
 
 using rust::Str;

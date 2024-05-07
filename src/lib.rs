@@ -221,16 +221,19 @@ impl<T: Tokenizer> Translator<T> {
     }
 
     /// Number of batches in the work queue.
+    #[inline]
     pub fn num_queued_batches(&self) -> Result<usize> {
         self.translator.num_queued_batches()
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
+    #[inline]
     pub fn num_active_batches(&self) -> Result<usize> {
         self.translator.num_active_batches()
     }
 
     /// Number of parallel replicas.
+    #[inline]
     pub fn num_replicas(&self) -> Result<usize> {
         self.translator.num_replicas()
     }
@@ -284,16 +287,19 @@ impl<T: Tokenizer> Generator<T> {
     }
 
     /// Number of batches in the work queue.
+    #[inline]
     pub fn num_queued_batches(&self) -> Result<usize> {
         self.generator.num_queued_batches()
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
+    #[inline]
     pub fn num_active_batches(&self) -> Result<usize> {
         self.generator.num_active_batches()
     }
 
     /// Number of parallel replicas.
+    #[inline]
     pub fn num_replicas(&self) -> Result<usize> {
         self.generator.num_replicas()
     }

@@ -36,15 +36,15 @@ public:
         GenerationCallbackBox& callback
     ) const;
 
-    size_t num_queued_batches() const {
+    inline size_t num_queued_batches() const {
         return this->impl->num_queued_batches();
     }
 
-    size_t num_active_batches() const {
+    inline size_t num_active_batches() const {
         return this->impl->num_active_batches();
     }
 
-    size_t num_replicas() const {
+    inline size_t num_replicas() const {
         return this->impl->num_replicas();
     }
 };

@@ -8,7 +8,7 @@
 
 #include "ct2rs/include/translator.h"
 
-#include "ct2rs/include/convert.h"
+#include "ct2rs/include/types.h"
 #include "ct2rs/src/translator.rs.h"
 
 using rust::Fn;

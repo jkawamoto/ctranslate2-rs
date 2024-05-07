@@ -361,16 +361,19 @@ impl Translator {
     }
 
     /// Number of batches in the work queue.
+    #[inline]
     pub fn num_queued_batches(&self) -> Result<usize> {
         self.ptr.num_queued_batches().map_err(Error::from)
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
+    #[inline]
     pub fn num_active_batches(&self) -> Result<usize> {
         self.ptr.num_active_batches().map_err(Error::from)
     }
 
     /// Number of parallel replicas.
+    #[inline]
     pub fn num_replicas(&self) -> Result<usize> {
         self.ptr.num_replicas().map_err(Error::from)
     }
@@ -396,21 +399,25 @@ impl From<ffi::TranslationResult> for TranslationResult {
 
 impl TranslationResult {
     /// Returns the first translation hypothesis if exists.
+    #[inline]
     pub fn output(&self) -> Option<&Vec<String>> {
         self.hypotheses.first()
     }
 
     /// Returns the score of the first translation hypothesis if exists.
+    #[inline]
     pub fn score(&self) -> Option<f32> {
         self.scores.first().copied()
     }
 
     /// Returns the number of translation hypotheses.
+    #[inline]
     pub fn num_hypotheses(&self) -> usize {
         self.hypotheses.len()
     }
 
     /// Returns true if this result contains scores.
+    #[inline]
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }

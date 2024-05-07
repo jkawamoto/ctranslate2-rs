@@ -20,7 +20,7 @@ fn main() {
     println!("cargo:rerun-if-changed=src/translator.cpp");
     println!("cargo:rerun-if-changed=src/generator.rs");
     println!("cargo:rerun-if-changed=src/generator.cpp");
-    println!("cargo:rerun-if-changed=include/convert.h");
+    println!("cargo:rerun-if-changed=include/types.h");
     println!("cargo:rerun-if-changed=include/config.h");
     println!("cargo:rerun-if-changed=include/translator.h");
     println!("cargo:rerun-if-changed=include/generator.h");

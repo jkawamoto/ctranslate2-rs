@@ -183,16 +183,19 @@ impl Generator {
     }
 
     /// Number of batches in the work queue.
+    #[inline]
     pub fn num_queued_batches(&self) -> anyhow::Result<usize> {
         self.ptr.num_queued_batches().map_err(Error::from)
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
+    #[inline]
     pub fn num_active_batches(&self) -> anyhow::Result<usize> {
         self.ptr.num_active_batches().map_err(Error::from)
     }
 
     /// Number of parallel replicas.
+    #[inline]
     pub fn num_replicas(&self) -> anyhow::Result<usize> {
         self.ptr.num_replicas().map_err(Error::from)
     }
@@ -341,11 +344,13 @@ impl From<ffi::GenerationResult> for GenerationResult {
 
 impl GenerationResult {
     /// Returns the number of sequences.
+    #[inline]
     pub fn num_sequences(&self) -> usize {
         self.sequences.len()
     }
 
     /// Returns true if this result has scores.
+    #[inline]
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }

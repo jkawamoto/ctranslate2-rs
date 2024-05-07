@@ -1,4 +1,4 @@
-// convert.h
+// types.h
 //
 // Copyright (c) 2023-2024 Junpei Kawamoto
 //
@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "ct2rs/src/types.rs.h"
 #include "rust/cxx.h"
 #include <string>
 #include <vector>
