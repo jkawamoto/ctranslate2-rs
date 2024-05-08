@@ -8,7 +8,7 @@
 
 use std::fs::File;
 use std::io;
-use std::io::{stdout, BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, stdout, Write};
 use std::time;
 
 use anyhow::Result;
@@ -57,8 +57,12 @@ fn main() -> Result<()> {
     let target_prefixes = vec![vec![args.target]; sources.len()];
 
     let now = time::Instant::now();
-    let res =
-        t.translate_batch_with_target_prefix(&sources, &target_prefixes, &Default::default())?;
+    let res = t.translate_batch_with_target_prefix(
+        &sources,
+        &target_prefixes,
+        &Default::default(),
+        None,
+    )?;
     let elapsed = now.elapsed();
 
     let mut out: BufWriter<Box<dyn Write>> = BufWriter::new(match args.output {

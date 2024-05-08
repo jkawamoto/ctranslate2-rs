@@ -58,6 +58,7 @@ fn main() -> Result<()> {
             // include_prompt_in_result: false,
             ..GenerationOptions::default()
         },
+        None,
     )?;
     let mut out: BufWriter<Box<dyn Write>> = BufWriter::new(match args.output {
         None => Box::new(stdout()),
