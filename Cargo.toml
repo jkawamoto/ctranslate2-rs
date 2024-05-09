@@ -59,10 +59,17 @@ cudnn = ["cuda"]
 
 
 [[example]]
-name = "nllb"
+name = "bart"
+
+[[example]]
+name = "bloom"
+
+[[example]]
+name = "falcon"
 
 [[example]]
 name = "marian-mt"
 
 [[example]]
-name = "generator"
+name = "nllb"
+
