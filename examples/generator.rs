@@ -45,7 +45,7 @@ fn main() -> Result<()> {
     } else {
         Config::default()
     };
-    let g = Generator::new(&args.path, Tokenizer::new(&args.path)?, &cfg)?;
+    let g = Generator::with_tokenizer(&args.path, Tokenizer::new(&args.path)?, &cfg)?;
 
     let res = g.generate_batch(
         &BufReader::new(File::open(args.prompt)?)

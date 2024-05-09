@@ -27,7 +27,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Generator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
+//! let t = Generator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! # Ok(())
 //! # }
 //! ```
@@ -75,10 +75,10 @@ impl crate::Tokenizer for Tokenizer {
     ///
     /// # Returns
     /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
-    fn encode<T: AsRef<str>>(&self, input: &T) -> Result<Vec<String>> {
+    fn encode(&self, input: &str) -> Result<Vec<String>> {
         let mut source: Vec<String> = self
             .encoder
-            .encode(input.as_ref())?
+            .encode(input)?
             .iter()
             .map(|v| v.piece.to_string())
             .collect();

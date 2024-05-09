@@ -58,7 +58,7 @@ use ct2rs::tokenizers::Tokenizer;
 
 fn main() -> Result<()> {
     let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
+    let t = Translator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
     let res = t.translate_batch_with_target_prefix(
         &vec![
             "Hello world!",
@@ -69,6 +69,7 @@ fn main() -> Result<()> {
             return_scores: true,
             ..Default::default()
         },
+        None
     )?;
     for r in res {
         println!("{}, (score: {:?})", r.0, r.1);
@@ -97,10 +98,11 @@ use ct2rs::sentencepiece::Tokenizer;
 
 fn main() -> Result<()> {
     let path = "/path/to/model";
-    let g = Generator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
+    let g = Generator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
     let res = g.generate_batch(
         &vec!["prompt"],
         &GenerationOptions::default(),
+        None,
     )?;
     for r in res {
         println!("{:?}", r.0);
