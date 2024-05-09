@@ -1,4 +1,4 @@
-// convert.h
+// types.h
 //
 // Copyright (c) 2023-2024 Junpei Kawamoto
 //
@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "ct2rs/src/types.rs.h"
 #include "rust/cxx.h"
 #include <string>
 #include <vector>
@@ -103,23 +102,4 @@ inline rust::Vec<T> to_rust(const std::vector<std::vector<size_t>>& v) {
         res.push_back(T { to_rust(item) });
     }
     return res;
-}
-
-inline std::function<bool(ctranslate2::GenerationStepResult)> from_rust(bool has_callback, const rust::Fn<bool(GenerationStepResult)>& callback) {
-    if (!has_callback) {
-        return nullptr;
-    }
-
-    return [=](ctranslate2::GenerationStepResult res) -> bool {
-        return callback(GenerationStepResult {
-            res.step,
-            res.batch_id,
-            res.token_id,
-            res.hypothesis_id,
-            rust::Str(res.token),
-            res.log_prob.has_value(),
-            res.log_prob.value_or(0),
-            res.is_last,
-        });
-    };
 }

@@ -6,36 +6,57 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-//! This module provides raw Rust bindings to the `ctranslate2::Generator`.
+//! This module provides Rust bindings for the
+//! [`ctranslate2::Generator`](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html).
 //!
-//! # Example
+//! The [`Generator`] structure is the primary interface in this module, offering the capability
+//! to generate text based on a trained model. It is designed for tasks such as text generation,
+//! autocompletion, and other similar language generation tasks.
 //!
-//! ```no_run
-//! # use anyhow::Result;
-//! use ct2rs::config::{Config, Device};
-//! use ct2rs::generator::{Generator, GenerationOptions};
+//! Alongside the `Generator`, this module also includes structures that are critical for
+//! controlling and understanding the generation process:
 //!
-//! # fn main() -> Result<()> {
-//! let generator = Generator::new("/path/to/model", &Config::default())?;
-//! let res = generator.generate_batch(
-//!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
-//!     &GenerationOptions::default(),
-//! )?;
-//! for r in res {
-//!     println!("{:?}", r);
-//! }
-//! # Ok(())
-//! # }
-//! ```
+//! - [`GenerationOptions`]: A structure containing configuration options for the generation
+//!   process,
+//!
+//! - [`GenerationResult`]: A structure that holds the results of the generation process.
+//!
 
 use std::path::Path;
 
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-pub use crate::translator::GenerationStepResult;
-use crate::types::{noop_callback, vec_ffi_vecstr};
+pub use crate::types::ffi::GenerationStepResult;
+use crate::types::vec_ffi_vecstr;
+
+trait GenerationCallback {
+    fn execute(&mut self, res: GenerationStepResult) -> bool;
+}
+
+impl<F: FnMut(GenerationStepResult) -> bool> GenerationCallback for F {
+    fn execute(&mut self, args: GenerationStepResult) -> bool {
+        self(args)
+    }
+}
+
+type GenerationCallbackBox<'a> = Box<dyn GenerationCallback + 'a>;
+
+impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>>
+    for GenerationCallbackBox<'a>
+{
+    fn from(opt: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>) -> Self {
+        match opt {
+            None => Box::new(|_| false) as GenerationCallbackBox,
+            Some(c) => Box::new(c) as GenerationCallbackBox,
+        }
+    }
+}
+
+fn execute_generation_callback(f: &mut GenerationCallbackBox, arg: GenerationStepResult) -> bool {
+    f.execute(arg)
+}
 
 #[cxx::bridge]
 mod ffi {
@@ -70,6 +91,14 @@ mod ffi {
         scores: Vec<f32>,
     }
 
+    extern "Rust" {
+        type GenerationCallbackBox<'a>;
+        fn execute_generation_callback(
+            f: &mut GenerationCallbackBox,
+            arg: GenerationStepResult,
+        ) -> bool;
+    }
+
     unsafe extern "C++" {
         include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/generator.h");
@@ -80,7 +109,7 @@ mod ffi {
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;
-        type GenerationStepResult<'a> = crate::types::ffi::GenerationStepResult<'a>;
+        type GenerationStepResult = crate::types::ffi::GenerationStepResult;
 
         type Generator;
 
@@ -91,7 +120,7 @@ mod ffi {
             start_tokens: &Vec<VecStr>,
             options: &GenerationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut GenerationCallbackBox,
         ) -> Result<Vec<GenerationResult>>;
 
         fn num_queued_batches(self: &Generator) -> Result<usize>;
@@ -105,13 +134,58 @@ mod ffi {
 unsafe impl Send for ffi::Generator {}
 unsafe impl Sync for ffi::Generator {}
 
-/// A text translator.
+/// A Rust binding to the
+/// [`ctranslate2::Generator`](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html).
+///
+/// # Example
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// use ct2rs::config::{Config, Device};
+/// use ct2rs::generator::{Generator, GenerationOptions};
+///
+/// # fn main() -> Result<()> {
+/// let generator = Generator::new("/path/to/model", &Config::default())?;
+/// let res = generator.generate_batch(
+///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &GenerationOptions::default(),
+///     None
+/// )?;
+/// for r in res {
+///     println!("{:?}", r);
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub struct Generator {
     ptr: UniquePtr<ffi::Generator>,
 }
 
 impl Generator {
-    pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> anyhow::Result<Generator> {
+    /// Creates and initializes an instance of `Generator`.
+    ///
+    /// This function constructs a new `Generator` by loading a language model from the specified
+    /// `model_path` and applying the provided `config` settings.
+    ///
+    /// # Arguments
+    /// * `model_path` - A path to the directory containing the language model to be loaded.
+    /// * `config` - A reference to a `Config` structure that specifies various settings
+    ///   and configurations for the `Generator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Generator`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use ct2rs::config::Config;
+    /// use ct2rs::generator::Generator;
+    ///
+    /// let config = Config::default();
+    /// let generator = Generator::new("/path/to/model", &config)
+    ///     .expect("Failed to create generator");
+    /// ```
+    pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Generator> {
         Ok(Generator {
             ptr: ffi::generator(
                 model_path
@@ -123,22 +197,61 @@ impl Generator {
         })
     }
 
-    /// Generates from a batch of start tokens.
+    /// Generates a sequence of tokens following the provided batch of start tokens.
     ///
-    /// `start_tokens` are Batch of start tokens. If the decoder starts from a special start token
-    /// like `<s>`, this token should be added to this input.
-    pub fn generate_batch<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
+    /// This function generates tokens sequentially starting from the given `start_tokens`.
+    /// If the decoding process should start with a specific start token such as `<s>`,
+    /// it needs to be included in the input. The generation continues according to the
+    /// options specified in `options`.
+    ///
+    /// An optional `callback` can be provided, which is called with each token generated
+    /// during the process. This callback allows for monitoring and reacting to the generation
+    /// step-by-step. If the callback returns `true`, the generation process for the current batch
+    /// will be stopped. It's important to note that if a callback is used, `options.beam_size`
+    /// must be set to `1`.
+    ///
+    /// # Arguments
+    /// * `start_tokens` - A vector of vectors containing start tokens for each sequence in the
+    ///   batch. These tokens represent the initial state of the generation process.
+    /// * `options` - Settings applied to the generation process, such as beam size and other
+    ///   generation-specific configurations.
+    /// * `callback` - An optional mutable reference to a closure that is invoked for each
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`.
+    ///   Returning `true` will stop the generation for that batch.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `GenerationResult` if successful, encapsulating
+    /// the generated sequences for each input start token batch, or an error if the generation fails.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use ct2rs::config::Config;
+    /// use ct2rs::generator::{Generator, GenerationOptions, GenerationStepResult};
+    ///
+    /// let start_tokens = vec![vec!["<s>".to_string()]];
+    /// let options = GenerationOptions::default();
+    /// let mut callback = |step_result: GenerationStepResult| -> bool {
+    ///     println!("{:?}", step_result);
+    ///     false // Continue processing
+    /// };
+    /// let generator = Generator::new("/path/to/model", &Config::default())
+    ///     .expect("Failed to create generator");
+    /// let results = generator.generate_batch(&start_tokens, &options, Some(&mut callback))
+    ///     .expect("Generation failed");
+    /// ```
+    pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,
         start_tokens: &Vec<Vec<T>>,
         options: &GenerationOptions<U, V>,
-    ) -> anyhow::Result<Vec<GenerationResult>> {
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+    ) -> Result<Vec<GenerationResult>> {
         Ok(self
             .ptr
             .generate_batch(
                 &vec_ffi_vecstr(start_tokens),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut GenerationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(GenerationResult::from)
@@ -146,17 +259,20 @@ impl Generator {
     }
 
     /// Number of batches in the work queue.
-    pub fn num_queued_batches(&self) -> anyhow::Result<usize> {
+    #[inline]
+    pub fn num_queued_batches(&self) -> Result<usize> {
         self.ptr.num_queued_batches().map_err(Error::from)
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
-    pub fn num_active_batches(&self) -> anyhow::Result<usize> {
+    #[inline]
+    pub fn num_active_batches(&self) -> Result<usize> {
         self.ptr.num_active_batches().map_err(Error::from)
     }
 
     /// Number of parallel replicas.
-    pub fn num_replicas(&self) -> anyhow::Result<usize> {
+    #[inline]
+    pub fn num_replicas(&self) -> Result<usize> {
         self.ptr.num_replicas().map_err(Error::from)
     }
 }
@@ -214,9 +330,6 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub cache_static_prompt: bool,
     /// Include the input tokens in the generation result.
     pub include_prompt_in_result: bool,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
@@ -250,7 +363,6 @@ impl Default for GenerationOptions<String, String> {
             include_prompt_in_result: true,
             max_batch_size: 0,
             batch_type: Default::default(),
-            callback: None,
         }
     }
 }
@@ -308,11 +420,13 @@ impl From<ffi::GenerationResult> for GenerationResult {
 
 impl GenerationResult {
     /// Returns the number of sequences.
+    #[inline]
     pub fn num_sequences(&self) -> usize {
         self.sequences.len()
     }
 
     /// Returns true if this result has scores.
+    #[inline]
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }
@@ -348,6 +462,5 @@ mod tests {
         assert!(options.include_prompt_in_result);
         assert_eq!(options.max_batch_size, 0);
         assert_eq!(options.batch_type, Default::default());
-        assert_eq!(options.callback, None);
     }
 }

@@ -6,29 +6,17 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-//! This module provides raw Rust bindings to the `ctranslate2::Translator`.
+//! This module provides a Rust binding to the
+//! [`ctranslate2::Translator`](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html).
 //!
-//! # Example
-//! Below is an example where a given list of tokens is translated into Japanese:
+//! The main structure provided by this module is the [`Translator`] structure, which serves as
+//! the interface to the translation functionalities of the `ctranslate2` library.
 //!
-//! ```no_run
-//! # use anyhow::Result;
-//! use ct2rs::config::{Config, Device};
-//! use ct2rs::translator::Translator;
+//! In addition to the `Translator`, this module also offers various supportive structures such
+//! as [`TranslationOptions`] and [`TranslationResult`].
 //!
-//! # fn main() -> Result<()> {
-//! let translator = Translator::new("/path/to/model", &Config::default())?;
-//! let res = translator.translate_batch_with_target_prefix(
-//!     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
-//!     &vec![vec!["jpn_Jpan"]],
-//!     &Default::default()
-//! )?;
-//! for r in res {
-//!     println!("{:?}", r);
-//! }
-//! # Ok(())
-//! # }
-//! ```
+//! For more detailed information on each structure and its usage, please refer to their respective
+//! documentation within this module.
 
 use std::path::Path;
 
@@ -36,8 +24,34 @@ use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use crate::config::{BatchType, Config};
-use crate::types::{noop_callback, vec_ffi_vecstr};
 pub use crate::types::ffi::GenerationStepResult;
+use crate::types::vec_ffi_vecstr;
+
+trait GenerationCallback {
+    fn execute(&mut self, res: GenerationStepResult) -> bool;
+}
+
+impl<F: FnMut(GenerationStepResult) -> bool> GenerationCallback for F {
+    fn execute(&mut self, args: GenerationStepResult) -> bool {
+        self(args)
+    }
+}
+type TranslationCallbackBox<'a> = Box<dyn GenerationCallback + 'a>;
+
+impl<'a> From<Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>>
+    for TranslationCallbackBox<'a>
+{
+    fn from(opt: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>) -> Self {
+        match opt {
+            None => Box::new(|_| false) as TranslationCallbackBox,
+            Some(c) => Box::new(c) as TranslationCallbackBox,
+        }
+    }
+}
+
+fn execute_translation_callback(f: &mut TranslationCallbackBox, arg: GenerationStepResult) -> bool {
+    f.execute(arg)
+}
 
 #[cxx::bridge]
 mod ffi {
@@ -76,6 +90,14 @@ mod ffi {
         // attention: Vec<Vec<Vec<f32>>>,
     }
 
+    extern "Rust" {
+        type TranslationCallbackBox<'a>;
+        fn execute_translation_callback(
+            f: &mut TranslationCallbackBox,
+            arg: GenerationStepResult,
+        ) -> bool;
+    }
+
     unsafe extern "C++" {
         include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/translator.h");
@@ -85,7 +107,7 @@ mod ffi {
 
         type Config = crate::config::ffi::Config;
         type BatchType = crate::config::ffi::BatchType;
-        type GenerationStepResult<'a> = crate::types::ffi::GenerationStepResult<'a>;
+        type GenerationStepResult = crate::types::ffi::GenerationStepResult;
 
         type Translator;
 
@@ -97,7 +119,7 @@ mod ffi {
             source: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut TranslationCallbackBox,
         ) -> Result<Vec<TranslationResult>>;
 
         fn translate_batch_with_target_prefix(
@@ -106,7 +128,7 @@ mod ffi {
             target_prefix: &Vec<VecStr>,
             options: &TranslationOptions,
             has_callback: bool,
-            callback: fn(GenerationStepResult) -> bool,
+            callback: &mut TranslationCallbackBox,
         ) -> Result<Vec<TranslationResult>>;
 
         fn num_queued_batches(self: &Translator) -> Result<usize>;
@@ -182,9 +204,6 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub min_alternative_expansion_prob: f32,
     /// Replace unknown target tokens by the original source token with the highest attention.
     pub replace_unknowns: bool,
-    /// Optional function that is called for each generated token when `beam_size` is 1.
-    /// If the callback function returns `true`, the decoding will stop for this batch.
-    pub callback: Option<fn(GenerationStepResult) -> bool>,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
     /// so that the number of padding positions is minimized.
@@ -221,7 +240,6 @@ impl Default for TranslationOptions<String> {
             replace_unknowns: false,
             max_batch_size: 0,
             batch_type: BatchType::default(),
-            callback: None,
         }
     }
 }
@@ -258,13 +276,81 @@ impl<T: AsRef<str>> TranslationOptions<T> {
     }
 }
 
-/// A text translator.
+/// A Rust binding to the
+/// [`ctranslate2::Translator`](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html).
+///
+/// # Example
+/// Below is an example where a given list of tokens is translated:
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// use ct2rs::config::{Config, Device};
+/// use ct2rs::translator::Translator;
+///
+/// # fn main() -> Result<()> {
+/// let translator = Translator::new("/path/to/model", &Config::default())?;
+/// let res = translator.translate_batch(
+///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &Default::default(),
+///     None,
+/// )?;
+/// for r in res {
+///     println!("{:?}", r);
+/// }
+/// # Ok(())
+/// # }
+/// ```
+///
+/// If the model requires target prefixes, use [`Translator::translate_batch_with_target_prefix`]
+/// instead:
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// use ct2rs::config::{Config, Device};
+/// use ct2rs::translator::Translator;
+///
+/// # fn main() -> Result<()> {
+/// let translator = Translator::new("/path/to/model", &Config::default())?;
+/// let res = translator.translate_batch_with_target_prefix(
+///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &vec![vec!["jpn_Jpan"]],
+///     &Default::default(),
+///     None,
+/// )?;
+/// for r in res {
+///     println!("{:?}", r);
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub struct Translator {
     ptr: UniquePtr<ffi::Translator>,
 }
 
 impl Translator {
-    /// Initializes the translator.
+    /// Creates and initializes an instance of `Translator`.
+    ///
+    /// This function constructs a new `Translator` by loading a language model from the specified
+    /// `model_path` and applying the provided `config` settings.
+    ///
+    /// # Arguments
+    /// * `model_path` - A path to the directory containing the language model to be loaded.
+    /// * `config` - A reference to a `Config` structure that specifies various settings
+    ///   and configurations for the `Translator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Translator`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use ct2rs::config::Config;
+    /// use ct2rs::translator::Translator;
+    ///
+    /// let config = Config::default();
+    /// let translator = Translator::new("/path/to/model", &config)
+    ///     .expect("Failed to create translator");
+    /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Translator> {
         Ok(Translator {
             ptr: ffi::translator(
@@ -277,35 +363,103 @@ impl Translator {
         })
     }
 
-    /// Translates a batch of tokens.
-    pub fn translate_batch<T, V>(
+    /// Translates multiple lists of tokens in a batch processing manner.
+    ///
+    /// This function takes a vector of token lists and performs batch translation according to the
+    /// specified settings in `options`. The results of the batch translation are returned as a
+    /// vector. An optional `callback` closure can be provided which is invoked for each new token
+    /// generated during the translation process. This allows for step-by-step reception of the
+    /// batch translation results. If the callback returns `true`, it will stop the translation for
+    /// that batch. Note that if a callback is provided, `options.beam_size` must be set to `1`.
+    ///
+    /// # Arguments
+    /// * `source` - A vector of token lists, each list representing a sequence of tokens to be
+    ///    translated.
+    /// * `options` - Settings applied to the batch translation process.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`. If it
+    ///   returns `true`, the translation process for the current batch will stop.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
+    /// the translation fails.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use ct2rs::config::Config;
+    /// use ct2rs::translator::{Translator, TranslationOptions, GenerationStepResult};
+    ///
+    /// let source_tokens = vec![
+    ///     vec!["▁Hall", "o", "▁World", "!", "</s>"],
+    ///     vec![
+    ///         "▁This", "▁library", "▁is", "▁a", "▁", "Rust", "▁", "binding", "s", "▁of",
+    ///         "▁C", "Trans", "late", "2", ".", "</s>"
+    ///     ],
+    /// ];
+    /// let options = TranslationOptions::default();
+    /// let mut callback = |step_result: GenerationStepResult| -> bool {
+    ///     println!("{:?}", step_result);
+    ///     false // Continue processing
+    /// };
+    /// let translator = Translator::new("/path/to/model", &Config::default())
+    ///     .expect("Failed to create translator");
+    /// let results = translator.translate_batch(&source_tokens, &options, Some(&mut callback))
+    ///     .expect("Translation failed");
+    /// ```
+    pub fn translate_batch<'a, T, V>(
         &self,
         source: &Vec<Vec<T>>,
         options: &TranslationOptions<V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
-        T: AsRef<str>,
+        T: AsRef<str> + std::fmt::Debug,
         V: AsRef<str>,
     {
+        println!("{:?}", source);
         Ok(self
             .ptr
             .translate_batch(
                 &vec_ffi_vecstr(source),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut TranslationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
             .collect())
     }
 
-    /// Translates a batch of tokens with target prefixes.
-    pub fn translate_batch_with_target_prefix<T, U, V>(
+    /// Translates multiple lists of tokens with target prefixes in a batch processing manner.
+    ///
+    /// This function takes a vector of token lists and corresponding target prefixes, performing
+    /// batch translation according to the specified settings in `options`. An optional `callback`
+    /// closure can be provided which is invoked for each new token generated during the translation
+    /// process.
+    ///
+    /// This function is similar to `translate_batch`, with the addition of handling target prefixes
+    /// that guide the translation process. For more detailed parameter and option descriptions,
+    /// refer to the documentation for [`Translator::translate_batch`].
+    ///
+    /// # Arguments
+    /// * `source` - A vector of token lists, each list representing a sequence of tokens to be
+    ///   translated.
+    /// * `target_prefix` - A vector of token lists, each list representing a sequence of target
+    ///   prefix tokens that provide a starting point for the translation output.
+    /// * `options` - Settings applied to the batch translation process.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`. If it
+    ///   returns `true`, the translation process for the current batch will stop.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
+    /// the translation fails.
+    pub fn translate_batch_with_target_prefix<'a, T, U, V>(
         &self,
         source: &Vec<Vec<T>>,
         target_prefix: &Vec<Vec<U>>,
         options: &TranslationOptions<V>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
@@ -318,8 +472,8 @@ impl Translator {
                 &vec_ffi_vecstr(source),
                 &vec_ffi_vecstr(target_prefix),
                 &options.to_ffi(),
-                options.callback.is_some(),
-                options.callback.unwrap_or(noop_callback),
+                callback.is_some(),
+                &mut TranslationCallbackBox::from(callback),
             )?
             .into_iter()
             .map(TranslationResult::from)
@@ -327,16 +481,19 @@ impl Translator {
     }
 
     /// Number of batches in the work queue.
+    #[inline]
     pub fn num_queued_batches(&self) -> Result<usize> {
         self.ptr.num_queued_batches().map_err(Error::from)
     }
 
     /// Number of batches in the work queue or currently processed by a worker.
+    #[inline]
     pub fn num_active_batches(&self) -> Result<usize> {
         self.ptr.num_active_batches().map_err(Error::from)
     }
 
     /// Number of parallel replicas.
+    #[inline]
     pub fn num_replicas(&self) -> Result<usize> {
         self.ptr.num_replicas().map_err(Error::from)
     }
@@ -362,21 +519,25 @@ impl From<ffi::TranslationResult> for TranslationResult {
 
 impl TranslationResult {
     /// Returns the first translation hypothesis if exists.
+    #[inline]
     pub fn output(&self) -> Option<&Vec<String>> {
         self.hypotheses.first()
     }
 
     /// Returns the score of the first translation hypothesis if exists.
+    #[inline]
     pub fn score(&self) -> Option<f32> {
         self.scores.first().copied()
     }
 
     /// Returns the number of translation hypotheses.
+    #[inline]
     pub fn num_hypotheses(&self) -> usize {
         self.hypotheses.len()
     }
 
     /// Returns true if this result contains scores.
+    #[inline]
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
     }
@@ -416,6 +577,5 @@ mod tests {
         assert!(!options.replace_unknowns);
         assert_eq!(options.max_batch_size, 0);
         assert_eq!(options.batch_type, BatchType::default());
-        assert_eq!(options.callback, None);
     }
 }
