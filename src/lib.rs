@@ -20,7 +20,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
+//! let t = Translator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! let res = t.translate_batch_with_target_prefix(
 //!     &vec![
 //!         "Hello world!",
@@ -50,7 +50,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let g = Generator::new(&path,  Tokenizer::new(&path)?, &Config::default())?;
+//! let g = Generator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! let res = g.generate_batch(
 //!     &vec!["prompt"],
 //!     &GenerationOptions::default(),
@@ -73,11 +73,14 @@ use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
+use crate::auto::Tokenizer as AutoTokenizer;
+pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
 pub use crate::types::ffi::GenerationStepResult;
 
+pub mod auto;
 pub mod config;
 pub mod generator;
 pub mod sentencepiece;
@@ -107,7 +110,7 @@ pub trait Tokenizer {
     ///
     /// # Returns
     /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
-    fn encode<T: AsRef<str>>(&self, input: &T) -> Result<Vec<String>>;
+    fn encode(&self, input: &str) -> Result<Vec<String>>;
 
     /// Decodes a given sequence of tokens back into a single string.
     ///
@@ -128,7 +131,7 @@ fn encode_strings<T: Tokenizer, U: AsRef<str>>(
 ) -> Result<Vec<Vec<String>>> {
     sources
         .into_iter()
-        .map(|s| tokenizer.encode(s))
+        .map(|s| tokenizer.encode(s.as_ref()))
         .collect::<Result<Vec<Vec<String>>>>()
 }
 
@@ -138,9 +141,16 @@ pub struct Translator<T: Tokenizer> {
     tokenizer: T,
 }
 
+impl Translator<AutoTokenizer> {
+    /// Initializes the translator with [`auto::Tokenizer`].
+    pub fn new<U: AsRef<Path>>(path: U, config: &Config) -> Result<Self> {
+        Self::with_tokenizer(&path, AutoTokenizer::new(&path)?, config)
+    }
+}
+
 impl<T: Tokenizer> Translator<T> {
     /// Initializes the translator with the given tokenizer.
-    pub fn new<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
+    pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Translator {
             translator: translator::Translator::new(path, config)?,
             tokenizer,
@@ -245,9 +255,16 @@ pub struct Generator<T: Tokenizer> {
     tokenizer: T,
 }
 
+impl Generator<AutoTokenizer> {
+    /// Initializes the generator with [`auto::Tokenizer`].
+    pub fn new<T: AsRef<Path>>(path: T, config: &Config) -> Result<Self> {
+        Self::with_tokenizer(&path, AutoTokenizer::new(&path)?, config)
+    }
+}
+
 impl<T: Tokenizer> Generator<T> {
     /// Initializes the generator with the given tokenizer.
-    pub fn new<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
+    pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Generator {
             generator: generator::Generator::new(path, config)?,
             tokenizer,

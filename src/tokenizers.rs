@@ -26,7 +26,7 @@
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
-//! let t = Translator::new(&path, Tokenizer::new(&path)?, &Config::default())?;
+//! let t = Translator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
 //! # Ok(())
 //! # }
 //! ```
@@ -79,9 +79,9 @@ impl crate::Tokenizer for Tokenizer {
     ///
     /// # Returns
     /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
-    fn encode<T: AsRef<str>>(&self, input: &T) -> Result<Vec<String>> {
+    fn encode(&self, input: &str) -> Result<Vec<String>> {
         self.tokenizer
-            .encode(input.as_ref(), self.special_token)
+            .encode(input, self.special_token)
             .map(|r| r.get_tokens().to_vec())
             .map_err(|err| anyhow!("failed to encode the given input: {err}"))
     }

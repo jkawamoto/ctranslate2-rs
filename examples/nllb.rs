@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     } else {
         Config::default()
     };
-    let t = Translator::new(&args.path, Tokenizer::new(&args.path)?, &cfg)?;
+    let t = Translator::with_tokenizer(&args.path, Tokenizer::new(&args.path)?, &cfg)?;
 
     let sources = BufReader::new(File::open(args.prompt)?)
         .lines()
