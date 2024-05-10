@@ -81,6 +81,7 @@ pub use crate::translator::TranslationOptions;
 pub use crate::types::ffi::GenerationStepResult;
 
 pub mod auto;
+pub mod bpe;
 pub mod config;
 pub mod generator;
 pub mod sentencepiece;
