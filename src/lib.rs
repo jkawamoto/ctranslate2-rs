@@ -74,8 +74,8 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 
 use crate::auto::Tokenizer as AutoTokenizer;
-pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
+pub use crate::config::{set_log_level, set_random_seed};
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
 
@@ -248,7 +248,7 @@ impl<T: Tokenizer> Translator<T> {
                 .hypotheses
                 .into_iter()
                 .next()
-                .ok_or(anyhow!("no results are returned"))?;
+                .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
                     .decode(h.into_iter().collect())
@@ -307,7 +307,7 @@ impl<T: Tokenizer> Translator<T> {
                 .hypotheses
                 .into_iter()
                 .next()
-                .ok_or(anyhow!("no results are returned"))?;
+                .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
                     .decode(h.into_iter().skip(prefix.len()).collect())

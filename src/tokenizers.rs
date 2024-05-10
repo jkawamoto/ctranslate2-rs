@@ -102,7 +102,7 @@ impl crate::Tokenizer for Tokenizer {
         let decoder = self
             .tokenizer
             .get_decoder()
-            .ok_or(anyhow!("no decoder is provided"))?;
+            .ok_or_else(|| anyhow!("no decoder is provided"))?;
 
         decoder
             .decode(tokens)

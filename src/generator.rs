@@ -191,7 +191,7 @@ impl Generator {
                 model_path
                     .as_ref()
                     .to_str()
-                    .ok_or(anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.as_ref().display()))?,
                 config.to_ffi(),
             )?,
         })
