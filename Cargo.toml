@@ -76,3 +76,6 @@ name = "mpt"
 [[example]]
 name = "nllb"
 
+[[example]]
+name = "gpt-2"
+
