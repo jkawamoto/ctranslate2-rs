@@ -416,7 +416,6 @@ impl Translator {
         T: AsRef<str> + std::fmt::Debug,
         V: AsRef<str>,
     {
-        println!("{:?}", source);
         Ok(self
             .ptr
             .translate_batch(
