@@ -6,25 +6,53 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! Translate a file using NLLB models.
+//!
+//! In this example, we will use
+//! the [NLLB](https://huggingface.co/docs/transformers/model_doc/nllb) model
+//! to perform a translation from English to Japanese.
+//! The original Python version of the code can be found in the
+//! [CTranslate2 documentation](https://opennmt.net/CTranslate2/guides/transformers.html#nllb).
+//!
+//! First, convert the model files with the following command:
+//!
+//! ```bash
+//! pip install -U ctranslate2 huggingface_hub torch transformers
+//!
+//! ct2-transformers-converter --model facebook/nllb-200-distilled-600M \
+//!     --output_dir nllb-200-distilled-600M --copy_files tokenizer.json
+//! ```
+//!
+//! Note: The above command copies `tokenizer.json` because it is provided by the
+//! [facebook/nllb-200-distilled-600M](https://huggingface.co/facebook/nllb-200-distilled-600M)
+//! repository.
+//! If you prefer to use another repository that offers `source.spm` and `target.spm`,
+//! you can copy it using the option `--copy_files source.spm target.spm`.
+//!
+//! Create a file named `prompt.txt`, write the sentence you want to translate into it,
+//! and save the file.
+//! Then, execute the sample code below with the following command:
+//!
+//! ```bash
+//! cargo run --example nllb -- ./nllb-200-distilled-600M
+//! ```
+//!
+
 use std::fs::File;
 use std::io;
-use std::io::{BufRead, BufReader, BufWriter, stdout, Write};
+use std::io::{BufRead, BufReader};
 use std::time;
 
 use anyhow::Result;
 use clap::Parser;
 
 use ct2rs::config::{Config, Device};
-use ct2rs::tokenizers::Tokenizer;
 use ct2rs::Translator;
 
 /// Translate a file using NLLB.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path to the output file. If not specified, output to stdout.
-    #[arg(short, long, value_name = "FILE")]
-    output: Option<String>,
     /// Path to the file contains prompts.
     #[arg(short, long, value_name = "FILE", default_value = "prompt.txt")]
     prompt: String,
@@ -49,7 +77,7 @@ fn main() -> Result<()> {
     } else {
         Config::default()
     };
-    let t = Translator::with_tokenizer(&args.path, Tokenizer::new(&args.path)?, &cfg)?;
+    let t = Translator::new(&args.path, &cfg)?;
 
     let sources = BufReader::new(File::open(args.prompt)?)
         .lines()
@@ -65,14 +93,10 @@ fn main() -> Result<()> {
     )?;
     let elapsed = now.elapsed();
 
-    let mut out: BufWriter<Box<dyn Write>> = BufWriter::new(match args.output {
-        None => Box::new(stdout()),
-        Some(p) => Box::new(File::create(p)?),
-    });
     for (r, _) in res {
-        writeln!(out, "{r}")?;
+        println!("{r}");
     }
-    writeln!(out, "Time taken: {:?}", elapsed)?;
+    println!("Time taken: {:?}", elapsed);
 
     Ok(())
 }
