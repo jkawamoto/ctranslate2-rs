@@ -78,7 +78,6 @@ pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
-pub use crate::types::ffi::GenerationStepResult;
 
 pub mod auto;
 pub mod bpe;
@@ -110,7 +109,8 @@ pub trait Tokenizer {
     /// * `input` - A reference to the string to be tokenized.
     ///
     /// # Returns
-    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
+    /// A `Result` containing either the vector of tokens if successful or an error if the
+    /// tokenization fails.
     fn encode(&self, input: &str) -> Result<Vec<String>>;
 
     /// Decodes a given sequence of tokens back into a single string.
@@ -121,8 +121,21 @@ pub trait Tokenizer {
     /// * `tokens` - A vector of strings representing the tokens to be decoded.
     ///
     /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String>;
+
+    /// Decodes a given sequence of token ids back into a single string.
+    ///
+    /// This function takes a vector of token ids and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
+    fn decode_ids(&self, ids: &[u32]) -> Result<String>;
 }
 
 #[inline]
@@ -134,6 +147,39 @@ fn encode_strings<T: Tokenizer, U: AsRef<str>>(
         .into_iter()
         .map(|s| tokenizer.encode(s.as_ref()))
         .collect::<Result<Vec<Vec<String>>>>()
+}
+
+/// The result for a single generation step.
+#[derive(Clone, Debug)]
+pub struct GenerationStepResult {
+    /// The decoding step.
+    pub step: usize,
+    /// The batch index.
+    pub batch_id: usize,
+    /// Index of the hypothesis in the batch.
+    pub hypothesis_id: usize,
+    /// The generated text.
+    pub text: String,
+    /// true if return_log_prob was enabled
+    pub has_log_prob: bool,
+    /// Log probability of the token.
+    pub log_prob: f32,
+    /// Whether this step is the last step for this batch.
+    pub is_last: bool,
+}
+
+impl GenerationStepResult {
+    fn from_ffi(r: types::ffi::GenerationStepResult, text: String) -> Self {
+        Self {
+            step: r.step,
+            batch_id: r.batch_id,
+            hypothesis_id: r.hypothesis_id,
+            text,
+            has_log_prob: r.has_log_prob,
+            log_prob: r.log_prob,
+            is_last: r.is_last,
+        }
+    }
 }
 
 /// A text translator with a tokenizer.
@@ -169,11 +215,31 @@ impl<T: Tokenizer> Translator<T> {
         U: AsRef<str>,
         V: AsRef<str>,
     {
-        let output = self.translator.translate_batch(
-            &encode_strings(&self.tokenizer, sources)?,
-            options,
-            callback,
-        )?;
+        let output = if let Some(callback) = callback {
+            let mut callback_result = Ok(());
+            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
+                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
+                    Err(e) => {
+                        callback_result = Err(e);
+                        true
+                    }
+                }
+            };
+            let output = self.translator.translate_batch(
+                &encode_strings(&self.tokenizer, sources)?,
+                options,
+                Some(&mut wrapped_callback),
+            )?;
+            callback_result?;
+            output
+        } else {
+            self.translator.translate_batch(
+                &encode_strings(&self.tokenizer, sources)?,
+                options,
+                None,
+            )?
+        };
 
         let mut res = Vec::new();
         for r in output.into_iter() {
@@ -206,12 +272,33 @@ impl<T: Tokenizer> Translator<T> {
         V: AsRef<str>,
         W: AsRef<str>,
     {
-        let output = self.translator.translate_batch_with_target_prefix(
-            &encode_strings(&self.tokenizer, sources)?,
-            &target_prefixes,
-            options,
-            callback,
-        )?;
+        let output = if let Some(callback) = callback {
+            let mut callback_result = Ok(());
+            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
+                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
+                    Err(e) => {
+                        callback_result = Err(e);
+                        true
+                    }
+                }
+            };
+            let output = self.translator.translate_batch_with_target_prefix(
+                &encode_strings(&self.tokenizer, sources)?,
+                &target_prefixes,
+                options,
+                Some(&mut wrapped_callback),
+            )?;
+            callback_result?;
+            output
+        } else {
+            self.translator.translate_batch_with_target_prefix(
+                &encode_strings(&self.tokenizer, sources)?,
+                &target_prefixes,
+                options,
+                None,
+            )?
+        };
 
         let mut res = Vec::new();
         for (r, prefix) in output.into_iter().zip(target_prefixes) {
@@ -284,11 +371,31 @@ impl<T: Tokenizer> Generator<T> {
         V: AsRef<str>,
         W: AsRef<str>,
     {
-        let output = self.generator.generate_batch(
-            &encode_strings(&self.tokenizer, prompts)?,
-            options,
-            callback,
-        )?;
+        let output = if let Some(callback) = callback {
+            let mut callback_result = Ok(());
+            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
+                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
+                    Err(e) => {
+                        callback_result = Err(e);
+                        true
+                    }
+                }
+            };
+            let output = self.generator.generate_batch(
+                &encode_strings(&self.tokenizer, prompts)?,
+                options,
+                Some(&mut wrapped_callback),
+            )?;
+            callback_result?;
+            output
+        } else {
+            self.generator.generate_batch(
+                &encode_strings(&self.tokenizer, prompts)?,
+                options,
+                None,
+            )?
+        };
 
         let mut res = Vec::new();
         for r in output.into_iter() {

@@ -74,7 +74,8 @@ impl crate::Tokenizer for Tokenizer {
     /// * `input` - A reference to the string to be tokenized.
     ///
     /// # Returns
-    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
+    /// A `Result` containing either the vector of tokens if successful or an error if the
+    /// tokenization fails.
     fn encode(&self, input: &str) -> Result<Vec<String>> {
         self.tokenizer.encode(input)
     }
@@ -87,8 +88,23 @@ impl crate::Tokenizer for Tokenizer {
     /// * `tokens` - A vector of strings representing the tokens to be decoded.
     ///
     /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String> {
         self.tokenizer.decode(tokens)
+    }
+
+    /// Decodes a given sequence of token ids back into a single string.
+    ///
+    /// This function takes a vector of token ids and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
+    fn decode_ids(&self, ids: &[u32]) -> Result<String>{
+        self.tokenizer.decode_ids(ids)
     }
 }
