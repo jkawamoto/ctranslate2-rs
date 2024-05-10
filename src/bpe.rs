@@ -116,4 +116,23 @@ impl crate::Tokenizer for Tokenizer {
             .decode(tokens)
             .map_err(|e| anyhow!("failed to decode tokens: {e}"))
     }
+
+    /// Decodes a given sequence of token ids back into a single string.
+    ///
+    /// This function takes a vector of token ids and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
+    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
+        self.decode(
+            ids.into_iter()
+                .map(|id| self.encoder.id_to_token(*id))
+                .collect::<Option<Vec<String>>>()
+                .ok_or_else(|| anyhow!("unknown token ID"))?,
+        )
+    }
 }

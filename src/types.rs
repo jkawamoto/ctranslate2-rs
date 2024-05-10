@@ -27,7 +27,7 @@ pub(crate) mod ffi {
         pub has_log_prob: bool,
         /// Log probability of the token.
         pub log_prob: f32,
-        /// Whether this step is the last decoding step for this batch.
+        /// Whether this step is the last generation step for this batch.
         pub is_last: bool,
     }
 

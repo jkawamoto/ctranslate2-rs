@@ -45,7 +45,8 @@ pub struct Tokenizer {
 }
 
 impl Tokenizer {
-    /// Create a tokenizer instance by specifying the path to a directory containing `tokenizer.json`.
+    /// Create a tokenizer instance by specifying the path to a directory containing
+    /// `tokenizer.json`.
     pub fn new<T: AsRef<Path>>(path: T) -> Result<Self> {
         Tokenizer::from_file(path.as_ref().join(TOKENIZER_FILENAME))
     }
@@ -78,7 +79,8 @@ impl crate::Tokenizer for Tokenizer {
     /// * `input` - A reference to the string to be tokenized.
     ///
     /// # Returns
-    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
+    /// A `Result` containing either the vector of tokens if successful or an error if the
+    /// tokenization fails.
     fn encode(&self, input: &str) -> Result<Vec<String>> {
         self.tokenizer
             .encode(input, self.special_token)
@@ -94,7 +96,8 @@ impl crate::Tokenizer for Tokenizer {
     /// * `tokens` - A vector of strings representing the tokens to be decoded.
     ///
     /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String> {
         let decoder = self
             .tokenizer
@@ -104,5 +107,21 @@ impl crate::Tokenizer for Tokenizer {
         decoder
             .decode(tokens)
             .map_err(|err| anyhow!("failed to decode: {err}"))
+    }
+
+    /// Decodes a given sequence of token ids back into a single string.
+    ///
+    /// This function takes a vector of token ids and reconstructs the original string.
+    ///
+    /// # Arguments
+    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
+    ///
+    /// # Returns
+    /// A `Result` containing either the reconstructed string if successful or an error if the
+    /// decoding fails.
+    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
+        self.tokenizer
+            .decode(ids, self.special_token)
+            .map_err(|err| anyhow!("failed to decode IDs: {err}"))
     }
 }

@@ -91,3 +91,5 @@ name = "opt"
 [[example]]
 name = "t5"
 
+[[example]]
+name = "stream"
