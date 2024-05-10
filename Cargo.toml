@@ -79,3 +79,6 @@ name = "nllb"
 [[example]]
 name = "gpt-2"
 
+[[example]]
+name = "gpt-j"
+
