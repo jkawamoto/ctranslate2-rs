@@ -55,6 +55,8 @@ impl Tokenizer {
                 Box::new(t)
             } else if let Ok(t) = crate::sentencepiece::Tokenizer::new(&path) {
                 Box::new(t)
+            } else if let Ok(t) = crate::bpe::Tokenizer::new(&path, None) {
+                Box::new(t)
             } else {
                 bail!("failed to create a tokenizer")
             },

@@ -9,7 +9,7 @@
 //! A module for utilizing the tokenizer based on
 //! [Sentencepiece crate](https://docs.rs/sentencepiece/).
 //!
-//! This module facilitates the creation of a [`Tokenizer` ]structure instance by specifying
+//! This module facilitates the creation of a [`Tokenizer`] structure instance by specifying
 //! the path to a directory containing `source.spm` and `target.spm`. The created `Tokenizer`
 //! instance can then be utilized in [`Translator`](crate::Translator)
 //! and [`Generator`](crate::Generator).
