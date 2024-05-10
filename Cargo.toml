@@ -82,3 +82,6 @@ name = "gpt-2"
 [[example]]
 name = "gpt-j"
 
+[[example]]
+name = "gpt-neox"
+
