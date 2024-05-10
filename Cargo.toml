@@ -71,5 +71,8 @@ name = "falcon"
 name = "marian-mt"
 
 [[example]]
+name = "mpt"
+
+[[example]]
 name = "nllb"
 
