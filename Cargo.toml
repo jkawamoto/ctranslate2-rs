@@ -85,3 +85,6 @@ name = "gpt-j"
 [[example]]
 name = "gpt-neox"
 
+[[example]]
+name = "t5"
+
