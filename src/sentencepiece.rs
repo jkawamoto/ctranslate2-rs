@@ -34,7 +34,7 @@
 
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Error, Result};
 use sentencepiece::SentencePieceProcessor;
 
 const SOURCE_SPM_FILE: &str = "source.spm";
@@ -98,9 +98,7 @@ impl crate::Tokenizer for Tokenizer {
     /// A `Result` containing either the reconstructed string if successful or an error if the
     /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String> {
-        self.decoder
-            .decode_pieces(&tokens)
-            .map_err(|err| anyhow!("failed to decode tokens: {err}"))
+        self.decoder.decode_pieces(&tokens).map_err(Error::new)
     }
 
     /// Decodes a given sequence of token ids back into a single string.
@@ -114,8 +112,6 @@ impl crate::Tokenizer for Tokenizer {
     /// A `Result` containing either the reconstructed string if successful or an error if the
     /// decoding fails.
     fn decode_ids(&self, ids: &[u32]) -> Result<String> {
-        self.decoder
-            .decode_piece_ids(ids)
-            .map_err(|err| anyhow!("failed to decode IDs: {err}"))
+        self.decoder.decode_piece_ids(ids).map_err(Error::new)
     }
 }

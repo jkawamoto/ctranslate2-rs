@@ -388,7 +388,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             return_scores: self.return_scores,
             return_alternatives: self.return_alternatives,
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
-            static_prompt: self.static_prompt.iter().map(|v| v.as_ref()).collect(),
+            static_prompt: self.static_prompt.iter().map(AsRef::as_ref).collect(),
             cache_static_prompt: self.cache_static_prompt,
             include_prompt_in_result: self.include_prompt_in_result,
             max_batch_size: self.max_batch_size,
@@ -411,8 +411,12 @@ pub struct GenerationResult {
 impl From<ffi::GenerationResult> for GenerationResult {
     fn from(res: ffi::GenerationResult) -> Self {
         Self {
-            sequences: res.sequences.into_iter().map(|c| c.v).collect(),
-            sequences_ids: res.sequences_ids.into_iter().map(|c| c.v).collect(),
+            sequences: res.sequences.into_iter().map(Vec::<String>::from).collect(),
+            sequences_ids: res
+                .sequences_ids
+                .into_iter()
+                .map(Vec::<usize>::from)
+                .collect(),
             scores: res.scores,
         }
     }

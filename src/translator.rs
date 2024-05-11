@@ -510,7 +510,7 @@ pub struct TranslationResult {
 impl From<ffi::TranslationResult> for TranslationResult {
     fn from(r: ffi::TranslationResult) -> Self {
         Self {
-            hypotheses: r.hypotheses.into_iter().map(|h| h.v).collect(),
+            hypotheses: r.hypotheses.into_iter().map(Vec::<String>::from).collect(),
             scores: r.scores,
         }
     }
