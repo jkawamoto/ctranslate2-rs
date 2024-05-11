@@ -125,7 +125,7 @@ pub(crate) mod ffi {
 
     /// Logging level.
     ///
-    /// This enum can take one of the following two values:
+    /// This enum can take one of the following values:
     /// - `Off`
     /// - `Critical`
     /// - `Error`

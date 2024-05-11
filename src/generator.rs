@@ -178,12 +178,16 @@ impl Generator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::generator::Generator;
     ///
+    /// # fn main() -> Result<()> {
     /// let config = Config::default();
-    /// let generator = Generator::new("/path/to/model", &config)
-    ///     .expect("Failed to create generator");
+    /// let generator = Generator::new("/path/to/model", &config)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Generator> {
         Ok(Generator {
@@ -225,19 +229,22 @@ impl Generator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::generator::{Generator, GenerationOptions, GenerationStepResult};
     ///
+    /// # fn main() -> Result<()> {
     /// let start_tokens = vec![vec!["<s>".to_string()]];
     /// let options = GenerationOptions::default();
     /// let mut callback = |step_result: GenerationStepResult| -> bool {
     ///     println!("{:?}", step_result);
     ///     false // Continue processing
     /// };
-    /// let generator = Generator::new("/path/to/model", &Config::default())
-    ///     .expect("Failed to create generator");
-    /// let results = generator.generate_batch(&start_tokens, &options, Some(&mut callback))
-    ///     .expect("Generation failed");
+    /// let generator = Generator::new("/path/to/model", &Config::default())?;
+    /// let results = generator.generate_batch(&start_tokens, &options, Some(&mut callback))?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,

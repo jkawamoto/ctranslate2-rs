@@ -87,6 +87,7 @@ fn main() -> Result<()> {
         },
         // Each time a new token is generated, the following callback closure is called.
         // In this example, it writes to the standard output sequentially.
+        // Additionally, if the callback closure returns true, it can also stop the generation.
         Some(&mut |r: GenerationStepResult| -> bool {
             print!("{}", r.text);
             let _ = stdout().flush();
