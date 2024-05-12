@@ -276,9 +276,8 @@ impl GenerationStepResult {
 /// the output to standard output.
 ///
 ///```no_run
-/// # use anyhow::Result;
-/// #
 /// use std::io::{stdout, Write};
+/// use anyhow::Result;
 ///
 /// use ct2rs::config::Config;
 /// use ct2rs::{Translator, TranslationOptions, GenerationStepResult};
@@ -292,10 +291,10 @@ impl GenerationStepResult {
 ///     beam_size: 1,
 ///     ..Default::default()
 /// };
-/// let mut callback = |step_result: GenerationStepResult| -> bool {
+/// let mut callback = |step_result: GenerationStepResult| -> Result<()> {
 ///     print!("{:?}", step_result.text);
-///     let _ = stdout().flush();
-///     false // Continue processing
+///     stdout().flush()?;
+///     Ok(())
 /// };
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
 /// let results = translator.translate_batch(&sources, &options, Some(&mut callback))?;
@@ -368,15 +367,16 @@ impl<T: Tokenizer> Translator<T> {
     /// specified settings in `options`. The results of the batch translation are returned as a
     /// vector. An optional `callback` closure can be provided which is invoked for each new token
     /// generated during the translation process. This allows for step-by-step reception of the
-    /// batch translation results. If the callback returns `true`, it will stop the translation for
+    /// batch translation results. If the callback returns `Err`, it will stop the translation for
     /// that batch. Note that if a callback is provided, `options.beam_size` must be set to `1`.
     ///
     /// # Arguments
     /// * `source` - A vector of strings to be translated.
     /// * `options` - Settings applied to the batch translation process.
     /// * `callback` - An optional mutable reference to a closure that is called for each token
-    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`. If it
-    ///   returns `true`, the translation process for the current batch will stop.
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
     ///
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
@@ -386,7 +386,7 @@ impl<T: Tokenizer> Translator<T> {
         &self,
         sources: &Vec<U>,
         options: &TranslationOptions<V>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -395,13 +395,15 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.translator.translate_batch(
                 &encode_strings(&self.tokenizer, sources)?,
@@ -453,8 +455,9 @@ impl<T: Tokenizer> Translator<T> {
     ///   prefix tokens that provide a starting point for the translation output.
     /// * `options` - Settings applied to the batch translation process.
     /// * `callback` - An optional mutable reference to a closure that is called for each token
-    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`. If it
-    ///   returns `true`, the translation process for the current batch will stop.
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
     ///
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
@@ -464,7 +467,7 @@ impl<T: Tokenizer> Translator<T> {
         sources: &Vec<U>,
         target_prefixes: &Vec<Vec<V>>,
         options: &TranslationOptions<W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -474,13 +477,15 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.translator.translate_batch_with_target_prefix(
                 &encode_strings(&self.tokenizer, sources)?,
@@ -563,10 +568,10 @@ impl<T: Tokenizer> Translator<T> {
 ///
 /// The following example generates text following a single prompt and outputs it to the standard
 /// output using a callback closure for stream processing.
-/// 
+///
 /// ```no_run
-/// # use anyhow::Result;
 /// use std::io::{stdout, Write};
+/// use anyhow::Result;
 ///
 /// use ct2rs::config::{Config, Device};
 /// use ct2rs::{Generator, GenerationOptions};
@@ -581,10 +586,10 @@ impl<T: Tokenizer> Translator<T> {
 ///         beam_size: 1,
 ///         ..Default::default()
 ///     },
-///     Some(&mut |step_result: GenerationStepResult| -> bool {
+///     Some(&mut |step_result: GenerationStepResult| -> Result<()> {
 ///         print!("{:?}", step_result.text);
-///         let _ = stdout().flush();
-///         false
+///         stdout().flush()?;
+///         Ok(())
 ///     })
 /// )?;
 /// # Ok(())
@@ -657,20 +662,20 @@ impl<T: Tokenizer> Generator<T> {
     /// The generation continues according to the
     /// options specified in `options`.
     ///
-    /// An optional `callback` can be provided, which is called with each token generated
-    /// during the process. This callback allows for monitoring and reacting to the generation
-    /// step-by-step. If the callback returns `true`, the generation process for the current batch
-    /// will be stopped. It's important to note that if a callback is used, `options.beam_size`
-    /// must be set to `1`.
+    /// An optional `callback` closure can be provided which is invoked for each new token
+    /// generated during the translation process. This allows for step-by-step reception of the
+    /// batch translation results. If the callback returns `Err`, it will stop the translation for
+    /// that batch. Note that if a callback is provided, `options.beam_size` must be set to `1`.
     ///
     /// # Arguments
     /// * `prompts` - A vector of prompts. These prompts represent the initial state of the
     ///   generation process.
     /// * `options` - Settings applied to the generation process, such as beam size and other
     ///   generation-specific configurations.
-    /// * `callback` - An optional mutable reference to a closure that is invoked for each
-    ///   generation step. The closure takes a `GenerationStepResult` and returns a `bool`.
-    ///   Returning `true` will stop the generation for that batch.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
     ///
     /// # Returns
     /// Returns a `Result` containing a vector of `GenerationResult` if successful, encapsulating
@@ -680,7 +685,7 @@ impl<T: Tokenizer> Generator<T> {
         &self,
         prompts: &Vec<U>,
         options: &GenerationOptions<V, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
         U: AsRef<str>,
@@ -690,13 +695,15 @@ impl<T: Tokenizer> Generator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.generator.generate_batch(
                 &encode_strings(&self.tokenizer, prompts)?,
