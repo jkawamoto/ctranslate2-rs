@@ -8,6 +8,8 @@
 
 //! This module defines common structures.
 
+use crate::types::ffi::{VecString, VecUSize};
+
 #[cxx::bridge]
 pub(crate) mod ffi {
     /// The result for a single generation step.
@@ -54,9 +56,21 @@ pub(crate) mod ffi {
 pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<ffi::VecStr> {
     src.iter()
         .map(|v| ffi::VecStr {
-            v: v.iter().map(|s| s.as_ref()).collect(),
+            v: v.iter().map(AsRef::as_ref).collect(),
         })
         .collect()
+}
+
+impl From<VecString> for Vec<String> {
+    fn from(value: VecString) -> Self {
+        value.v
+    }
+}
+
+impl From<VecUSize> for Vec<usize> {
+    fn from(value: VecUSize) -> Self {
+        value.v
+    }
 }
 
 #[cfg(test)]

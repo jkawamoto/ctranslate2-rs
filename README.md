@@ -8,8 +8,33 @@ At this time, it has only been tested and confirmed to work on macOS and Linux.
 Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
-# Compilation
 
+## Supported Models
+The ct2rs crate has been tested and confirmed to work with the following models:
+
+* BART
+* BLOOM
+* FALCON
+* Marian-MT
+* MPT
+* NLLB
+* GPT-2
+* GPT-J
+* OPT
+* T5
+
+Please see the respective 
+[examples](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples)
+for each model.
+
+
+## Stream API
+We also offer a streaming API that utilizes callback closures. 
+Please refer to the [example code](https://github.com/jkawamoto/ctranslate2-rs/blob/main/examples/stream.rs)
+for more information.
+
+
+## Compilation
 If you plan to use GPU acceleration, CUDA and cuDNN are available.
 Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
@@ -31,87 +56,20 @@ The installation of CMake is required to compile the library.
 Additional notes for Windows:
 it is necessary to add `RUSTFLAGS=-C target-feature=+crt-static` to the environment variables for compilation.
 
-## Model Conversion for CTranslate2
 
+## Model Conversion for CTranslate2
 To use model files with CTranslate2, they must first be converted.
 Below is an example of how to convert the `nllb-200-distilled-600M` model:
 
 ```shell-session
-pip install ctranslate2
-ct2-transformers-converter --model facebook/nllb-200-distilled-600M --output_dir nllb-200-distilled-600M --copy_files tokenizer.json
+pip install ctranslate2 huggingface_hub torch transformers
+ct2-transformers-converter --model facebook/nllb-200-distilled-600M --output_dir nllb-200-distilled-600M \
+    --copy_files tokenizer.json
 ```
 
 For more details, please refer to
 the [CTranslate2's docs](https://opennmt.net/CTranslate2/guides/transformers.html#nllb).
 
-## Example of text translation
-
-The following example translates English to German and Japanese using the previously converted
-model `nllb-200-distilled-600M`.
-
-```rust
-use anyhow::Result;
-
-use ct2rs::config::{Config, Device};
-use ct2rs::{TranslationOptions, Translator};
-use ct2rs::tokenizers::Tokenizer;
-
-fn main() -> Result<()> {
-    let path = "/path/to/nllb-200-distilled-600M";
-    let t = Translator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
-    let res = t.translate_batch_with_target_prefix(
-        &vec![
-            "Hello world!",
-            "This library provides Rust bindings for CTranslate2.",
-        ],
-        &vec![vec!["deu_Latn"], vec!["jpn_Jpan"]],
-        &TranslationOptions {
-            return_scores: true,
-            ..Default::default()
-        },
-        None
-    )?;
-    for r in res {
-        println!("{}, (score: {:?})", r.0, r.1);
-    }
-
-
-    Ok(())
-}
-```
-
-### Output
-
-```
-Hallo Welt!<unk>, (score: Some(-0.5597002))
-このライブラリでは,CTranslate2 の Rust バインディングが提供されています., (score: Some(-0.56321025))
-```
-
-## Example of text generation
-
-```rust
-use anyhow::Result;
-
-use ct2rs::config::{Config, Device};
-use ct2rs::{Generator, GenerationOptions};
-use ct2rs::sentencepiece::Tokenizer;
-
-fn main() -> Result<()> {
-    let path = "/path/to/model";
-    let g = Generator::with_tokenizer(&path, Tokenizer::new(&path)?, &Config::default())?;
-    let res = g.generate_batch(
-        &vec!["prompt"],
-        &GenerationOptions::default(),
-        None,
-    )?;
-    for r in res {
-        println!("{:?}", r.0);
-    }
-
-    Ok(())
-}
-```
 
 ## License
-
 This application is released under the MIT License. For details, see the [LICENSE](LICENSE) file.

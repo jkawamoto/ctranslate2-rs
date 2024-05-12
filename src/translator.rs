@@ -344,12 +344,16 @@ impl Translator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::translator::Translator;
     ///
+    /// # fn main() -> Result<()> {
     /// let config = Config::default();
-    /// let translator = Translator::new("/path/to/model", &config)
-    ///     .expect("Failed to create translator");
+    /// let translator = Translator::new("/path/to/model", &config)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Translator> {
         Ok(Translator {
@@ -357,7 +361,7 @@ impl Translator {
                 model_path
                     .as_ref()
                     .to_str()
-                    .ok_or(anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.as_ref().display()))?,
                 config.to_ffi(),
             )?,
         })
@@ -386,9 +390,12 @@ impl Translator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::translator::{Translator, TranslationOptions, GenerationStepResult};
     ///
+    /// # fn main() -> Result<()> {
     /// let source_tokens = vec![
     ///     vec!["▁Hall", "o", "▁World", "!", "</s>"],
     ///     vec![
@@ -401,10 +408,10 @@ impl Translator {
     ///     println!("{:?}", step_result);
     ///     false // Continue processing
     /// };
-    /// let translator = Translator::new("/path/to/model", &Config::default())
-    ///     .expect("Failed to create translator");
-    /// let results = translator.translate_batch(&source_tokens, &options, Some(&mut callback))
-    ///     .expect("Translation failed");
+    /// let translator = Translator::new("/path/to/model", &Config::default())?;
+    /// let results = translator.translate_batch(&source_tokens, &options, Some(&mut callback))?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn translate_batch<'a, T, V>(
         &self,
@@ -510,7 +517,7 @@ pub struct TranslationResult {
 impl From<ffi::TranslationResult> for TranslationResult {
     fn from(r: ffi::TranslationResult) -> Self {
         Self {
-            hypotheses: r.hypotheses.into_iter().map(|h| h.v).collect(),
+            hypotheses: r.hypotheses.into_iter().map(Vec::<String>::from).collect(),
             scores: r.scores,
         }
     }

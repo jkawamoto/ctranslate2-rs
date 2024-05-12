@@ -178,12 +178,16 @@ impl Generator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::generator::Generator;
     ///
+    /// # fn main() -> Result<()> {
     /// let config = Config::default();
-    /// let generator = Generator::new("/path/to/model", &config)
-    ///     .expect("Failed to create generator");
+    /// let generator = Generator::new("/path/to/model", &config)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Generator> {
         Ok(Generator {
@@ -191,7 +195,7 @@ impl Generator {
                 model_path
                     .as_ref()
                     .to_str()
-                    .ok_or(anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.as_ref().display()))?,
                 config.to_ffi(),
             )?,
         })
@@ -225,19 +229,22 @@ impl Generator {
     ///
     /// # Example
     /// ```no_run
+    /// # use anyhow::Result;
+    /// #
     /// use ct2rs::config::Config;
     /// use ct2rs::generator::{Generator, GenerationOptions, GenerationStepResult};
     ///
+    /// # fn main() -> Result<()> {
     /// let start_tokens = vec![vec!["<s>".to_string()]];
     /// let options = GenerationOptions::default();
     /// let mut callback = |step_result: GenerationStepResult| -> bool {
     ///     println!("{:?}", step_result);
     ///     false // Continue processing
     /// };
-    /// let generator = Generator::new("/path/to/model", &Config::default())
-    ///     .expect("Failed to create generator");
-    /// let results = generator.generate_batch(&start_tokens, &options, Some(&mut callback))
-    ///     .expect("Generation failed");
+    /// let generator = Generator::new("/path/to/model", &Config::default())?;
+    /// let results = generator.generate_batch(&start_tokens, &options, Some(&mut callback))?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,
@@ -388,7 +395,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             return_scores: self.return_scores,
             return_alternatives: self.return_alternatives,
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
-            static_prompt: self.static_prompt.iter().map(|v| v.as_ref()).collect(),
+            static_prompt: self.static_prompt.iter().map(AsRef::as_ref).collect(),
             cache_static_prompt: self.cache_static_prompt,
             include_prompt_in_result: self.include_prompt_in_result,
             max_batch_size: self.max_batch_size,
@@ -411,8 +418,12 @@ pub struct GenerationResult {
 impl From<ffi::GenerationResult> for GenerationResult {
     fn from(res: ffi::GenerationResult) -> Self {
         Self {
-            sequences: res.sequences.into_iter().map(|c| c.v).collect(),
-            sequences_ids: res.sequences_ids.into_iter().map(|c| c.v).collect(),
+            sequences: res.sequences.into_iter().map(Vec::<String>::from).collect(),
+            sequences_ids: res
+                .sequences_ids
+                .into_iter()
+                .map(Vec::<usize>::from)
+                .collect(),
             scores: res.scores,
         }
     }

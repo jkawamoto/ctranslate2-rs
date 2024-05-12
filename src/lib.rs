@@ -8,7 +8,49 @@
 
 //! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 //!
-//! # Examples
+//! This crate provides the following:
+//!
+//! * Rust bindings for
+//!   [Translator](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html) and
+//!   [Generator](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html) provided by
+//!   CTranslate2, specifically [`translator::Translator`] and [`generator::Generator`].
+//! * More user-friendly versions of these, [`Translator`] and [`Generator`],
+//!   which incorporate tokenizers for easier handling.
+//!
+//! # Tokenizers
+//! Both [`translator::Translator`] and [`generator::Generator`] work with sequences of tokens.
+//! To handle human-readable strings, a tokenizer is necessary.
+//! The [`Translator`] and [`Generator`] utilize Hugging Face and SentencePiece tokenizers
+//! to convert between strings and token sequences.
+//! The [`auto::Tokenizer`] automatically determines which tokenizer to use and constructs it
+//! appropriately.
+//!
+//! ## Example:
+//! ### [auto::Tokenizer]
+//! Here is an example of using [`auto::Tokenizer`] to build a Translator and translate a string:
+//!
+//! ```no_run
+//! # use anyhow::Result;
+//! #
+//! use ct2rs::config::Config;
+//! use ct2rs::Translator;
+//!
+//! # fn main() -> Result<()> {
+//! // Translator::new creates a translator instance with auto::Tokenizer.
+//! let t = Translator::new("/path/to/model", &Config::default())?;
+//! let res = t.translate_batch(
+//!     &vec!["Hallo World!"],
+//!     &Default::default(),
+//!     None,
+//! )?;
+//! for r in res {
+//!     println!("{:?}", r);
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### [tokenizers::Tokenizer]
 //! The following example translates English to German and Japanese using the tokenizer provided by
 //! the Hugging Face's [`tokenizers` crate](https://docs.rs/tokenizers/).
 //! ```no_run
@@ -40,6 +82,7 @@
 //! # }
 //! ```
 //!
+//! ### [sentencepiece::Tokenizer]
 //! The following example generates text using the tokenizer provided by
 //! [Sentencepiece crate](https://docs.rs/sentencepiece/).
 //! ```no_run
@@ -63,8 +106,29 @@
 //! # }
 //! ```
 //!
-//! Please also see the other sample code available in the
-//! [examples directory](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples).
+//! # Supported Models
+//! The `ct2rs` crate has been tested and confirmed to work with the following models:
+//!
+//! * BART
+//! * BLOOM
+//! * FALCON
+//! * Marian-MT
+//! * MPT
+//! * NLLB
+//! * GPT-2
+//! * GPT-J
+//! * OPT
+//! * T5
+//!
+//! Please see the respective
+//! [examples](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples) for each model.
+//!
+//! # Stream API
+//! This crate also offers a streaming API that utilizes callback closures.
+//! Please refer to
+//! [the example code](https://github.com/jkawamoto/ctranslate2-rs/blob/main/examples/stream.rs)
+//! for more information.
+//!
 
 #[cfg(feature = "mkl")]
 extern crate intel_mkl_src;
@@ -183,6 +247,60 @@ impl GenerationStepResult {
 }
 
 /// A text translator with a tokenizer.
+///
+/// # Example
+/// The following example translates two strings using default settings and outputs each to
+/// the standard output.
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// #
+/// use ct2rs::config::Config;
+/// use ct2rs::{Translator, TranslationOptions, GenerationStepResult};
+///
+/// # fn main() -> Result<()> {
+/// let sources = vec![
+///     "Hallo World!",
+///     "This crate provides Rust bindings for CTranslate2."
+/// ];
+/// let translator = Translator::new("/path/to/model", &Default::default())?;
+/// let results = translator.translate_batch(&sources, &Default::default(), None)?;
+/// for (r, _) in results{
+///     println!("{}", r);
+/// }
+/// # Ok(())
+/// # }
+///```
+///
+/// The following example translates a single string and uses a callback closure for streaming
+/// the output to standard output.
+///
+///```no_run
+/// use std::io::{stdout, Write};
+/// use anyhow::Result;
+///
+/// use ct2rs::config::Config;
+/// use ct2rs::{Translator, TranslationOptions, GenerationStepResult};
+///
+/// # fn main() -> Result<()> {
+/// let sources = vec![
+///     "Hallo World! This crate provides Rust bindings for CTranslate2."
+/// ];
+/// let options = TranslationOptions {
+///     // beam_size must be 1 to use the stream API.
+///     beam_size: 1,
+///     ..Default::default()
+/// };
+/// let mut callback = |step_result: GenerationStepResult| -> Result<()> {
+///     print!("{:?}", step_result.text);
+///     stdout().flush()?;
+///     Ok(())
+/// };
+/// let translator = Translator::new("/path/to/model", &Config::default())?;
+/// let results = translator.translate_batch(&sources, &options, Some(&mut callback))?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct Translator<T: Tokenizer> {
     translator: translator::Translator,
     tokenizer: T,
@@ -190,6 +308,15 @@ pub struct Translator<T: Tokenizer> {
 
 impl Translator<AutoTokenizer> {
     /// Initializes the translator with [`auto::Tokenizer`].
+    ///
+    /// # Arguments
+    /// * `path` - A path to the directory containing the language model to be loaded.
+    /// * `config` - A reference to a `Config` structure that specifies various settings
+    ///   and configurations for the `Translator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Translator`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
     pub fn new<U: AsRef<Path>>(path: U, config: &Config) -> Result<Self> {
         Self::with_tokenizer(&path, AutoTokenizer::new(&path)?, config)
     }
@@ -197,6 +324,36 @@ impl Translator<AutoTokenizer> {
 
 impl<T: Tokenizer> Translator<T> {
     /// Initializes the translator with the given tokenizer.
+    ///
+    /// # Arguments
+    /// * `path` - The path to the directory containing the language model.
+    /// * `tokenizer` - An instance of a tokenizer.
+    /// * `config` - A reference to a `Config` structure specifying the settings for the
+    ///   `Translator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing the initialized `Translator`, or an error if initialization
+    /// fails.
+    ///
+    /// # Example
+    /// This example demonstrates creating a `Translator` instance with a Sentencepiece tokenizer.
+    ///
+    /// ```no_run
+    /// # use anyhow::Result;
+    /// use ct2rs::{TranslationOptions, Translator};
+    /// use ct2rs::config::Config;
+    /// use ct2rs::sentencepiece::Tokenizer;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let translator = Translator::with_tokenizer(
+    ///     "/path/to/model",
+    ///     Tokenizer::from_file("/path/to/source.spm", "/path/to/target.spm")?,
+    ///     &Config::default()
+    /// )?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Translator {
             translator: translator::Translator::new(path, config)?,
@@ -204,12 +361,32 @@ impl<T: Tokenizer> Translator<T> {
         })
     }
 
-    /// Translates a batch of strings.
+    /// Translates multiple lists of strings in a batch processing manner.
+    ///
+    /// This function takes a vector of strings and performs batch translation according to the
+    /// specified settings in `options`. The results of the batch translation are returned as a
+    /// vector. An optional `callback` closure can be provided which is invoked for each new token
+    /// generated during the translation process. This allows for step-by-step reception of the
+    /// batch translation results. If the callback returns `Err`, it will stop the translation for
+    /// that batch. Note that if a callback is provided, `options.beam_size` must be set to `1`.
+    ///
+    /// # Arguments
+    /// * `source` - A vector of strings to be translated.
+    /// * `options` - Settings applied to the batch translation process.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
+    /// the translation fails.
+    ///
     pub fn translate_batch<'a, U, V>(
         &self,
         sources: &Vec<U>,
         options: &TranslationOptions<V>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -218,13 +395,15 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.translator.translate_batch(
                 &encode_strings(&self.tokenizer, sources)?,
@@ -248,7 +427,7 @@ impl<T: Tokenizer> Translator<T> {
                 .hypotheses
                 .into_iter()
                 .next()
-                .ok_or(anyhow!("no results are returned"))?;
+                .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
                     .decode(h.into_iter().collect())
@@ -259,13 +438,36 @@ impl<T: Tokenizer> Translator<T> {
         Ok(res)
     }
 
-    /// Translates a batch of strings using target prefixes.
+    /// Translates multiple lists of strings with target prefixes in a batch processing manner.
+    ///
+    /// This function takes a vector of strings and corresponding target prefixes, performing
+    /// batch translation according to the specified settings in `options`. An optional `callback`
+    /// closure can be provided which is invoked for each new token generated during the translation
+    /// process.
+    ///
+    /// This function is similar to `translate_batch`, with the addition of handling target prefixes
+    /// that guide the translation process. For more detailed parameter and option descriptions,
+    /// refer to the documentation for [`Translator::translate_batch`].
+    ///
+    /// # Arguments
+    /// * `sources` - A vector of strings translated.
+    /// * `target_prefix` - A vector of token lists, each list representing a sequence of target
+    ///   prefix tokens that provide a starting point for the translation output.
+    /// * `options` - Settings applied to the batch translation process.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
+    /// the translation fails.
     pub fn translate_batch_with_target_prefix<'a, U, V, W>(
         &self,
         sources: &Vec<U>,
         target_prefixes: &Vec<Vec<V>>,
         options: &TranslationOptions<W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -275,13 +477,15 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.translator.translate_batch_with_target_prefix(
                 &encode_strings(&self.tokenizer, sources)?,
@@ -307,7 +511,7 @@ impl<T: Tokenizer> Translator<T> {
                 .hypotheses
                 .into_iter()
                 .next()
-                .ok_or(anyhow!("no results are returned"))?;
+                .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
                     .decode(h.into_iter().skip(prefix.len()).collect())
@@ -338,6 +542,59 @@ impl<T: Tokenizer> Translator<T> {
 }
 
 /// A text generator with a tokenizer.
+///
+/// # Example
+/// The following example generates text following two prompts in a batch process,
+/// with each result output to the standard output.
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// use ct2rs::config::{Config, Device};
+/// use ct2rs::{Generator, GenerationOptions};
+///
+/// # fn main() -> Result<()> {
+/// let generator = Generator::new("/path/to/model", &Config::default())?;
+/// let res = generator.generate_batch(
+///     &vec!["Hello, I am"],
+///     &GenerationOptions::default(),
+///     None
+/// )?;
+/// for r in res {
+///     println!("{:?}", r);
+/// }
+/// # Ok(())
+/// # }
+/// ```
+///
+/// The following example generates text following a single prompt and outputs it to the standard
+/// output using a callback closure for stream processing.
+///
+/// ```no_run
+/// use std::io::{stdout, Write};
+/// use anyhow::Result;
+///
+/// use ct2rs::config::{Config, Device};
+/// use ct2rs::{Generator, GenerationOptions};
+///
+/// # fn main() -> Result<()> {
+/// use ct2rs::GenerationStepResult;
+/// let generator = Generator::new("/path/to/model", &Config::default())?;
+/// let _ = generator.generate_batch(
+///     &vec!["Hello, I am"],
+///     &GenerationOptions{
+///         // beam_size must be 1 to use the stream API.
+///         beam_size: 1,
+///         ..Default::default()
+///     },
+///     Some(&mut |step_result: GenerationStepResult| -> Result<()> {
+///         print!("{:?}", step_result.text);
+///         stdout().flush()?;
+///         Ok(())
+///     })
+/// )?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct Generator<T: Tokenizer> {
     generator: generator::Generator,
     tokenizer: T,
@@ -345,6 +602,15 @@ pub struct Generator<T: Tokenizer> {
 
 impl Generator<AutoTokenizer> {
     /// Initializes the generator with [`auto::Tokenizer`].
+    ///
+    /// # Arguments
+    /// * `path` - A path to the directory containing the language model to be loaded.
+    /// * `config` - A reference to a `Config` structure that specifies various settings
+    ///   and configurations for the `Generator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Generator`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
     pub fn new<T: AsRef<Path>>(path: T, config: &Config) -> Result<Self> {
         Self::with_tokenizer(&path, AutoTokenizer::new(&path)?, config)
     }
@@ -352,6 +618,37 @@ impl Generator<AutoTokenizer> {
 
 impl<T: Tokenizer> Generator<T> {
     /// Initializes the generator with the given tokenizer.
+    ///
+    /// # Arguments
+    /// * `path` - A path to the directory containing the language model to be loaded.
+    /// * `tokenizer` - An instance of the tokenizer.
+    /// * `config` - A reference to a `Config` structure that specifies various settings
+    ///   and configurations for the `Generator`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Generator`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
+    ///
+    /// # Example
+    /// The following example creates a translator instance with the tokenizer provided by
+    /// [tokenizers](https://huggingface.co/docs/tokenizers).
+    ///
+    /// ```no_run
+    /// # use anyhow::Result;
+    /// use ct2rs::Generator;
+    /// use ct2rs::config::Config;
+    /// use ct2rs::tokenizers::Tokenizer;
+    ///
+    /// # fn main() -> Result<()> {
+    /// let generator = Generator::with_tokenizer(
+    ///     "/path/to/model",
+    ///     Tokenizer::from_file("/path/to/tokenizer.json")?,
+    ///     &Config::default()
+    /// )?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Generator {
             generator: generator::Generator::new(path, config)?,
@@ -359,12 +656,36 @@ impl<T: Tokenizer> Generator<T> {
         })
     }
 
-    /// Generate texts with the given prompts.
+    /// Generates texts following the provided batch of start strings.
+    ///
+    /// This function generates texts sequentially starting from the given `prompts`.
+    /// The generation continues according to the
+    /// options specified in `options`.
+    ///
+    /// An optional `callback` closure can be provided which is invoked for each new token
+    /// generated during the translation process. This allows for step-by-step reception of the
+    /// batch translation results. If the callback returns `Err`, it will stop the translation for
+    /// that batch. Note that if a callback is provided, `options.beam_size` must be set to `1`.
+    ///
+    /// # Arguments
+    /// * `prompts` - A vector of prompts. These prompts represent the initial state of the
+    ///   generation process.
+    /// * `options` - Settings applied to the generation process, such as beam size and other
+    ///   generation-specific configurations.
+    /// * `callback` - An optional mutable reference to a closure that is called for each token
+    ///   generation step. The closure takes a `GenerationStepResult` and returns a
+    ///   `anyhow::Result<()>`. If it returns `Err`, the translation process for the current batch
+    ///   will stop.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `GenerationResult` if successful, encapsulating
+    /// the generated sequences for each input start token batch, or an error if the generation
+    /// fails.
     pub fn generate_batch<'a, U, V, W>(
         &self,
         prompts: &Vec<U>,
         options: &GenerationOptions<V, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
         U: AsRef<str>,
@@ -374,13 +695,15 @@ impl<T: Tokenizer> Generator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                match self.tokenizer.decode_ids(&[r.token_id as u32]) {
-                    Ok(s) => callback(GenerationStepResult::from_ffi(r, s)),
-                    Err(e) => {
-                        callback_result = Err(e);
-                        true
-                    }
+                if let Err(e) = self
+                    .tokenizer
+                    .decode_ids(&[r.token_id as u32])
+                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                {
+                    callback_result = Err(e);
+                    return true;
                 }
+                false
             };
             let output = self.generator.generate_batch(
                 &encode_strings(&self.tokenizer, prompts)?,

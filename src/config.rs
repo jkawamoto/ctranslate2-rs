@@ -11,8 +11,8 @@
 use cxx::UniquePtr;
 
 pub use ffi::{
-    get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
-    ComputeType, Device, LogLevel,
+    BatchType, ComputeType, Device, get_device_count, get_log_level, get_random_seed,
+    LogLevel, set_log_level, set_random_seed,
 };
 
 #[cxx::bridge]
@@ -125,7 +125,7 @@ pub(crate) mod ffi {
 
     /// Logging level.
     ///
-    /// This enum can take one of the following two values:
+    /// This enum can take one of the following values:
     /// - `Off`
     /// - `Critical`
     /// - `Error`
@@ -177,12 +177,28 @@ pub(crate) mod ffi {
         type LogLevel;
 
         /// Sets the CTranslate2 logging level.
+        ///
+        /// # Examples
+        /// The following example sets the log level to `Debug`.
+        /// ```
+        /// use ct2rs::config::{LogLevel, set_log_level};
+        ///
+        /// set_log_level(LogLevel::Debug);
+        /// ```
         fn set_log_level(level: LogLevel);
 
         /// Returns the current logging level.
         fn get_log_level() -> LogLevel;
 
         /// Sets the seed of random generators.
+        ///
+        /// # Examples
+        /// The following example sets the random seed to `12345`.
+        /// ```
+        /// use ct2rs::set_random_seed;
+        ///
+        /// set_random_seed(12345);
+        /// ```
         fn set_random_seed(seed: u32);
 
         /// Returns the current seed of random generators.
@@ -284,8 +300,8 @@ mod tests {
     use rand::random;
 
     use crate::config::{
-        get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, Config,
-        Device, LogLevel,
+        Config, Device, get_device_count, get_log_level, get_random_seed, LogLevel,
+        set_log_level, set_random_seed,
     };
 
     #[test]
