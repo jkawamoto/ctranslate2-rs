@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.7.3"
+version = "0.8.0"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 description = "Rust bindings for OpenNMT/CTranslate2"
@@ -30,8 +30,8 @@ include = [
 ]
 
 [dependencies]
-cxx = { version = "1.0.121", features = ["c++17"] }
-anyhow = "1.0.82"
+cxx = { version = "1.0.122", features = ["c++17"] }
+anyhow = "1.0.83"
 tokenizers = "0.19.1"
 sentencepiece = "0.11.2"
 intel-mkl-src = { version = "0.8.1", optional = true }
@@ -44,7 +44,7 @@ rand = "0.8.5"
 
 [build-dependencies]
 cmake = "0.1.50"
-cxx-build = "1.0.121"
+cxx-build = "1.0.122"
 walkdir = "2.5.0"
 
 
