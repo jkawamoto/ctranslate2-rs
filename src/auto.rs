@@ -44,7 +44,7 @@ use anyhow::{bail, Result};
 
 /// A tokenizer that automatically determines the appropriate tokenizer.
 pub struct Tokenizer {
-    tokenizer: Box<dyn crate::Tokenizer>,
+    tokenizer: Box<dyn crate::Tokenizer + Sync + Send>,
 }
 
 impl Tokenizer {
@@ -104,7 +104,7 @@ impl crate::Tokenizer for Tokenizer {
     /// # Returns
     /// A `Result` containing either the reconstructed string if successful or an error if the
     /// decoding fails.
-    fn decode_ids(&self, ids: &[u32]) -> Result<String>{
+    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
         self.tokenizer.decode_ids(ids)
     }
 }
