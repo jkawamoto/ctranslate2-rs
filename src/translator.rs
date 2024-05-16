@@ -143,70 +143,115 @@ unsafe impl Send for ffi::Translator {}
 unsafe impl Sync for ffi::Translator {}
 
 /// Options for translation.
+///
+/// # Examples
+///
+/// Example of creating a default `TranslationOptions`:
+///
+/// ```
+/// # use ct2rs::config::BatchType;
+/// use ct2rs::translator::TranslationOptions;
+///
+/// let options = TranslationOptions::default();
+/// # assert_eq!(options.beam_size, 2);
+/// # assert_eq!(options.patience, 1.);
+/// # assert_eq!(options.length_penalty, 1.);
+/// # assert_eq!(options.coverage_penalty, 0.);
+/// # assert_eq!(options.repetition_penalty, 1.);
+/// # assert_eq!(options.no_repeat_ngram_size, 0);
+/// # assert!(!options.disable_unk);
+/// # assert!(options.suppress_sequences.is_empty());
+/// # assert_eq!(options.prefix_bias_beta, 0.);
+/// # assert!(!options.return_end_token);
+/// # assert_eq!(options.max_input_length, 1024);
+/// # assert_eq!(options.max_decoding_length, 256);
+/// # assert_eq!(options.min_decoding_length, 1);
+/// # assert_eq!(options.sampling_topk, 1);
+/// # assert_eq!(options.sampling_topp, 1.);
+/// # assert_eq!(options.sampling_temperature, 1.);
+/// # assert!(!options.use_vmap);
+/// # assert_eq!(options.num_hypotheses, 1);
+/// # assert!(!options.return_scores);
+/// # assert!(!options.return_attention);
+/// # assert!(!options.return_alternatives);
+/// # assert_eq!(options.min_alternative_expansion_prob, 0.);
+/// # assert!(!options.replace_unknowns);
+/// # assert_eq!(options.max_batch_size, 0);
+/// # assert_eq!(options.batch_type, BatchType::default());
+/// ```
+///
 #[derive(Clone, Debug)]
 pub struct TranslationOptions<T: AsRef<str>> {
-    /// Beam size to use for beam search (set 1 to run greedy search).
+    /// Beam size to use for beam search (set 1 to run greedy search). (default: 2)
     pub beam_size: usize,
     /// Beam search patience factor, as described in <https://arxiv.org/abs/2204.05424>.
     /// The decoding will continue until beam_size*patience hypotheses are finished.
+    /// (default: 1.0)
     pub patience: f32,
     /// Exponential penalty applied to the length during beam search.
     /// The scores are normalized with:
-    ///   hypothesis_score /= (hypothesis_length ** length_penalty)
+    /// ```math
+    /// hypothesis_score /= (hypothesis_length ** length_penalty)
+    /// ```
+    /// (default: 1.0)
     pub length_penalty: f32,
-    /// Coverage penalty weight applied during beam search.
+    /// Coverage penalty weight applied during beam search. (default: 0)
     pub coverage_penalty: f32,
     /// Penalty applied to the score of previously generated tokens, as described in
-    /// <https://arxiv.org/abs/1909.05858> (set > 1 to penalize).
+    /// <https://arxiv.org/abs/1909.05858> (set > 1 to penalize). (default: 1.0)
     pub repetition_penalty: f32,
-    /// Prevent repetitions of ngrams with this size (set 0 to disable).
+    /// Prevent repetitions of ngrams with this size (set 0 to disable). (default: 0)
     pub no_repeat_ngram_size: usize,
-    /// Disable the generation of the unknown token.
+    /// Disable the generation of the unknown token. (default: false)
     pub disable_unk: bool,
-    /// Disable the generation of some sequences of tokens.
+    /// Disable the generation of some sequences of tokens. (default: empty)
     pub suppress_sequences: Vec<Vec<T>>,
     /// Biases decoding towards a given prefix, see <https://arxiv.org/abs/1912.03393> --section 4.2
-    /// Only activates biased-decoding when beta is in range (0, 1) and SearchStrategy is set to BeamSearch.
-    /// The closer beta is to 1, the stronger the bias is towards the given prefix.
+    /// Only activates biased-decoding when beta is in range (0, 1) and SearchStrategy is set to
+    /// BeamSearch. The closer beta is to 1, the stronger the bias is towards the given prefix.
     ///
     /// If beta <= 0 and a non-empty prefix is given, then the prefix will be used as a
-    /// hard-prefix rather than a soft, biased-prefix.
+    /// hard-prefix rather than a soft, biased-prefix. (default: 0)
     pub prefix_bias_beta: f32,
     // Stop the decoding on one of these tokens (defaults to the model EOS token).
     // end_token,
-    /// Include the end token in the result.
+    /// Include the end token in the result. (default: false)
     pub return_end_token: bool,
-    /// Truncate the inputs after this many tokens (set 0 to disable truncation).
+    /// Truncate the inputs after this many tokens (set 0 to disable truncation). (default: 1024)
     pub max_input_length: usize,
-    /// Decoding length constraints.
+    /// Decoding length constraints. (default: 256)
     pub max_decoding_length: usize,
-    /// Decoding length constraints.
+    /// Decoding length constraints. (default: 1)
     pub min_decoding_length: usize,
-    /// Randomly sample from the top K candidates (set 0 to sample from the full output distribution).
+    /// Randomly sample from the top K candidates (set 0 to sample from the full output
+    /// distribution). (default: 1)
     pub sampling_topk: usize,
     /// Keep the most probable tokens whose cumulative probability exceeds this value.
+    /// (default: 1.0)
     pub sampling_topp: f32,
-    /// High temperature increase randomness.
+    /// High temperature increase randomness. (default: 1.0)
     pub sampling_temperature: f32,
     /// Allow using the vocabulary map included in the model directory, if it exists.
+    /// (default: false)
     pub use_vmap: bool,
-    /// Number of hypotheses to store in the TranslationResult class.
+    /// Number of hypotheses to store in the TranslationResult class. (default: 1)
     pub num_hypotheses: usize,
-    /// Store scores in the TranslationResult class.
+    /// Store scores in the TranslationResult class. (default: false)
     pub return_scores: bool,
-    /// Store attention vectors in the TranslationResult class.
+    /// Store attention vectors in the TranslationResult class. (default: false)
     pub return_attention: bool,
     /// Return alternatives at the first unconstrained decoding position. This is typically
-    /// used with a target prefix to provide alternatives at a specifc location in the
-    /// translation.
+    /// used with a target prefix to provide alternatives at a specific location in the
+    /// translation. (default: false)
     pub return_alternatives: bool,
-    /// Minimum probability to expand an alternative.
+    /// Minimum probability to expand an alternative. (default: 0)
     pub min_alternative_expansion_prob: f32,
     /// Replace unknown target tokens by the original source token with the highest attention.
+    /// (default: false)
     pub replace_unknowns: bool,
     /// The maximum batch size. If the number of inputs is greater than `max_batch_size`,
     /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
-    /// so that the number of padding positions is minimized.
+    /// so that the number of padding positions is minimized. (default: 0)
     pub max_batch_size: usize,
     /// Whether `max_batch_size` is the number of “examples” or “tokens”.
     pub batch_type: BatchType,
@@ -546,42 +591,5 @@ impl TranslationResult {
     #[inline]
     pub fn has_scores(&self) -> bool {
         !self.scores.is_empty()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::config::BatchType;
-    use crate::translator::TranslationOptions;
-
-    #[test]
-    fn default_translation_options() {
-        let options = TranslationOptions::default();
-
-        assert_eq!(options.beam_size, 2);
-        assert_eq!(options.patience, 1.);
-        assert_eq!(options.length_penalty, 1.);
-        assert_eq!(options.coverage_penalty, 0.);
-        assert_eq!(options.repetition_penalty, 1.);
-        assert_eq!(options.no_repeat_ngram_size, 0);
-        assert!(!options.disable_unk);
-        assert!(options.suppress_sequences.is_empty());
-        assert_eq!(options.prefix_bias_beta, 0.);
-        assert!(!options.return_end_token);
-        assert_eq!(options.max_input_length, 1024);
-        assert_eq!(options.max_decoding_length, 256);
-        assert_eq!(options.min_decoding_length, 1);
-        assert_eq!(options.sampling_topk, 1);
-        assert_eq!(options.sampling_topp, 1.);
-        assert_eq!(options.sampling_temperature, 1.);
-        assert!(!options.use_vmap);
-        assert_eq!(options.num_hypotheses, 1);
-        assert!(!options.return_scores);
-        assert!(!options.return_attention);
-        assert!(!options.return_alternatives);
-        assert_eq!(options.min_alternative_expansion_prob, 0.);
-        assert!(!options.replace_unknowns);
-        assert_eq!(options.max_batch_size, 0);
-        assert_eq!(options.batch_type, BatchType::default());
     }
 }

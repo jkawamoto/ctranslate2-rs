@@ -33,7 +33,7 @@ pub(crate) mod ffi {
     /// use ct2rs::config::Device;
     ///
     /// let device = Device::default();
-    /// assert_eq!(device, Device::CPU);
+    /// # assert_eq!(device, Device::CPU);
     /// ```
     ///
     #[derive(Debug)]
@@ -78,7 +78,7 @@ pub(crate) mod ffi {
     /// use ct2rs::config::ComputeType;
     ///
     /// let compute_type = ComputeType::default();
-    /// assert_eq!(compute_type, ComputeType::DEFAULT);
+    /// # assert_eq!(compute_type, ComputeType::DEFAULT);
     /// ```
     ///
     #[derive(Debug)]
@@ -114,7 +114,7 @@ pub(crate) mod ffi {
     /// use ct2rs::config::BatchType;
     ///
     /// let batch_type = BatchType::default();
-    /// assert_eq!(batch_type, BatchType::Examples);
+    /// # assert_eq!(batch_type, BatchType::Examples);
     /// ```
     #[derive(Debug)]
     #[repr(i32)]
@@ -135,6 +135,17 @@ pub(crate) mod ffi {
     /// - `Trace`
     ///
     /// The default setting for this enum is `Warning`.
+    ///
+    /// # Examples
+    ///
+    /// Example of creating a default `LogLevel`:
+    ///
+    /// ```
+    /// use ct2rs::config::LogLevel;
+    ///
+    /// let log_level = LogLevel::default();
+    /// # assert_eq!(log_level, LogLevel::Warning);
+    /// ```
     #[derive(Debug)]
     #[repr(i32)]
     enum LogLevel {
@@ -240,13 +251,13 @@ impl Default for LogLevel {
 /// use ct2rs::config::{ComputeType, Config, Device};
 ///
 /// let config = Config::default();
-/// assert_eq!(config.device, Device::default());
-/// assert_eq!(config.compute_type, ComputeType::default());
-/// assert_eq!(config.device_indices, vec![0]);
-/// assert_eq!(config.tensor_parallel, false);
-/// assert_eq!(config.num_threads_per_replica, 0);
-/// assert_eq!(config.max_queued_batches, 0);
-/// assert_eq!(config.cpu_core_offset, -1);
+/// # assert_eq!(config.device, Device::default());
+/// # assert_eq!(config.compute_type, ComputeType::default());
+/// # assert_eq!(config.device_indices, vec![0]);
+/// # assert_eq!(config.tensor_parallel, false);
+/// # assert_eq!(config.num_threads_per_replica, 0);
+/// # assert_eq!(config.max_queued_batches, 0);
+/// # assert_eq!(config.cpu_core_offset, -1);
 /// ```
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Config {
@@ -254,14 +265,17 @@ pub struct Config {
     pub device: Device,
     /// Model computation type.
     pub compute_type: ComputeType,
-    /// Device IDs where to place this generator on.
+    /// Device IDs where to place this generator on. (default: `vec![0]`)
     pub device_indices: Vec<i32>,
-    /// Run model with tensor parallel mode.
+    /// Run model with tensor parallel mode. (default: false)
     pub tensor_parallel: bool,
+    /// Number of threads per translator/generator (0 to use a default value). (default: 0)
     pub num_threads_per_replica: usize,
     /// Maximum numbers of batches in the queue (-1 for unlimited, 0 for an automatic value).
     /// When the queue is full, future requests will block until a free slot is available.
+    /// (default: 0)
     pub max_queued_batches: i32,
+    /// (default: -1)
     pub cpu_core_offset: i32,
 }
 
