@@ -11,8 +11,8 @@
 use cxx::UniquePtr;
 
 pub use ffi::{
-    BatchType, ComputeType, Device, get_device_count, get_log_level, get_random_seed,
-    LogLevel, set_log_level, set_random_seed,
+    get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
+    ComputeType, Device, LogLevel,
 };
 
 #[cxx::bridge]
@@ -314,8 +314,8 @@ mod tests {
     use rand::random;
 
     use crate::config::{
-        Config, Device, get_device_count, get_log_level, get_random_seed, LogLevel,
-        set_log_level, set_random_seed,
+        get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, Config,
+        Device, LogLevel,
     };
 
     #[test]
@@ -348,7 +348,6 @@ mod tests {
             LogLevel::Debug,
             LogLevel::Trace,
         ] {
-            println!("{:?}", l);
             set_log_level(l);
             assert_eq!(get_log_level(), l);
         }

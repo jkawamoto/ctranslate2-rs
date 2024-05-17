@@ -29,9 +29,9 @@
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
-use tokenizers::{Decoder, Model};
 use tokenizers::decoders::bpe::BPEDecoder;
 use tokenizers::models::bpe::BPE;
+use tokenizers::{Decoder, Model};
 
 const VOCAB_FILE: &str = "vocab.json";
 const MERGES_FILE: &str = "merges.txt";

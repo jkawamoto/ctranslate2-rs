@@ -138,8 +138,8 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 
 use crate::auto::Tokenizer as AutoTokenizer;
-pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
+pub use crate::config::{set_log_level, set_random_seed};
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
 

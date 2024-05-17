@@ -44,8 +44,8 @@ use std::time;
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::{GenerationOptions, Generator};
 use ct2rs::config::{Config, Device};
+use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using GPT-J models.
 #[derive(Parser, Debug)]

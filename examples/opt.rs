@@ -39,9 +39,9 @@ use std::time;
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::{GenerationOptions, Generator};
 use ct2rs::bpe;
 use ct2rs::config::{Config, Device};
+use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using OPT models.
 #[derive(Parser, Debug)]
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
         bpe::Tokenizer::new(&args.path, Some("Ġ".to_string()))?,
         &cfg,
     )?;
-    let  prompts =
+    let prompts =
         BufReader::new(File::open(args.prompt)?)
             .lines()
             .fold(Ok(String::new()), |acc, line| {
