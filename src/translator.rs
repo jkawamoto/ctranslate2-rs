@@ -593,3 +593,96 @@ impl TranslationResult {
         !self.scores.is_empty()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::translator::ffi::{VecStr, VecString};
+    use crate::translator::{ffi, TranslationResult};
+    use crate::TranslationOptions;
+
+    #[test]
+    fn options_to_ffi() {
+        let opts = TranslationOptions {
+            suppress_sequences: vec![vec!["a".to_string(), "b".to_string(), "c".to_string()]],
+            ..Default::default()
+        };
+        let res = opts.to_ffi();
+
+        assert_eq!(res.beam_size, opts.beam_size);
+        assert_eq!(res.patience, opts.patience);
+        assert_eq!(res.length_penalty, opts.length_penalty);
+        assert_eq!(res.coverage_penalty, opts.coverage_penalty);
+        assert_eq!(res.repetition_penalty, opts.repetition_penalty);
+        assert_eq!(res.no_repeat_ngram_size, opts.no_repeat_ngram_size);
+        assert_eq!(res.disable_unk, opts.disable_unk);
+        assert_eq!(
+            res.suppress_sequences,
+            opts.suppress_sequences
+                .iter()
+                .map(|v| VecStr {
+                    v: v.iter().map(AsRef::as_ref).collect()
+                })
+                .collect::<Vec<VecStr>>()
+        );
+        assert_eq!(res.prefix_bias_beta, opts.prefix_bias_beta);
+        assert_eq!(res.return_end_token, opts.return_end_token);
+        assert_eq!(res.max_input_length, opts.max_input_length);
+        assert_eq!(res.max_decoding_length, opts.max_decoding_length);
+        assert_eq!(res.min_decoding_length, opts.min_decoding_length);
+        assert_eq!(res.sampling_topk, opts.sampling_topk);
+        assert_eq!(res.sampling_topp, opts.sampling_topp);
+        assert_eq!(res.sampling_temperature, opts.sampling_temperature);
+        assert_eq!(res.use_vmap, opts.use_vmap);
+        assert_eq!(res.num_hypotheses, opts.num_hypotheses);
+        assert_eq!(res.return_scores, opts.return_scores);
+        assert_eq!(res.return_attention, opts.return_attention);
+        assert_eq!(res.return_alternatives, opts.return_alternatives);
+        assert_eq!(
+            res.min_alternative_expansion_prob,
+            opts.min_alternative_expansion_prob
+        );
+        assert_eq!(res.replace_unknowns, opts.replace_unknowns);
+        assert_eq!(res.max_batch_size, opts.max_batch_size);
+        assert_eq!(res.batch_type, opts.batch_type);
+    }
+
+    #[test]
+    fn translation_result() {
+        let hypotheses = vec![
+            vec!["a".to_string(), "b".to_string()],
+            vec!["x".to_string(), "y".to_string(), "z".to_string()],
+        ];
+        let scores: Vec<f32> = vec![1., 2., 3.];
+        let res: TranslationResult = ffi::TranslationResult {
+            hypotheses: hypotheses
+                .iter()
+                .map(|v| VecString::from(v.clone()))
+                .collect(),
+            scores: scores.clone(),
+        }
+        .into();
+
+        assert_eq!(res.hypotheses, hypotheses);
+        assert_eq!(res.scores, scores);
+        assert_eq!(res.output(), Some(hypotheses.get(0).unwrap()));
+        assert_eq!(res.score(), Some(scores[0]));
+        assert_eq!(res.num_hypotheses(), 2);
+        assert!(res.has_scores());
+    }
+
+    #[test]
+    fn translation_empty_result() {
+        let res: TranslationResult = ffi::TranslationResult {
+            hypotheses: vec![],
+            scores: vec![],
+        }
+        .into();
+
+        assert!(res.hypotheses.is_empty());
+        assert!(res.scores.is_empty());
+        assert_eq!(res.output(), None);
+        assert_eq!(res.score(), None);
+        assert_eq!(res.num_hypotheses(), 0);
+        assert!(!res.has_scores());
+    }
+}

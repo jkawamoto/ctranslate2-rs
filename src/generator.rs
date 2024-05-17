@@ -478,3 +478,103 @@ impl GenerationResult {
         !self.scores.is_empty()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::generator::ffi::{VecStr, VecString, VecUSize};
+    use crate::generator::{ffi, GenerationOptions, GenerationResult};
+
+    #[test]
+    fn options_to_ffi() {
+        let opts = GenerationOptions {
+            suppress_sequences: vec![vec!["x".to_string(), "y".to_string(), "z".to_string()]],
+            static_prompt: vec!["one".to_string(), "two".to_string()],
+            ..Default::default()
+        };
+        let res = opts.to_ffi();
+
+        assert_eq!(res.beam_size, opts.beam_size);
+        assert_eq!(res.patience, opts.patience);
+        assert_eq!(res.length_penalty, opts.length_penalty);
+        assert_eq!(res.repetition_penalty, opts.repetition_penalty);
+        assert_eq!(res.no_repeat_ngram_size, opts.no_repeat_ngram_size);
+        assert_eq!(res.disable_unk, opts.disable_unk);
+        assert_eq!(
+            res.suppress_sequences,
+            opts.suppress_sequences
+                .iter()
+                .map(|v| VecStr {
+                    v: v.iter().map(AsRef::as_ref).collect()
+                })
+                .collect::<Vec<VecStr>>()
+        );
+        assert_eq!(res.return_end_token, opts.return_end_token);
+        assert_eq!(res.max_length, opts.max_length);
+        assert_eq!(res.min_length, opts.min_length);
+        assert_eq!(res.sampling_topk, opts.sampling_topk);
+        assert_eq!(res.sampling_topp, opts.sampling_topp);
+        assert_eq!(res.sampling_temperature, opts.sampling_temperature);
+        assert_eq!(res.num_hypotheses, opts.num_hypotheses);
+        assert_eq!(res.return_scores, opts.return_scores);
+        assert_eq!(res.return_alternatives, opts.return_alternatives);
+        assert_eq!(
+            res.min_alternative_expansion_prob,
+            opts.min_alternative_expansion_prob
+        );
+        assert_eq!(
+            res.static_prompt,
+            opts.static_prompt
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<&str>>()
+        );
+        assert_eq!(res.cache_static_prompt, opts.cache_static_prompt);
+        assert_eq!(res.include_prompt_in_result, opts.include_prompt_in_result);
+        assert_eq!(res.max_batch_size, opts.max_batch_size);
+        assert_eq!(res.batch_type, opts.batch_type);
+    }
+
+    #[test]
+    fn generation_result() {
+        let sequences = vec![
+            vec!["a".to_string(), "b".to_string()],
+            vec!["x".to_string(), "y".to_string(), "z".to_string()],
+        ];
+        let sequences_ids: Vec<Vec<usize>> = vec![vec![1, 2], vec![10, 20, 30]];
+        let scores: Vec<f32> = vec![1., 2., 3.];
+        let res: GenerationResult = ffi::GenerationResult {
+            sequences: sequences
+                .iter()
+                .map(|v| VecString::from(v.clone()))
+                .collect(),
+            sequences_ids: sequences_ids
+                .iter()
+                .map(|v| VecUSize::from(v.clone()))
+                .collect(),
+            scores: scores.clone(),
+        }
+        .into();
+
+        assert_eq!(res.sequences, sequences);
+        assert_eq!(res.sequences_ids, sequences_ids);
+        assert_eq!(res.scores, scores);
+        assert_eq!(res.num_sequences(), sequences.len());
+        assert!(res.has_scores());
+    }
+
+    #[test]
+    fn generation_empty_result() {
+        let res: GenerationResult = ffi::GenerationResult {
+            sequences: vec![],
+            sequences_ids: vec![],
+            scores: vec![],
+        }
+        .into();
+
+        assert!(res.sequences.is_empty());
+        assert!(res.sequences_ids.is_empty());
+        assert!(res.scores.is_empty());
+        assert_eq!(res.num_sequences(), 0);
+        assert!(!res.has_scores());
+    }
+}

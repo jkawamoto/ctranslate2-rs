@@ -33,14 +33,17 @@ pub(crate) mod ffi {
         pub is_last: bool,
     }
 
+    #[derive(PartialEq, Clone, Debug)]
     pub struct VecString {
         v: Vec<String>,
     }
 
+    #[derive(PartialEq, Clone, Debug)]
     pub struct VecStr<'a> {
         v: Vec<&'a str>,
     }
 
+    #[derive(PartialEq, Clone, Debug)]
     pub struct VecUSize {
         v: Vec<usize>,
     }
@@ -67,14 +70,27 @@ impl From<VecString> for Vec<String> {
     }
 }
 
+impl From<Vec<String>> for VecString {
+    fn from(v: Vec<String>) -> Self {
+        Self { v }
+    }
+}
+
 impl From<VecUSize> for Vec<usize> {
     fn from(value: VecUSize) -> Self {
         value.v
     }
 }
 
+impl From<Vec<usize>> for VecUSize {
+    fn from(v: Vec<usize>) -> Self {
+        Self { v }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::types::ffi::{VecString, VecUSize};
     use crate::types::vec_ffi_vecstr;
 
     #[test]
@@ -109,5 +125,39 @@ mod tests {
         let res = vec_ffi_vecstr(&data);
 
         assert_eq!(res.len(), 0);
+    }
+
+    #[test]
+    fn from_vec_string() {
+        let s = vec!["a".to_string(), "b".to_string()];
+        let v = VecString { v: s.clone() };
+
+        let res: Vec<String> = v.into();
+        assert_eq!(s, res);
+    }
+
+    #[test]
+    fn into_vec_string() {
+        let v = vec!["a".to_string(), "b".to_string()];
+        let res: VecString = v.clone().into();
+
+        assert_eq!(res, VecString { v });
+    }
+
+    #[test]
+    fn from_vec_usize() {
+        let s: Vec<usize> = vec![1, 2, 3];
+        let v = VecUSize { v: s.clone() };
+
+        let res: Vec<usize> = v.into();
+        assert_eq!(s, res);
+    }
+
+    #[test]
+    fn into_vec_usize() {
+        let v: Vec<usize> = vec![1, 2, 3];
+        let res: VecUSize = v.clone().into();
+
+        assert_eq!(res, VecUSize { v });
     }
 }
