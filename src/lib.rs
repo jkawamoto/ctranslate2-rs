@@ -188,18 +188,6 @@ pub trait Tokenizer {
     /// A `Result` containing either the reconstructed string if successful or an error if the
     /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String>;
-
-    /// Decodes a given sequence of token ids back into a single string.
-    ///
-    /// This function takes a vector of token ids and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the
-    /// decoding fails.
-    fn decode_ids(&self, ids: &[u32]) -> Result<String>;
 }
 
 #[inline]
@@ -233,8 +221,9 @@ pub struct GenerationStepResult {
 }
 
 impl GenerationStepResult {
-    fn from_ffi(r: types::ffi::GenerationStepResult, text: String) -> Self {
-        Self {
+    fn from_ffi<T: Tokenizer>(r: types::ffi::GenerationStepResult, tokenizer: &T) -> Result<Self> {
+        let text = tokenizer.decode(vec![r.token])?;
+        Ok(Self {
             step: r.step,
             batch_id: r.batch_id,
             hypothesis_id: r.hypothesis_id,
@@ -242,7 +231,7 @@ impl GenerationStepResult {
             has_log_prob: r.has_log_prob,
             log_prob: r.log_prob,
             is_last: r.is_last,
-        }
+        })
     }
 }
 
@@ -395,10 +384,8 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                if let Err(e) = self
-                    .tokenizer
-                    .decode_ids(&[r.token_id as u32])
-                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                if let Err(e) =
+                    GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
                     callback_result = Err(e);
                     return true;
@@ -477,10 +464,8 @@ impl<T: Tokenizer> Translator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                if let Err(e) = self
-                    .tokenizer
-                    .decode_ids(&[r.token_id as u32])
-                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                if let Err(e) =
+                    GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
                     callback_result = Err(e);
                     return true;
@@ -695,10 +680,8 @@ impl<T: Tokenizer> Generator<T> {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
             let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
-                if let Err(e) = self
-                    .tokenizer
-                    .decode_ids(&[r.token_id as u32])
-                    .and_then(|s| callback(GenerationStepResult::from_ffi(r, s)))
+                if let Err(e) =
+                    GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
                     callback_result = Err(e);
                     return true;
