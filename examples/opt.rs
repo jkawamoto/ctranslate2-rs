@@ -39,9 +39,9 @@ use std::time;
 use anyhow::Result;
 use clap::Parser;
 
+use ct2rs::{GenerationOptions, Generator};
 use ct2rs::bpe;
 use ct2rs::config::{Config, Device};
-use ct2rs::{GenerationOptions, Generator};
 
 /// Generate text using OPT models.
 #[derive(Parser, Debug)]
@@ -72,7 +72,7 @@ fn main() -> Result<()> {
     // Use BPE tokenizer.
     let g = Generator::with_tokenizer(
         &args.path,
-        bpe::Tokenizer::new(&args.path, Some("Ġ".to_string()))?,
+        bpe::new(&args.path, Some("Ġ".to_string()))?,
         &cfg,
     )?;
     let prompts =
@@ -91,6 +91,7 @@ fn main() -> Result<()> {
     let res = g.generate_batch(
         &vec![prompts],
         &GenerationOptions {
+            beam_size: 15,
             max_length: 50,
             include_prompt_in_result: false,
             ..GenerationOptions::default()
