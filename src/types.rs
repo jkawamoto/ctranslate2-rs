@@ -8,7 +8,9 @@
 
 //! This module defines common structures.
 
-use crate::types::ffi::{VecString, VecUSize};
+use std::fmt::{Debug, Formatter};
+
+use crate::types::ffi::{VecStr, VecString, VecUSize};
 
 #[cxx::bridge]
 pub(crate) mod ffi {
@@ -33,17 +35,17 @@ pub(crate) mod ffi {
         pub is_last: bool,
     }
 
-    #[derive(PartialEq, Clone, Debug)]
+    #[derive(PartialEq, Clone)]
     pub struct VecString {
         v: Vec<String>,
     }
 
-    #[derive(PartialEq, Clone, Debug)]
+    #[derive(PartialEq, Clone)]
     pub struct VecStr<'a> {
         v: Vec<&'a str>,
     }
 
-    #[derive(PartialEq, Clone, Debug)]
+    #[derive(PartialEq, Clone)]
     pub struct VecUSize {
         v: Vec<usize>,
     }
@@ -56,9 +58,9 @@ pub(crate) mod ffi {
 }
 
 #[inline]
-pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<ffi::VecStr> {
+pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &Vec<Vec<T>>) -> Vec<VecStr> {
     src.iter()
-        .map(|v| ffi::VecStr {
+        .map(|v| VecStr {
             v: v.iter().map(AsRef::as_ref).collect(),
         })
         .collect()
@@ -76,6 +78,18 @@ impl From<Vec<String>> for VecString {
     }
 }
 
+impl Debug for VecString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.v.fmt(f)
+    }
+}
+
+impl<'a> Debug for VecStr<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.v.fmt(f)
+    }
+}
+
 impl From<VecUSize> for Vec<usize> {
     fn from(value: VecUSize) -> Self {
         value.v
@@ -85,6 +99,12 @@ impl From<VecUSize> for Vec<usize> {
 impl From<Vec<usize>> for VecUSize {
     fn from(v: Vec<usize>) -> Self {
         Self { v }
+    }
+}
+
+impl Debug for VecUSize {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.v.fmt(f)
     }
 }
 

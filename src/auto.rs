@@ -55,7 +55,7 @@ impl Tokenizer {
                 Box::new(t)
             } else if let Ok(t) = crate::sentencepiece::Tokenizer::new(&path) {
                 Box::new(t)
-            } else if let Ok(t) = crate::bpe::Tokenizer::new(&path, None) {
+            } else if let Ok(t) = crate::bpe::new(&path, None) {
                 Box::new(t)
             } else {
                 bail!("failed to create a tokenizer")
@@ -92,19 +92,5 @@ impl crate::Tokenizer for Tokenizer {
     /// decoding fails.
     fn decode(&self, tokens: Vec<String>) -> Result<String> {
         self.tokenizer.decode(tokens)
-    }
-
-    /// Decodes a given sequence of token ids back into a single string.
-    ///
-    /// This function takes a vector of token ids and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the
-    /// decoding fails.
-    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
-        self.tokenizer.decode_ids(ids)
     }
 }

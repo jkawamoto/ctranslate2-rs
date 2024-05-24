@@ -31,108 +31,52 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 use tokenizers::decoders::bpe::BPEDecoder;
 use tokenizers::models::bpe::BPE;
-use tokenizers::{Decoder, Model};
+use tokenizers::processors::roberta::RobertaProcessing;
+use tokenizers::Tokenizer as HFTokenizer;
+
+use crate::tokenizers::Tokenizer;
 
 const VOCAB_FILE: &str = "vocab.json";
 const MERGES_FILE: &str = "merges.txt";
 
-pub struct Tokenizer {
-    encoder: BPE,
-    decoder: BPEDecoder,
+/// Create a tokenizer instance by specifying the path to a directory containing `vocab.json`
+/// and `mergers.txt`.
+pub fn new<T: AsRef<Path>>(path: T, decoder_suffix: Option<String>) -> Result<Tokenizer> {
+    from_file(
+        path.as_ref().join(VOCAB_FILE),
+        path.as_ref().join(MERGES_FILE),
+        decoder_suffix,
+    )
 }
 
-impl Tokenizer {
-    /// Create a tokenizer instance by specifying the path to a directory containing `vocab.json`
-    /// and `mergers.txt`.
-    pub fn new<T: AsRef<Path>>(path: T, decoder_suffix: Option<String>) -> Result<Self> {
-        Self::from_file(
-            path.as_ref().join(VOCAB_FILE),
-            path.as_ref().join(MERGES_FILE),
-            decoder_suffix,
+/// Create a tokenizer instance by specifying the path to `vocab.json` and `mergers.txt`.
+pub fn from_file<T: AsRef<Path>, U: AsRef<Path>>(
+    vocab: T,
+    merges: U,
+    decoder_suffix: Option<String>,
+) -> Result<Tokenizer> {
+    let mut res = Tokenizer::from(HFTokenizer::new(
+        BPE::from_file(
+            vocab
+                .as_ref()
+                .to_str()
+                .ok_or_else(|| anyhow!("invalid path: {}", vocab.as_ref().display()))?,
+            merges
+                .as_ref()
+                .to_str()
+                .ok_or_else(|| anyhow!("invalid path: {}", merges.as_ref().display()))?,
         )
-    }
+        .build()
+        .map_err(|err| anyhow!("failed to build a tokenizer: {err}"))?,
+    ));
 
-    /// Create a tokenizer instance by specifying the path to `vocab.json` and `mergers.txt`.
-    pub fn from_file<T: AsRef<Path>, U: AsRef<Path>>(
-        vocab: T,
-        merges: U,
-        decoder_suffix: Option<String>,
-    ) -> Result<Self> {
-        Ok(Self {
-            encoder: BPE::from_file(
-                vocab
-                    .as_ref()
-                    .to_str()
-                    .ok_or_else(|| anyhow!("invalid path: {}", vocab.as_ref().display()))?,
-                merges
-                    .as_ref()
-                    .to_str()
-                    .ok_or_else(|| anyhow!("invalid path: {}", merges.as_ref().display()))?,
-            )
-            .build()
-            .map_err(|e| anyhow!("failed to build an encoder: {e}"))?,
-            decoder: decoder_suffix
-                .map(BPEDecoder::new)
-                .unwrap_or_else(BPEDecoder::default),
-        })
-    }
-}
+    res.with_decoder(match decoder_suffix {
+        None => BPEDecoder::default(),
+        Some(s) => BPEDecoder::new(s),
+    })
+    .with_post_processor(
+        RobertaProcessing::new(("</s>".to_string(), 2), ("<s>".to_string(), 0)).trim_offsets(true),
+    );
 
-impl crate::Tokenizer for Tokenizer {
-    /// Encodes a given string into a sequence of tokens.
-    ///
-    /// This function takes a reference to a string and returns a vector of token strings
-    /// resulting from the tokenization process.
-    ///
-    /// # Arguments
-    /// * `input` - A reference to the string to be tokenized.
-    ///
-    /// # Returns
-    /// A `Result` containing either the vector of tokens if successful or an error if the tokenization fails.
-    fn encode(&self, input: &str) -> Result<Vec<String>> {
-        let tokens = self
-            .encoder
-            .tokenize(input)
-            .map_err(|e| anyhow!("failed to tokenize input: {e}"))?;
-        let mut res = tokens
-            .into_iter()
-            .map(|token| token.value)
-            .collect::<Vec<String>>();
-        res.push("</s>".to_string());
-        Ok(res)
-    }
-
-    /// Decodes a given sequence of tokens back into a single string.
-    ///
-    /// This function takes a vector of token strings and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `tokens` - A vector of strings representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the decoding fails.
-    fn decode(&self, tokens: Vec<String>) -> Result<String> {
-        self.decoder
-            .decode(tokens)
-            .map_err(|e| anyhow!("failed to decode tokens: {e}"))
-    }
-
-    /// Decodes a given sequence of token ids back into a single string.
-    ///
-    /// This function takes a vector of token ids and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the
-    /// decoding fails.
-    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
-        self.decode(
-            ids.into_iter()
-                .map(|id| self.encoder.id_to_token(*id))
-                .collect::<Option<Vec<String>>>()
-                .ok_or_else(|| anyhow!("unknown token ID"))?,
-        )
-    }
+    Ok(res)
 }

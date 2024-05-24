@@ -31,6 +31,7 @@
 //! # }
 //! ```
 
+use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -40,7 +41,7 @@ const TOKENIZER_FILENAME: &str = "tokenizer.json";
 
 /// Tokenizer that utilize the tokenizer provided by the Hugging Face's `tokenizers` crate.
 pub struct Tokenizer {
-    tokenizer: tokenizers::tokenizer::Tokenizer,
+    tokenizer: tokenizers::Tokenizer,
     special_token: bool,
 }
 
@@ -66,6 +67,12 @@ impl Tokenizer {
     pub fn disable_spacial_token(&mut self) -> &mut Self {
         self.special_token = false;
         self
+    }
+
+    /// Returns a mutable reference of the `tokenizers::Tokenizer`.
+    #[inline]
+    pub fn inner(&mut self) -> &mut tokenizers::Tokenizer {
+        self.deref_mut()
     }
 }
 
@@ -108,20 +115,29 @@ impl crate::Tokenizer for Tokenizer {
             .decode(tokens)
             .map_err(|err| anyhow!("failed to decode: {err}"))
     }
+}
 
-    /// Decodes a given sequence of token ids back into a single string.
-    ///
-    /// This function takes a vector of token ids and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `ids` - A vector of u32 integers representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the
-    /// decoding fails.
-    fn decode_ids(&self, ids: &[u32]) -> Result<String> {
-        self.tokenizer
-            .decode(ids, self.special_token)
-            .map_err(|err| anyhow!("failed to decode IDs: {err}"))
+impl From<tokenizers::Tokenizer> for Tokenizer {
+    fn from(tokenizer: tokenizers::Tokenizer) -> Self {
+        Self {
+            tokenizer,
+            special_token: true,
+        }
+    }
+}
+
+impl Deref for Tokenizer {
+    type Target = tokenizers::Tokenizer;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.tokenizer
+    }
+}
+
+impl DerefMut for Tokenizer {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.tokenizer
     }
 }
