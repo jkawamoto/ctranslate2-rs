@@ -45,11 +45,10 @@ fn main() {
     }
 
     if cfg!(feature = "cuda") {
-        let cuda =
-            env::var("CUDA_TOOLKIT_ROOT_DIR").expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
+        let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
         cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
-        link_libraries(Path::new(&cuda).join("lib64"));
+        link_libraries(cuda.join("lib64"));
         if cfg!(feature = "cudnn") {
             cmake.define("WITH_CUDNN", "ON");
         }
@@ -126,4 +125,45 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
                 });
         }
     }
+}
+
+// The function below was derived and modified from the `cudarc` crate.
+// Original source: https://github.com/coreylowman/cudarc/blob/main/build.rs
+//
+// Copyright (c) 2024 Corey Lowman
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+fn cuda_root() -> Option<PathBuf> {
+    let env_vars = [
+        "CUDA_PATH",
+        "CUDA_ROOT",
+        "CUDA_TOOLKIT_ROOT_DIR",
+        "CUDNN_LIB",
+    ];
+    let env_vars = env_vars
+        .into_iter()
+        .map(std::env::var)
+        .filter_map(Result::ok);
+
+    let roots = [
+        "/usr",
+        "/usr/local/cuda",
+        "/opt/cuda",
+        "/usr/lib/cuda",
+        "C:/Program Files/NVIDIA GPU Computing Toolkit",
+        "C:/CUDA",
+    ];
+    let roots = roots.into_iter().map(Into::into);
+    env_vars
+        .chain(roots)
+        .map(Into::<PathBuf>::into)
+        .find(|path| path.join("include").join("cuda.h").is_file())
 }
