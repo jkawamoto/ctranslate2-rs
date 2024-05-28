@@ -410,14 +410,14 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for r in output.into_iter() {
             let score = r.score();
-            let h = r
+            let hypotheses = r
                 .hypotheses
                 .into_iter()
                 .next()
                 .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
-                    .decode(h.into_iter().collect())
+                    .decode(hypotheses)
                     .map_err(|err| anyhow!("failed to decode: {err}"))?,
                 score,
             ));
@@ -492,14 +492,16 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for (r, prefix) in output.into_iter().zip(target_prefixes) {
             let score = r.score();
-            let h = r
+            let mut hypotheses = r
                 .hypotheses
                 .into_iter()
                 .next()
                 .ok_or_else(|| anyhow!("no results are returned"))?;
+            hypotheses.drain(0..prefix.len());
+
             res.push((
                 self.tokenizer
-                    .decode(h.into_iter().skip(prefix.len()).collect())
+                    .decode(hypotheses)
                     .map_err(|err| anyhow!("failed to decode: {err}"))?,
                 score,
             ));
