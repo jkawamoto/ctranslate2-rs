@@ -27,9 +27,12 @@ fn main() {
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
     if let Ok(library_path) = env::var("LIBRARY_PATH") {
-        library_path.split(':').for_each(|v| {
-            println!("cargo:rustc-link-search={}", v);
-        });
+        library_path
+            .split(':')
+            .filter(|v| !v.is_empty())
+            .for_each(|v| {
+                println!("cargo:rustc-link-search={}", v);
+            });
     }
 
     let mut cmake = Config::new("CTranslate2");
