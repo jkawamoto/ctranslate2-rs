@@ -10,6 +10,14 @@ env:
   CXXFLAGS: -std=c++17
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: dprint/check@v2.2
+      - uses: pre-commit/action@v3.0.1
+
   build-macos:
     strategy:
       fail-fast: false
