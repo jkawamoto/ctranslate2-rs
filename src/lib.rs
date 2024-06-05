@@ -191,14 +191,14 @@ pub trait Tokenizer {
 }
 
 #[inline]
-fn encode_strings<T: Tokenizer, U: AsRef<str>>(
+fn encode_all<T: Tokenizer, U: AsRef<str>>(
     tokenizer: &T,
-    sources: &Vec<U>,
+    sources: &[U],
 ) -> Result<Vec<Vec<String>>> {
     sources
         .into_iter()
         .map(|s| tokenizer.encode(s.as_ref()))
-        .collect::<Result<Vec<Vec<String>>>>()
+        .collect()
 }
 
 /// The result for a single generation step.
@@ -373,7 +373,7 @@ impl<T: Tokenizer> Translator<T> {
     ///
     pub fn translate_batch<'a, U, V>(
         &self,
-        sources: &Vec<U>,
+        sources: &[U],
         options: &TranslationOptions<V>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
@@ -393,7 +393,7 @@ impl<T: Tokenizer> Translator<T> {
                 false
             };
             let output = self.translator.translate_batch(
-                &encode_strings(&self.tokenizer, sources)?,
+                &encode_all(&self.tokenizer, sources)?,
                 options,
                 Some(&mut wrapped_callback),
             )?;
@@ -401,7 +401,7 @@ impl<T: Tokenizer> Translator<T> {
             output
         } else {
             self.translator.translate_batch(
-                &encode_strings(&self.tokenizer, sources)?,
+                &encode_all(&self.tokenizer, sources)?,
                 options,
                 None,
             )?
@@ -410,14 +410,14 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for r in output.into_iter() {
             let score = r.score();
-            let h = r
+            let hypotheses = r
                 .hypotheses
                 .into_iter()
                 .next()
                 .ok_or_else(|| anyhow!("no results are returned"))?;
             res.push((
                 self.tokenizer
-                    .decode(h.into_iter().collect())
+                    .decode(hypotheses)
                     .map_err(|err| anyhow!("failed to decode: {err}"))?,
                 score,
             ));
@@ -451,7 +451,7 @@ impl<T: Tokenizer> Translator<T> {
     /// the translation fails.
     pub fn translate_batch_with_target_prefix<'a, U, V, W>(
         &self,
-        sources: &Vec<U>,
+        sources: &[U],
         target_prefixes: &Vec<Vec<V>>,
         options: &TranslationOptions<W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
@@ -473,7 +473,7 @@ impl<T: Tokenizer> Translator<T> {
                 false
             };
             let output = self.translator.translate_batch_with_target_prefix(
-                &encode_strings(&self.tokenizer, sources)?,
+                &encode_all(&self.tokenizer, sources)?,
                 &target_prefixes,
                 options,
                 Some(&mut wrapped_callback),
@@ -482,7 +482,7 @@ impl<T: Tokenizer> Translator<T> {
             output
         } else {
             self.translator.translate_batch_with_target_prefix(
-                &encode_strings(&self.tokenizer, sources)?,
+                &encode_all(&self.tokenizer, sources)?,
                 &target_prefixes,
                 options,
                 None,
@@ -492,14 +492,16 @@ impl<T: Tokenizer> Translator<T> {
         let mut res = Vec::new();
         for (r, prefix) in output.into_iter().zip(target_prefixes) {
             let score = r.score();
-            let h = r
+            let mut hypotheses = r
                 .hypotheses
                 .into_iter()
                 .next()
                 .ok_or_else(|| anyhow!("no results are returned"))?;
+            hypotheses.drain(0..prefix.len());
+
             res.push((
                 self.tokenizer
-                    .decode(h.into_iter().skip(prefix.len()).collect())
+                    .decode(hypotheses)
                     .map_err(|err| anyhow!("failed to decode: {err}"))?,
                 score,
             ));
@@ -668,7 +670,7 @@ impl<T: Tokenizer> Generator<T> {
     /// fails.
     pub fn generate_batch<'a, U, V, W>(
         &self,
-        prompts: &Vec<U>,
+        prompts: &[U],
         options: &GenerationOptions<V, W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
@@ -689,18 +691,15 @@ impl<T: Tokenizer> Generator<T> {
                 false
             };
             let output = self.generator.generate_batch(
-                &encode_strings(&self.tokenizer, prompts)?,
+                &encode_all(&self.tokenizer, prompts)?,
                 options,
                 Some(&mut wrapped_callback),
             )?;
             callback_result?;
             output
         } else {
-            self.generator.generate_batch(
-                &encode_strings(&self.tokenizer, prompts)?,
-                options,
-                None,
-            )?
+            self.generator
+                .generate_batch(&encode_all(&self.tokenizer, prompts)?, options, None)?
         };
 
         let mut res = Vec::new();

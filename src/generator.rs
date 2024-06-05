@@ -190,12 +190,12 @@ impl Generator {
     /// # }
     /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Generator> {
+        let model_path = model_path.as_ref();
         Ok(Generator {
             ptr: ffi::generator(
                 model_path
-                    .as_ref()
                     .to_str()
-                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.display()))?,
                 config.to_ffi(),
             )?,
         })
@@ -248,7 +248,7 @@ impl Generator {
     /// ```
     pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
         &self,
-        start_tokens: &Vec<Vec<T>>,
+        start_tokens: &[Vec<T>],
         options: &GenerationOptions<U, V>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<GenerationResult>> {

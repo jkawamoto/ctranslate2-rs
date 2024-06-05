@@ -401,12 +401,12 @@ impl Translator {
     /// # }
     /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Translator> {
+        let model_path = model_path.as_ref();
         Ok(Translator {
             ptr: ffi::translator(
                 model_path
-                    .as_ref()
                     .to_str()
-                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.as_ref().display()))?,
+                    .ok_or_else(|| anyhow!("invalid path: {}", model_path.display()))?,
                 config.to_ffi(),
             )?,
         })
@@ -460,12 +460,12 @@ impl Translator {
     /// ```
     pub fn translate_batch<'a, T, V>(
         &self,
-        source: &Vec<Vec<T>>,
+        source: &[Vec<T>],
         options: &TranslationOptions<V>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
-        T: AsRef<str> + std::fmt::Debug,
+        T: AsRef<str>,
         V: AsRef<str>,
     {
         Ok(self
@@ -507,8 +507,8 @@ impl Translator {
     /// the translation fails.
     pub fn translate_batch_with_target_prefix<'a, T, U, V>(
         &self,
-        source: &Vec<Vec<T>>,
-        target_prefix: &Vec<Vec<U>>,
+        source: &[Vec<T>],
+        target_prefix: &[Vec<U>],
         options: &TranslationOptions<V>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>

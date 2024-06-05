@@ -1,0 +1,92 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  CXXFLAGS: -std=c++17
+
+jobs:
+  build-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-13, macos-14 ]
+        feature: [ ruy, accelerate ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install OpenBLAS
+        if: ${{ matrix.feature == 'openblas' }}
+        run: |
+          brew install openblas
+          PREFIX=$(brew --prefix openblas)
+          echo "LIBRARY_PATH=$PREFIX/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$PREFIX/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$PREFIX:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+      - name: Run tests
+        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
+
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [ ruy, mkl, openblas ]
+    runs-on: ubuntu-latest
+    env:
+      LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
+
+    steps:
+      - name: Install MKL
+        if: ${{ matrix.feature == 'mkl' }}
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
+          sudo apt-get update
+          sudo apt-get install -y intel-mkl-64bit-2020.4-912
+          echo "LD_LIBRARY_PATH=/opt/intel/lib/intel64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - name: Install OpenBLAS
+        if: ${{ matrix.feature == 'openblas' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libclang-dev libopenblas-dev
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+      - name: Run tests
+        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
+
+  build-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: [ ruy ]
+    runs-on: windows-latest
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+      - name: Run tests
+        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
