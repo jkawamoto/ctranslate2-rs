@@ -12,16 +12,16 @@ but it has not been thoroughly tested and may have limitations or require additi
 
 The ct2rs crate has been tested and confirmed to work with the following models:
 
-* BART
-* BLOOM
-* FALCON
-* Marian-MT
-* MPT
-* NLLB
-* GPT-2
-* GPT-J
-* OPT
-* T5
+- BART
+- BLOOM
+- FALCON
+- Marian-MT
+- MPT
+- NLLB
+- GPT-2
+- GPT-J
+- OPT
+- T5
 
 Please see the respective
 [examples](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples)

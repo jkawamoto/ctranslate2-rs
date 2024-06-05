@@ -13,3 +13,11 @@ repos:
     hooks:
       - id: clang-format
         types_or: [ c++, c, cuda ]
+  - repo: local
+    hooks:
+      - id: dprint
+        name: run dprint
+        entry: dprint fmt
+        language: system
+        files: \.(toml|md)$
+        types: [ text ]

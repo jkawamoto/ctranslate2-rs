@@ -2,13 +2,9 @@
 name = "ct2rs"
 version = "0.8.3"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
-edition = "2021"
-description = "Rust bindings for OpenNMT/CTranslate2"
-documentation = "https://docs.rs/ct2rs"
-repository = "https://github.com/jkawamoto/ctranslate2-rs"
-license = "MIT"
-keywords = ["ctranslate2", "bindings", "llm"]
 categories = ["api-bindings"]
+documentation = "https://docs.rs/ct2rs"
+edition = "2021"
 include = [
     "/include",
     "/src",
@@ -28,25 +24,26 @@ include = [
     "!/CTranslate2/**/docs",
     "!/CTranslate2/**/media",
 ]
+keywords = ["ctranslate2", "bindings", "llm"]
+license = "MIT"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
+description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
-cxx = { version = "1.0.122", features = ["c++17"] }
 anyhow = "1.0.86"
-tokenizers = "0.19.1"
-sentencepiece = "0.11.2"
+cxx = { version = "1.0.122", features = ["c++17"] }
 intel-mkl-src = { version = "0.8.1", optional = true }
-
+sentencepiece = "0.11.2"
+tokenizers = "0.19.1"
 
 [dev-dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 rand = "0.8.5"
 
-
 [build-dependencies]
 cmake = "0.1.50"
 cxx-build = "1.0.122"
 walkdir = "2.5.0"
-
 
 [features]
 default = ["ruy", "accelerate"]
@@ -56,7 +53,6 @@ ruy = []
 accelerate = []
 cuda = []
 cudnn = ["cuda"]
-
 
 [[example]]
 name = "bart"
