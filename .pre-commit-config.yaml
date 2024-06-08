@@ -12,7 +12,11 @@ repos:
     rev: v18.1.5
     hooks:
       - id: clang-format
-        types_or: [ c++, c, cuda ]
+        types_or: [c++, c, cuda]
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.12.1
+    hooks:
+      - id: yamlfmt
   - repo: local
     hooks:
       - id: dprint
@@ -20,4 +24,4 @@ repos:
         entry: dprint fmt
         language: system
         files: \.(toml|md)$
-        types: [ text ]
+        types: [text]
