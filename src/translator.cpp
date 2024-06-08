@@ -16,6 +16,7 @@ using rust::Str;
 using rust::String;
 using rust::Vec;
 using std::string;
+using std::variant;
 using std::vector;
 
 inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
@@ -48,6 +49,11 @@ inline ctranslate2::TranslationOptions convert_options(
     bool has_callback,
     TranslationCallbackBox& callback
 ) {
+    variant<string, vector<string>, vector<size_t>> end_token;
+    if (!options.end_token.empty()) {
+        end_token = from_rust(options.end_token);
+    }
+
     return ctranslate2::TranslationOptions {
         options.beam_size,
         options.patience,
@@ -58,7 +64,7 @@ inline ctranslate2::TranslationOptions convert_options(
         options.disable_unk,
         from_rust(options.suppress_sequences),
         options.prefix_bias_beta,
-        {},
+        end_token,
         options.return_end_token,
         options.max_input_length,
         options.max_decoding_length,

@@ -68,6 +68,7 @@ mod ffi {
         no_repeat_ngram_size: usize,
         disable_unk: bool,
         suppress_sequences: Vec<VecStr<'a>>,
+        end_token: Vec<&'a str>,
         return_end_token: bool,
         max_length: usize,
         min_length: usize,
@@ -246,10 +247,10 @@ impl Generator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>>(
+    pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>, W: AsRef<str>>(
         &self,
         start_tokens: &[Vec<T>],
-        options: &GenerationOptions<U, V>,
+        options: &GenerationOptions<U, V, W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<GenerationResult>> {
         Ok(self
@@ -301,6 +302,7 @@ impl Generator {
 /// # assert_eq!(options.no_repeat_ngram_size, 0);
 /// # assert!(!options.disable_unk);
 /// # assert!(options.suppress_sequences.is_empty());
+/// # assert!(options.end_token.is_empty());
 /// # assert!(!options.return_end_token);
 /// # assert_eq!(options.max_length, 512);
 /// # assert_eq!(options.min_length, 0);
@@ -319,7 +321,7 @@ impl Generator {
 /// ```
 ///
 #[derive(Clone, Debug)]
-pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
+pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search). (default: 1)
     pub beam_size: usize,
     /// Beam search patience factor, as described in <https://arxiv.org/abs/2204.05424>.
@@ -341,8 +343,8 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub disable_unk: bool,
     /// Disable the generation of some sequences of tokens. (default: empty)
     pub suppress_sequences: Vec<Vec<T>>,
-    // Stop the decoding on one of these tokens (defaults to the model EOS token).
-    //std::variant<std::string, std::vector<std::string>, std::vector<size_t>> end_token;
+    /// Stop the decoding on one of these tokens (defaults to the model EOS token).
+    pub end_token: Vec<U>,
     /// Include the end token in the result. (default: false)
     pub return_end_token: bool,
     /// Length constraints. (default: 512)
@@ -367,7 +369,7 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     /// Minimum probability to expand an alternative. (default: 0)
     pub min_alternative_expansion_prob: f32,
     /// The static prompt will prefix all inputs for this model. (default: empty)
-    pub static_prompt: Vec<U>,
+    pub static_prompt: Vec<V>,
     /// Cache the model state after the static prompt and reuse it for future runs using
     /// the same static prompt. (default: true)
     pub cache_static_prompt: bool,
@@ -381,7 +383,7 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub batch_type: BatchType,
 }
 
-impl Default for GenerationOptions<String, String> {
+impl Default for GenerationOptions<String, String, String> {
     fn default() -> Self {
         Self {
             beam_size: 1,
@@ -391,6 +393,7 @@ impl Default for GenerationOptions<String, String> {
             no_repeat_ngram_size: 0,
             disable_unk: false,
             suppress_sequences: vec![],
+            end_token: vec![],
             return_end_token: false,
             max_length: 512,
             min_length: 0,
@@ -410,7 +413,7 @@ impl Default for GenerationOptions<String, String> {
     }
 }
 
-impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
+impl<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> GenerationOptions<T, U, V> {
     #[inline]
     fn to_ffi(&self) -> ffi::GenerationOptions {
         ffi::GenerationOptions {
@@ -421,6 +424,7 @@ impl<T: AsRef<str>, U: AsRef<str>> GenerationOptions<T, U> {
             no_repeat_ngram_size: self.no_repeat_ngram_size,
             disable_unk: self.disable_unk,
             suppress_sequences: vec_ffi_vecstr(self.suppress_sequences.as_ref()),
+            end_token: self.end_token.iter().map(AsRef::as_ref).collect(),
             return_end_token: self.return_end_token,
             max_length: self.max_length,
             min_length: self.min_length,
@@ -488,6 +492,7 @@ mod tests {
     fn options_to_ffi() {
         let opts = GenerationOptions {
             suppress_sequences: vec![vec!["x".to_string(), "y".to_string(), "z".to_string()]],
+            end_token: vec!["1".to_string(), "2".to_string()],
             static_prompt: vec!["one".to_string(), "two".to_string()],
             ..Default::default()
         };
@@ -507,6 +512,13 @@ mod tests {
                     v: v.iter().map(AsRef::as_ref).collect()
                 })
                 .collect::<Vec<VecStr>>()
+        );
+        assert_eq!(
+            res.end_token,
+            opts.end_token
+                .iter()
+                .map(AsRef::as_ref)
+                .collect::<Vec<&str>>()
         );
         assert_eq!(res.return_end_token, opts.return_end_token);
         assert_eq!(res.max_length, opts.max_length);

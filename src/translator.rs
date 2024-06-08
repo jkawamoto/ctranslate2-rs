@@ -65,7 +65,7 @@ mod ffi {
         disable_unk: bool,
         suppress_sequences: Vec<VecStr<'a>>,
         prefix_bias_beta: f32,
-        // end_token,
+        end_token: Vec<&'a str>,
         return_end_token: bool,
         max_input_length: usize,
         max_decoding_length: usize,
@@ -162,6 +162,7 @@ unsafe impl Sync for ffi::Translator {}
 /// # assert!(!options.disable_unk);
 /// # assert!(options.suppress_sequences.is_empty());
 /// # assert_eq!(options.prefix_bias_beta, 0.);
+/// # assert!(options.end_token.is_empty());
 /// # assert!(!options.return_end_token);
 /// # assert_eq!(options.max_input_length, 1024);
 /// # assert_eq!(options.max_decoding_length, 256);
@@ -181,7 +182,7 @@ unsafe impl Sync for ffi::Translator {}
 /// ```
 ///
 #[derive(Clone, Debug)]
-pub struct TranslationOptions<T: AsRef<str>> {
+pub struct TranslationOptions<T: AsRef<str>, U: AsRef<str>> {
     /// Beam size to use for beam search (set 1 to run greedy search). (default: 2)
     pub beam_size: usize,
     /// Beam search patience factor, as described in <https://arxiv.org/abs/2204.05424>.
@@ -213,8 +214,8 @@ pub struct TranslationOptions<T: AsRef<str>> {
     /// If beta <= 0 and a non-empty prefix is given, then the prefix will be used as a
     /// hard-prefix rather than a soft, biased-prefix. (default: 0)
     pub prefix_bias_beta: f32,
-    // Stop the decoding on one of these tokens (defaults to the model EOS token).
-    // end_token,
+    /// Stop the decoding on one of these tokens (defaults to the model EOS token).
+    pub end_token: Vec<U>,
     /// Include the end token in the result. (default: false)
     pub return_end_token: bool,
     /// Truncate the inputs after this many tokens (set 0 to disable truncation). (default: 1024)
@@ -257,7 +258,7 @@ pub struct TranslationOptions<T: AsRef<str>> {
     pub batch_type: BatchType,
 }
 
-impl Default for TranslationOptions<String> {
+impl Default for TranslationOptions<String, String> {
     fn default() -> Self {
         Self {
             beam_size: 2,
@@ -269,6 +270,7 @@ impl Default for TranslationOptions<String> {
             disable_unk: false,
             suppress_sequences: vec![],
             prefix_bias_beta: 0.,
+            end_token: vec![],
             return_end_token: false,
             max_input_length: 1024,
             max_decoding_length: 256,
@@ -289,7 +291,7 @@ impl Default for TranslationOptions<String> {
     }
 }
 
-impl<T: AsRef<str>> TranslationOptions<T> {
+impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
     fn to_ffi(&self) -> ffi::TranslationOptions {
         ffi::TranslationOptions {
             beam_size: self.beam_size,
@@ -301,6 +303,7 @@ impl<T: AsRef<str>> TranslationOptions<T> {
             disable_unk: self.disable_unk,
             suppress_sequences: vec_ffi_vecstr(self.suppress_sequences.as_ref()),
             prefix_bias_beta: self.prefix_bias_beta,
+            end_token: self.end_token.iter().map(AsRef::as_ref).collect(),
             return_end_token: self.return_end_token,
             max_input_length: self.max_input_length,
             max_decoding_length: self.max_decoding_length,
@@ -458,14 +461,15 @@ impl Translator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn translate_batch<'a, T, V>(
+    pub fn translate_batch<'a, T, U, V>(
         &self,
         source: &[Vec<T>],
-        options: &TranslationOptions<V>,
+        options: &TranslationOptions<U, V>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
+        U: AsRef<str>,
         V: AsRef<str>,
     {
         Ok(self
@@ -505,17 +509,18 @@ impl Translator {
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
-    pub fn translate_batch_with_target_prefix<'a, T, U, V>(
+    pub fn translate_batch_with_target_prefix<'a, T, U, V, W>(
         &self,
         source: &[Vec<T>],
         target_prefix: &[Vec<U>],
-        options: &TranslationOptions<V>,
+        options: &TranslationOptions<V, W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
         U: AsRef<str>,
         V: AsRef<str>,
+        W: AsRef<str>,
     {
         Ok(self
             .ptr
@@ -604,6 +609,7 @@ mod tests {
     fn options_to_ffi() {
         let opts = TranslationOptions {
             suppress_sequences: vec![vec!["a".to_string(), "b".to_string(), "c".to_string()]],
+            end_token: vec!["1".to_string(), "2".to_string()],
             ..Default::default()
         };
         let res = opts.to_ffi();
@@ -625,6 +631,13 @@ mod tests {
                 .collect::<Vec<VecStr>>()
         );
         assert_eq!(res.prefix_bias_beta, opts.prefix_bias_beta);
+        assert_eq!(
+            res.end_token,
+            opts.end_token
+                .iter()
+                .map(AsRef::as_ref)
+                .collect::<Vec<&str>>()
+        );
         assert_eq!(res.return_end_token, opts.return_end_token);
         assert_eq!(res.max_input_length, opts.max_input_length);
         assert_eq!(res.max_decoding_length, opts.max_decoding_length);
