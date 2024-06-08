@@ -371,15 +371,16 @@ impl<T: Tokenizer> Translator<T> {
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
     ///
-    pub fn translate_batch<'a, U, V>(
+    pub fn translate_batch<'a, U, V, W>(
         &self,
         sources: &[U],
-        options: &TranslationOptions<V>,
+        options: &TranslationOptions<V, W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
         V: AsRef<str>,
+        W: AsRef<str>,
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
@@ -449,17 +450,18 @@ impl<T: Tokenizer> Translator<T> {
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
-    pub fn translate_batch_with_target_prefix<'a, U, V, W>(
+    pub fn translate_batch_with_target_prefix<'a, U, V, W, E>(
         &self,
         sources: &[U],
         target_prefixes: &Vec<Vec<V>>,
-        options: &TranslationOptions<W>,
+        options: &TranslationOptions<W, E>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
         V: AsRef<str>,
         W: AsRef<str>,
+        E: AsRef<str>,
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
@@ -668,16 +670,17 @@ impl<T: Tokenizer> Generator<T> {
     /// Returns a `Result` containing a vector of `GenerationResult` if successful, encapsulating
     /// the generated sequences for each input start token batch, or an error if the generation
     /// fails.
-    pub fn generate_batch<'a, U, V, W>(
+    pub fn generate_batch<'a, U, V, W, E>(
         &self,
         prompts: &[U],
-        options: &GenerationOptions<V, W>,
+        options: &GenerationOptions<V, E, W>,
         callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
         U: AsRef<str>,
         V: AsRef<str>,
         W: AsRef<str>,
+        E: AsRef<str>,
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());

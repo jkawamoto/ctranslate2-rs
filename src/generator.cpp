@@ -14,6 +14,7 @@
 using rust::Str;
 using rust::Vec;
 using std::string;
+using std::variant;
 using std::vector;
 
 inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
@@ -47,7 +48,13 @@ Generator::generate_batch(
     const GenerationOptions& options,
     bool has_callback,
     GenerationCallbackBox& callback
+
 ) const {
+    variant<string, vector<string>, vector<size_t>> end_token;
+    if (!options.end_token.empty()) {
+        end_token = from_rust(options.end_token);
+    }
+
     auto futures = this->impl->generate_batch_async(
         from_rust(start_tokens),
         ctranslate2::GenerationOptions {
@@ -58,7 +65,7 @@ Generator::generate_batch(
             options.no_repeat_ngram_size,
             options.disable_unk,
             from_rust(options.suppress_sequences),
-            {},
+            end_token,
             options.return_end_token,
             options.max_length,
             options.min_length,
