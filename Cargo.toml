@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.8.4"
+version = "0.8.5"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs"
@@ -37,7 +37,7 @@ sentencepiece = "0.11.2"
 tokenizers = "0.19.1"
 
 [dev-dependencies]
-clap = { version = "4.5.6", features = ["derive"] }
+clap = { version = "4.5.7", features = ["derive"] }
 rand = "0.8.5"
 
 [build-dependencies]
