@@ -7,7 +7,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  CXXFLAGS: -std=c++17
 
 jobs:
   check:
@@ -85,8 +84,6 @@ jobs:
       matrix:
         feature: [ruy]
     runs-on: windows-latest
-    env:
-      RUSTFLAGS: "-C target-feature=+crt-static"
 
     steps:
       - uses: actions/checkout@v4
