@@ -6,6 +6,7 @@
   },
   "includes": [
     "**/Cargo.toml",
+    "**/config.toml",
     "/README.md"
   ],
   "plugins": [
