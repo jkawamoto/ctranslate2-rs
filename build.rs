@@ -43,6 +43,11 @@ fn main() {
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE");
     if cfg!(target_os = "windows") {
+        let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
+        if !rustflags.contains("target-feature=+crt-static") {
+            println!("cargo:warning=For Windows compilation, set `RUSTFLAGS=-C target-feature=+crt-static`.");
+        }
+
         println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
         cmake.profile("Release");
     }

@@ -53,6 +53,9 @@ and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 
 The installation of CMake is required to compile the library.
 
+Additional notes for Windows:
+it is necessary to add `RUSTFLAGS=-C target-feature=+crt-static` to the environment variables for compilation.
+
 ## Model Conversion for CTranslate2
 
 To use model files with CTranslate2, they must first be converted.
