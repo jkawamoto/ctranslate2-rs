@@ -43,7 +43,7 @@ fn main() {
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE");
     if cfg!(target_os = "windows") {
-        let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
+        let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
             println!("cargo:warning=For Windows compilation, set `RUSTFLAGS=-C target-feature=+crt-static`.");
         }
@@ -56,6 +56,7 @@ fn main() {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
         cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
+        link_libraries(cuda.join("lib"));
         link_libraries(cuda.join("lib64"));
         if cfg!(feature = "cudnn") {
             cmake.define("WITH_CUDNN", "ON");
