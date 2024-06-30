@@ -1,5 +1,2 @@
-[env]
-CXXFLAGS = "-std=c++17"
-
 [target.'cfg(target_os = "windows")']
 rustflags = ["-C", "target-feature=+crt-static"]

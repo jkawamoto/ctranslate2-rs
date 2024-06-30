@@ -37,7 +37,6 @@ fn main() {
 
     let mut cmake = Config::new("CTranslate2");
     cmake
-        .static_crt(true)
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_MKL", "OFF")
@@ -49,7 +48,7 @@ fn main() {
         }
 
         println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
-        cmake.profile("Release");
+        cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
     }
 
     if cfg!(feature = "cuda") {
@@ -90,7 +89,8 @@ fn main() {
     .file("src/generator.cpp")
     .include("CTranslate2/include")
     .std("c++17")
-    .static_crt(true)
+    .static_crt(cfg!(target_os = "windows"))
+    .flag_if_supported("/EHsc")
     .compile("ct2rs");
 }
 
