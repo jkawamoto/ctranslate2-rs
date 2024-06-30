@@ -53,6 +53,7 @@ ruy = []
 accelerate = []
 cuda = []
 cudnn = ["cuda"]
+openmp = []
 
 [[example]]
 name = "bart"
