@@ -138,9 +138,10 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 
 use crate::auto::Tokenizer as AutoTokenizer;
-use crate::config::Config;
 pub use crate::config::{set_log_level, set_random_seed};
+use crate::config::Config;
 pub use crate::generator::GenerationOptions;
+pub use crate::storage_view::StorageView;
 pub use crate::translator::TranslationOptions;
 
 pub mod auto;
@@ -148,6 +149,7 @@ pub mod bpe;
 pub mod config;
 pub mod generator;
 pub mod sentencepiece;
+pub mod storage_view;
 pub mod tokenizers;
 pub mod translator;
 mod types;

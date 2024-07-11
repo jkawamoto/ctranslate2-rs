@@ -8,7 +8,7 @@
 
 //! Configs and associated enums.
 
-use std::fmt::{Debug, Display, Formatter, Pointer};
+use std::fmt::{Debug, Display, Formatter};
 
 use cxx::UniquePtr;
 
