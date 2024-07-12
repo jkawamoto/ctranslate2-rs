@@ -7,6 +7,7 @@
 // http://opensource.org/licenses/mit-license.php
 
 use std::fmt::{Debug, Formatter};
+use std::marker::PhantomData;
 use std::ops::Deref;
 
 use anyhow::Result;
@@ -23,21 +24,9 @@ pub(crate) mod ffi {
 
         type StorageView;
 
-        fn storage_view_from_float(
+        fn storage_view(
             shape: &[usize],
-            init: &[f32],
-            device: Device,
-        ) -> Result<UniquePtr<StorageView>>;
-
-        fn storage_view_from_int8(
-            shape: &[usize],
-            init: &[i8],
-            device: Device,
-        ) -> Result<UniquePtr<StorageView>>;
-
-        fn storage_view_from_int16(
-            shape: &[usize],
-            init: &[i16],
+            init: &mut [f32],
             device: Device,
         ) -> Result<UniquePtr<StorageView>>;
 
@@ -53,29 +42,17 @@ pub(crate) mod ffi {
 
 /// A Rust binding to the
 /// [`ctranslate2::StorageView`](https://opennmt.net/CTranslate2/python/ctranslate2.StorageView.html).
-pub struct StorageView {
+pub struct StorageView<'a> {
     ptr: UniquePtr<ffi::StorageView>,
+    phantom: PhantomData<&'a [f32]>,
 }
 
-impl StorageView {
+impl<'a> StorageView<'a> {
     /// Creates a storage view with the given shape from the given array of float values.
-    pub fn from_f32(shape: &[usize], init: &[f32], device: Device) -> Result<Self> {
+    pub fn new(shape: &[usize], init: &'a mut [f32], device: Device) -> Result<Self> {
         Ok(Self {
-            ptr: ffi::storage_view_from_float(shape, init, device)?,
-        })
-    }
-
-    /// Creates a storage view with the given shape from the given array of int8 values.
-    pub fn from_i8(shape: &[usize], init: &[i8], device: Device) -> Result<Self> {
-        Ok(Self {
-            ptr: ffi::storage_view_from_int8(shape, init, device)?,
-        })
-    }
-
-    /// Creates a storage view with the given shape from the given array of int16 values.
-    pub fn from_i16(shape: &[usize], init: &[i16], device: Device) -> Result<Self> {
-        Ok(Self {
-            ptr: ffi::storage_view_from_int16(shape, init, device)?,
+            ptr: ffi::storage_view(shape, init, device)?,
+            phantom: PhantomData,
         })
     }
 
@@ -100,13 +77,13 @@ impl StorageView {
     }
 }
 
-impl Debug for StorageView {
+impl Debug for StorageView<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "StorageView {{{} }}", ffi::to_string(self).replace("\n", ", "))
     }
 }
 
-impl Deref for StorageView {
+impl Deref for StorageView<'_> {
     type Target = ffi::StorageView;
 
     fn deref(&self) -> &Self::Target {
@@ -114,8 +91,8 @@ impl Deref for StorageView {
     }
 }
 
-unsafe impl Send for StorageView {}
-unsafe impl Sync for StorageView {}
+unsafe impl Send for StorageView<'_> {}
+unsafe impl Sync for StorageView<'_> {}
 
 #[cfg(test)]
 mod tests {
@@ -123,40 +100,19 @@ mod tests {
     use crate::storage_view::StorageView;
 
     #[test]
-    fn test_from_f32() {
+    fn test_constructor() {
         let shape = vec![1, 2, 4];
-        let data = vec![1., 2., 3., 4., 5., 6., 7., 8.];
-        let v = StorageView::from_f32(&shape, &data, Default::default()).unwrap();
+        let mut data = vec![1., 2., 3., 4., 5., 6., 7., 8.];
+        let size = data.len() as i64;
+        let rank = shape.len() as i64;
 
-        assert_eq!(v.size(), data.len() as i64);
-        assert_eq!(v.rank(), shape.len() as i64);
+        let v = StorageView::new(&shape, &mut data, Default::default()).unwrap();
+
+        assert_eq!(v.size(), size);
+        assert_eq!(v.rank(), rank);
         assert!(!v.empty());
         assert_eq!(v.device(), Device::CPU);
 
         println!("{:?}", v);
-    }
-
-    #[test]
-    fn test_from_i8() {
-        let shape = vec![2, 2];
-        let data = vec![3, 4, 5, 6];
-        let v = StorageView::from_i8(&shape, &data, Default::default()).unwrap();
-
-        assert_eq!(v.size(), data.len() as i64);
-        assert_eq!(v.rank(), shape.len() as i64);
-        assert!(!v.empty());
-        assert_eq!(v.device(), Device::CPU);
-    }
-
-    #[test]
-    fn test_from_i16() {
-        let shape = vec![2, 2];
-        let data = vec![3, 4, 5, 6];
-        let v = StorageView::from_i16(&shape, &data, Default::default()).unwrap();
-
-        assert_eq!(v.size(), data.len() as i64);
-        assert_eq!(v.rank(), shape.len() as i64);
-        assert!(!v.empty());
-        assert_eq!(v.device(), Device::CPU);
     }
 }
