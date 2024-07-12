@@ -141,7 +141,6 @@ use crate::auto::Tokenizer as AutoTokenizer;
 pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
 pub use crate::generator::GenerationOptions;
-pub use crate::storage_view::StorageView;
 pub use crate::translator::TranslationOptions;
 
 pub mod auto;
@@ -153,6 +152,7 @@ pub mod storage_view;
 pub mod tokenizers;
 pub mod translator;
 mod types;
+pub mod whisper;
 
 /// Defines the necessary functions for a tokenizer.
 ///
