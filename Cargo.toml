@@ -38,7 +38,12 @@ tokenizers = "0.19.1"
 
 [dev-dependencies]
 clap = { version = "4.5.7", features = ["derive"] }
+hound = "3.5.1"
+ndarray = "0.15.6"
 rand = "0.8.5"
+rustfft = "6.2.0"
+serde = { version = "1.0.202", features = ["derive"] }
+serde_json = "1.0.117"
 
 [build-dependencies]
 cmake = "0.1.50"
@@ -89,3 +94,6 @@ name = "t5"
 
 [[example]]
 name = "stream"
+
+[[example]]
+name = "whisper"
