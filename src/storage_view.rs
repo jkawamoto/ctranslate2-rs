@@ -6,6 +6,9 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! This module provides a Rust binding to the
+//! [`ctranslate2::StorageView`](https://opennmt.net/CTranslate2/python/ctranslate2.StorageView.html).
+
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -79,7 +82,11 @@ impl<'a> StorageView<'a> {
 
 impl Debug for StorageView<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "StorageView {{{} }}", ffi::to_string(self).replace("\n", ", "))
+        write!(
+            f,
+            "StorageView {{{} }}",
+            ffi::to_string(self).replace("\n", ", ")
+        )
     }
 }
 

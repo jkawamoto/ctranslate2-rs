@@ -6,6 +6,17 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! This module provides a Rust binding to the
+//! [`ctranslate2::models::Whisper`](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html).
+//!
+//! The main structure provided by this module is the [`Whisper`] structure.
+//!
+//! In addition to the `Whisper`, this module also offers various supportive structures such
+//! as [`WhisperOptions`], [`DetectionResult`], and [`WhisperGenerationResult`].
+//!
+//! For more detailed information on each structure and its usage, please refer to their respective
+//! documentation within this module.
+
 use std::ffi::OsString;
 use std::fmt::{Debug, Formatter};
 use std::path::Path;
@@ -21,38 +32,51 @@ use crate::whisper::ffi::VecDetectionResult;
 
 #[cxx::bridge]
 mod ffi {
+    /// Options for whisper generation.
+    /// # Examples
+    ///
+    /// Example of creating a default `TranslationOptions`:
+    ///
+    /// ```
+    /// use ct2rs::whisper::WhisperOptions;
+    ///
+    /// let options = WhisperOptions::default();
+    /// ```
     #[derive(Clone, Debug)]
     pub struct WhisperOptions {
-        /// Beam size to use for beam search (set 1 to run greedy search).
+        /// Beam size to use for beam search (set 1 to run greedy search). (default: 5)
         pub beam_size: usize,
-        /// Beam search patience factor, as described in https://arxiv.org/abs/2204.05424.
+        /// Beam search patience factor, as described in <https://arxiv.org/abs/2204.05424>.
         /// The decoding will continue until beam_size*patience hypotheses are finished.
+        /// (default: 1.0)
         pub patience: f32,
-        /// Exponential penalty applied to the length during beam search.
+        /// Exponential penalty applied to the length during beam search. (default: 1.0)
         pub length_penalty: f32,
         /// Penalty applied to the score of previously generated tokens, as described in
-        /// https://arxiv.org/abs/1909.05858 (set > 1 to penalize).
+        /// <https://arxiv.org/abs/1909.05858> (set > 1 to penalize). (default: 1.0)
         pub repetition_penalty: f32,
-        /// Prevent repetitions of ngrams with this size (set 0 to disable).
+        /// Prevent repetitions of ngrams with this size (set 0 to disable). (default: 0)
         pub no_repeat_ngram_size: usize,
-        /// Maximum generation length.
+        /// Maximum generation length. (default: 448)
         pub max_length: usize,
         /// Randomly sample from the top K candidates (set 0 to sample from the full distribution).
+        /// (default: 1)
         pub sampling_topk: usize,
-        /// High temperatures increase randomness.
+        /// High temperatures increase randomness. (default: 1.0)
         pub sampling_temperature: f32,
-        /// Number of hypotheses to include in the result.
+        /// Number of hypotheses to include in the result. (default: 1)
         pub num_hypotheses: usize,
-        /// Include scores in the result.
+        /// Include scores in the result. (default: false)
         pub return_scores: bool,
-        /// Include the probability of the no speech token in the result.
+        /// Include the probability of the no speech token in the result. (default: false)
         pub return_no_speech_prob: bool,
-        /// Maximum index of the first predicted timestamp.
+        /// Maximum index of the first predicted timestamp. (default: 50)
         pub max_initial_timestamp_index: usize,
-        /// Suppress blank outputs at the beginning of the sampling.
+        /// Suppress blank outputs at the beginning of the sampling. (default: true)
         pub suppress_blank: bool,
         /// List of token IDs to suppress.
         /// -1 will suppress a default set of symbols as defined in the model config.json file.
+        /// (default: `[-1]`)
         pub suppress_tokens: Vec<i32>,
     }
 
@@ -63,9 +87,12 @@ mod ffi {
         no_speech_prob: f32,
     }
 
+    /// Pair of the detected language and its probability.
     #[derive(PartialEq, Clone, Debug)]
     pub struct DetectionResult {
+        /// Token of the language.
         language: String,
+        /// Probability of the language.
         probability: f32,
     }
 
