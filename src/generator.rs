@@ -247,11 +247,11 @@ impl Generator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn generate_batch<'a, T: AsRef<str>, U: AsRef<str>, V: AsRef<str>, W: AsRef<str>>(
+    pub fn generate_batch<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>, W: AsRef<str>>(
         &self,
         start_tokens: &[Vec<T>],
         options: &GenerationOptions<U, V, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<GenerationResult>> {
         Ok(self
             .ptr

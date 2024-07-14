@@ -74,21 +74,19 @@ fn main() -> Result<()> {
     };
 
     let g = Generator::new(&args.path, &cfg)?;
-    let prompts =
-        BufReader::new(File::open(args.prompt)?)
-            .lines()
-            .fold(Ok(String::new()), |acc, line| {
-                acc.and_then(|mut acc| {
-                    line.map(|l| {
-                        acc.push_str(&l);
-                        acc
-                    })
-                })
-            })?;
+    let prompts = BufReader::new(File::open(args.prompt)?).lines().try_fold(
+        String::new(),
+        |mut acc, line| {
+            line.map(|l| {
+                acc.push_str(&l);
+                acc
+            })
+        },
+    )?;
 
     let now = time::Instant::now();
     let res = g.generate_batch(
-        &vec![prompts],
+        &[prompts],
         &GenerationOptions {
             max_length: 200,
             sampling_topk: 10,

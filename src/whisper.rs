@@ -27,8 +27,8 @@ use cxx::UniquePtr;
 use crate::config::Config;
 use crate::storage_view::StorageView;
 use crate::types::vec_ffi_vecstr;
-pub use crate::whisper::ffi::{DetectionResult, WhisperOptions};
 use crate::whisper::ffi::VecDetectionResult;
+pub use crate::whisper::ffi::{DetectionResult, WhisperOptions};
 
 #[cxx::bridge]
 mod ffi {
@@ -206,9 +206,9 @@ impl From<ffi::WhisperGenerationResult> for WhisperGenerationResult {
     }
 }
 
-impl Into<Vec<DetectionResult>> for VecDetectionResult {
-    fn into(self) -> Vec<DetectionResult> {
-        self.v
+impl From<VecDetectionResult> for Vec<DetectionResult> {
+    fn from(value: VecDetectionResult) -> Self {
+        value.v
     }
 }
 

@@ -13,8 +13,8 @@ use std::fmt::{Debug, Display, Formatter};
 use cxx::UniquePtr;
 
 pub use ffi::{
-    BatchType, ComputeType, Device, get_device_count, get_log_level, get_random_seed,
-    LogLevel, set_log_level, set_random_seed,
+    get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
+    ComputeType, Device, LogLevel,
 };
 
 #[cxx::bridge]
@@ -369,8 +369,8 @@ mod tests {
     use rand::random;
 
     use crate::config::{
-        BatchType, ComputeType, Config, Device, get_device_count,
-        get_log_level, get_random_seed, LogLevel, set_log_level, set_random_seed,
+        get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed,
+        BatchType, ComputeType, Config, Device, LogLevel,
     };
 
     #[test]
@@ -431,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_log_level() {
-        for l in vec![
+        for l in [
             LogLevel::Off,
             LogLevel::Critical,
             LogLevel::Error,

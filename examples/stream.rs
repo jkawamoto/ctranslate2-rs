@@ -66,21 +66,19 @@ fn main() -> Result<()> {
     };
 
     let t = Translator::new(&args.path, &cfg)?;
-    let source =
-        BufReader::new(File::open(args.prompt)?)
-            .lines()
-            .fold(Ok(String::new()), |acc, line| {
-                acc.and_then(|mut acc| {
-                    line.map(|l| {
-                        acc.push_str(&l);
-                        acc
-                    })
-                })
-            })?;
+    let source = BufReader::new(File::open(args.prompt)?).lines().try_fold(
+        String::new(),
+        |mut acc, line| {
+            line.map(|l| {
+                acc.push_str(&l);
+                acc
+            })
+        },
+    )?;
 
     let mut out = stdout();
     let _ = t.translate_batch(
-        &vec![source],
+        &[source],
         &TranslationOptions {
             // beam_size must be 1 to use the stream API.
             beam_size: 1,

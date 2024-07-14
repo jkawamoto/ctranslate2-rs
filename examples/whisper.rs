@@ -39,13 +39,13 @@ use anyhow::Result;
 use clap::Parser;
 use hound::WavReader;
 use ndarray::{Array2, Ix3};
-use rustfft::FftPlanner;
 use rustfft::num_complex::Complex;
+use rustfft::FftPlanner;
 use serde::Deserialize;
 
-use ct2rs::{auto, Tokenizer};
 use ct2rs::storage_view::StorageView;
 use ct2rs::whisper::Whisper;
+use ct2rs::{auto, Tokenizer};
 
 const PREPROCESSOR_CONFIG_FILE: &str = "preprocessor_config.json";
 
@@ -104,7 +104,7 @@ fn main() -> Result<()> {
     // Transcribe.
     let res = model.generate(
         &storage_view,
-        &vec![vec![
+        &[vec![
             "<|startoftranscript|>",
             &lang[0][0].language,
             "<|transcribe|>",
@@ -242,7 +242,7 @@ impl PreprocessorConfig {
         let rows = aux.mel_filters.len();
         let cols = aux
             .mel_filters
-            .get(0)
+            .first()
             .map(|row| row.len())
             .unwrap_or_default();
 
