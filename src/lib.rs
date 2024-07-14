@@ -138,8 +138,8 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 
 use crate::auto::Tokenizer as AutoTokenizer;
-pub use crate::config::{set_log_level, set_random_seed};
 use crate::config::Config;
+pub use crate::config::{set_log_level, set_random_seed};
 pub use crate::generator::GenerationOptions;
 pub use crate::translator::TranslationOptions;
 
@@ -198,7 +198,7 @@ fn encode_all<T: Tokenizer, U: AsRef<str>>(
     sources: &[U],
 ) -> Result<Vec<Vec<String>>> {
     sources
-        .into_iter()
+        .iter()
         .map(|s| tokenizer.encode(s.as_ref()))
         .collect()
 }
@@ -373,11 +373,11 @@ impl<T: Tokenizer> Translator<T> {
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
     ///
-    pub fn translate_batch<'a, U, V, W>(
+    pub fn translate_batch<U, V, W>(
         &self,
         sources: &[U],
         options: &TranslationOptions<V, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -452,12 +452,12 @@ impl<T: Tokenizer> Translator<T> {
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
-    pub fn translate_batch_with_target_prefix<'a, U, V, W, E>(
+    pub fn translate_batch_with_target_prefix<U, V, W, E>(
         &self,
         sources: &[U],
         target_prefixes: &Vec<Vec<V>>,
         options: &TranslationOptions<W, E>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(String, Option<f32>)>>
     where
         U: AsRef<str>,
@@ -478,7 +478,7 @@ impl<T: Tokenizer> Translator<T> {
             };
             let output = self.translator.translate_batch_with_target_prefix(
                 &encode_all(&self.tokenizer, sources)?,
-                &target_prefixes,
+                target_prefixes,
                 options,
                 Some(&mut wrapped_callback),
             )?;
@@ -487,7 +487,7 @@ impl<T: Tokenizer> Translator<T> {
         } else {
             self.translator.translate_batch_with_target_prefix(
                 &encode_all(&self.tokenizer, sources)?,
-                &target_prefixes,
+                target_prefixes,
                 options,
                 None,
             )?
@@ -672,11 +672,11 @@ impl<T: Tokenizer> Generator<T> {
     /// Returns a `Result` containing a vector of `GenerationResult` if successful, encapsulating
     /// the generated sequences for each input start token batch, or an error if the generation
     /// fails.
-    pub fn generate_batch<'a, U, V, W, E>(
+    pub fn generate_batch<U, V, W, E>(
         &self,
         prompts: &[U],
         options: &GenerationOptions<V, E, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
     ) -> Result<Vec<(Vec<String>, Vec<f32>)>>
     where
         U: AsRef<str>,

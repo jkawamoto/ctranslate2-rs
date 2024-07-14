@@ -75,20 +75,18 @@ fn main() -> Result<()> {
 
     let t = Translator::new(&args.path, &cfg)?;
 
-    let source =
-        BufReader::new(File::open(args.prompt)?)
-            .lines()
-            .fold(Ok(String::new()), |acc, line| {
-                acc.and_then(|mut acc| {
-                    line.map(|l| {
-                        acc.push_str(&l);
-                        acc
-                    })
-                })
-            })?;
+    let source = BufReader::new(File::open(args.prompt)?).lines().try_fold(
+        String::new(),
+        |mut acc, line| {
+            line.map(|l| {
+                acc.push_str(&l);
+                acc
+            })
+        },
+    )?;
 
     let now = time::Instant::now();
-    let res = t.translate_batch(&vec![source], &Default::default(), None)?;
+    let res = t.translate_batch(&[source], &Default::default(), None)?;
     let elapsed = now.elapsed();
 
     for (r, _) in res {

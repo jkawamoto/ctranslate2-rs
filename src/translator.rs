@@ -461,11 +461,11 @@ impl Translator {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn translate_batch<'a, T, U, V>(
+    pub fn translate_batch<T, U, V>(
         &self,
         source: &[Vec<T>],
         options: &TranslationOptions<U, V>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
@@ -509,12 +509,12 @@ impl Translator {
     /// # Returns
     /// Returns a `Result` containing a vector of `TranslationResult` if successful, or an error if
     /// the translation fails.
-    pub fn translate_batch_with_target_prefix<'a, T, U, V, W>(
+    pub fn translate_batch_with_target_prefix<T, U, V, W>(
         &self,
         source: &[Vec<T>],
         target_prefix: &[Vec<U>],
         options: &TranslationOptions<V, W>,
-        callback: Option<&'a mut dyn FnMut(GenerationStepResult) -> bool>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> bool>,
     ) -> Result<Vec<TranslationResult>>
     where
         T: AsRef<str>,
@@ -677,7 +677,7 @@ mod tests {
 
         assert_eq!(res.hypotheses, hypotheses);
         assert_eq!(res.scores, scores);
-        assert_eq!(res.output(), Some(hypotheses.get(0).unwrap()));
+        assert_eq!(res.output(), Some(hypotheses.first().unwrap()));
         assert_eq!(res.score(), Some(scores[0]));
         assert_eq!(res.num_hypotheses(), 2);
         assert!(res.has_scores());

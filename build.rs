@@ -133,7 +133,7 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
                 .iter()
                 .for_each(|name| {
                     let parent = path.parent();
-                    if parent != current_dir.as_ref().map(|p: &PathBuf| p.as_path()) {
+                    if parent != current_dir.as_deref() {
                         let dir = parent.unwrap();
                         println!("cargo:rustc-link-search={}", dir.display());
                         current_dir = Some(dir.to_path_buf())

@@ -85,7 +85,7 @@ impl Debug for StorageView<'_> {
         write!(
             f,
             "StorageView {{{} }}",
-            ffi::to_string(self).replace("\n", ", ")
+            ffi::to_string(self).replace('\n', ", ")
         )
     }
 }
