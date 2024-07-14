@@ -20,10 +20,15 @@ fn main() {
     println!("cargo:rerun-if-changed=src/translator.cpp");
     println!("cargo:rerun-if-changed=src/generator.rs");
     println!("cargo:rerun-if-changed=src/generator.cpp");
+    println!("cargo:rerun-if-changed=src/storage_view.rs");
+    println!("cargo:rerun-if-changed=src/whisper.rs");
+    println!("cargo:rerun-if-changed=src/whisper.cpp");
     println!("cargo:rerun-if-changed=include/types.h");
     println!("cargo:rerun-if-changed=include/config.h");
     println!("cargo:rerun-if-changed=include/translator.h");
     println!("cargo:rerun-if-changed=include/generator.h");
+    println!("cargo:rerun-if-changed=include/storage_view.h");
+    println!("cargo:rerun-if-changed=include/whisper.h");
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
     if let Ok(library_path) = env::var("LIBRARY_PATH") {
@@ -84,9 +89,12 @@ fn main() {
         "src/config.rs",
         "src/translator.rs",
         "src/generator.rs",
+        "src/storage_view.rs",
+        "src/whisper.rs",
     ])
     .file("src/translator.cpp")
     .file("src/generator.cpp")
+    .file("src/whisper.cpp")
     .include("CTranslate2/include")
     .std("c++17")
     .static_crt(cfg!(target_os = "windows"))
