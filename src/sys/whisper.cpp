@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include "ct2rs/src/whisper.rs.h"
+#include "ct2rs/src/sys/whisper.rs.h"
 
 #include "ct2rs/include/types.h"
 

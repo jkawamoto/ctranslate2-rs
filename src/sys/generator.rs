@@ -27,9 +27,9 @@ use std::path::Path;
 use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
-use crate::config::{BatchType, Config};
-pub use crate::types::ffi::GenerationStepResult;
-use crate::types::vec_ffi_vecstr;
+use super::{
+    config, vec_ffi_vecstr, BatchType, Config, GenerationStepResult, VecStr, VecString, VecUSize,
+};
 
 trait GenerationCallback {
     fn execute(&mut self, res: GenerationStepResult) -> bool;
@@ -101,16 +101,16 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/generator.h");
+        include!("ct2rs/src/sys/types.rs.h");
 
-        type VecString = crate::types::ffi::VecString;
-        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
-        type VecUSize = crate::types::ffi::VecUSize;
+        type VecString = super::VecString;
+        type VecStr<'a> = super::VecStr<'a>;
+        type VecUSize = super::VecUSize;
 
-        type Config = crate::config::ffi::Config;
-        type BatchType = crate::config::ffi::BatchType;
-        type GenerationStepResult = crate::types::ffi::GenerationStepResult;
+        type Config = super::config::ffi::Config;
+        type BatchType = super::BatchType;
+        type GenerationStepResult = super::GenerationStepResult;
 
         type Generator;
 
@@ -135,15 +135,16 @@ mod ffi {
 unsafe impl Send for ffi::Generator {}
 unsafe impl Sync for ffi::Generator {}
 
-/// A Rust binding to the
+/// A text generator.
+///
+/// This struct is a Rust binding to the
 /// [`ctranslate2::Generator`](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html).
 ///
 /// # Example
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::config::{Config, Device};
-/// use ct2rs::generator::{Generator, GenerationOptions};
+/// use ct2rs::sys::{Config, Device, Generator, GenerationOptions};
 ///
 /// # fn main() -> Result<()> {
 /// let generator = Generator::new("/path/to/model", &Config::default())?;
@@ -181,8 +182,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::config::Config;
-    /// use ct2rs::generator::Generator;
+    /// use ct2rs::sys::{Config, Generator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -232,8 +232,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::config::Config;
-    /// use ct2rs::generator::{Generator, GenerationOptions, GenerationStepResult};
+    /// use ct2rs::sys::{Config, Generator, GenerationOptions, GenerationStepResult};
     ///
     /// # fn main() -> Result<()> {
     /// let start_tokens = vec![vec!["<s>".to_string()]];
@@ -292,7 +291,7 @@ impl Generator {
 /// Example of creating a default `GenerationOptions`:
 ///
 /// ```
-/// use ct2rs::generator::GenerationOptions;
+/// use ct2rs::sys::GenerationOptions;
 ///
 /// let options = GenerationOptions::default();
 /// # assert_eq!(options.beam_size, 1);
@@ -445,6 +444,9 @@ impl<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> GenerationOptions<T, U, V> {
 }
 
 /// A generation result.
+///
+/// This struct is a Rust binding to the
+/// [`ctranslate2.GenerationResult`](https://opennmt.net/CTranslate2/python/ctranslate2.GenerationResult.html).
 #[derive(Clone, Debug)]
 pub struct GenerationResult {
     /// Generated sequences of tokens.
@@ -485,8 +487,8 @@ impl GenerationResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::generator::ffi::{VecStr, VecString, VecUSize};
-    use crate::generator::{ffi, GenerationOptions, GenerationResult};
+    use super::ffi::{VecStr, VecString, VecUSize};
+    use super::{ffi, GenerationOptions, GenerationResult};
 
     #[test]
     fn options_to_ffi() {

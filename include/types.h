@@ -8,9 +8,10 @@
 
 #pragma once
 
-#include "rust/cxx.h"
 #include <string>
 #include <vector>
+
+#include "rust/cxx.h"
 
 inline std::string from_rust(const rust::Str& v) {
     return static_cast<std::string>(v);

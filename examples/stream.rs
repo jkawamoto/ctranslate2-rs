@@ -36,8 +36,7 @@ use std::io::{stdout, BufRead, BufReader, Write};
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::config::{Config, Device};
-use ct2rs::{GenerationStepResult, TranslationOptions, Translator};
+use ct2rs::{Config, Device, GenerationStepResult, TranslationOptions, Translator};
 
 /// Translate a file using Marian-MT model with the Stream API.
 #[derive(Parser, Debug)]

@@ -10,11 +10,15 @@
 
 use std::fmt::{Debug, Formatter};
 
-use crate::types::ffi::{VecStr, VecString, VecUSize};
+pub use self::ffi::GenerationStepResult;
+pub(super) use self::ffi::{VecStr, VecString, VecUSize};
 
 #[cxx::bridge]
 pub(crate) mod ffi {
     /// The result for a single generation step.
+    ///
+    /// This struct is a Rust binding to the
+    /// [`ctranslate2.GenerationStepResult`](https://opennmt.net/CTranslate2/python/ctranslate2.GenerationStepResult.html).
     #[derive(Clone, Debug)]
     pub struct GenerationStepResult {
         /// The decoding step.
@@ -110,8 +114,8 @@ impl Debug for VecUSize {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::ffi::{VecString, VecUSize};
-    use crate::types::vec_ffi_vecstr;
+    use super::ffi::{VecString, VecUSize};
+    use super::vec_ffi_vecstr;
 
     #[test]
     fn str_vectors() {

@@ -13,12 +13,12 @@
 //! * Rust bindings for
 //!   [Translator](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html) and
 //!   [Generator](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html) provided by
-//!   CTranslate2, specifically [`translator::Translator`] and [`generator::Generator`].
+//!   CTranslate2, specifically [`sys::Translator`] and [`sys::Generator`].
 //! * More user-friendly versions of these, [`Translator`] and [`Generator`],
 //!   which incorporate tokenizers for easier handling.
 //!
 //! # Tokenizers
-//! Both [`translator::Translator`] and [`generator::Generator`] work with sequences of tokens.
+//! Both [`sys::Translator`] and [`sys::Generator`] work with sequences of tokens.
 //! To handle human-readable strings, a tokenizer is necessary.
 //! The [`Translator`] and [`Generator`] utilize Hugging Face and SentencePiece tokenizers
 //! to convert between strings and token sequences.
@@ -32,8 +32,7 @@
 //! ```no_run
 //! # use anyhow::Result;
 //! #
-//! use ct2rs::config::Config;
-//! use ct2rs::Translator;
+//! use ct2rs::{Config, Translator};
 //!
 //! # fn main() -> Result<()> {
 //! // Translator::new creates a translator instance with auto::Tokenizer.
@@ -56,8 +55,7 @@
 //! ```no_run
 //! # use anyhow::Result;
 //!
-//! use ct2rs::{TranslationOptions, Translator};
-//! use ct2rs::config::Config;
+//! use ct2rs::{Config, TranslationOptions, Translator};
 //! use ct2rs::tokenizers::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
@@ -87,8 +85,7 @@
 //! [Sentencepiece crate](https://docs.rs/sentencepiece/).
 //! ```no_run
 //! # use anyhow::Result;
-//! use ct2rs::config::{Config, Device};
-//! use ct2rs::{Generator, GenerationOptions};
+//! use ct2rs::{Config, Device, Generator, GenerationOptions};
 //! use ct2rs::sentencepiece::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
@@ -138,21 +135,17 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 
 use crate::auto::Tokenizer as AutoTokenizer;
-use crate::config::Config;
-pub use crate::config::{set_log_level, set_random_seed};
-pub use crate::generator::GenerationOptions;
-pub use crate::translator::TranslationOptions;
+use crate::sys::types;
+pub use crate::sys::{
+    set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, GenerationOptions,
+    LogLevel, TranslationOptions,
+};
 
 pub mod auto;
 pub mod bpe;
-pub mod config;
-pub mod generator;
 pub mod sentencepiece;
-pub mod storage_view;
+pub mod sys;
 pub mod tokenizers;
-pub mod translator;
-mod types;
-pub mod whisper;
 
 /// Defines the necessary functions for a tokenizer.
 ///
@@ -246,8 +239,7 @@ impl GenerationStepResult {
 /// ```no_run
 /// # use anyhow::Result;
 /// #
-/// use ct2rs::config::Config;
-/// use ct2rs::{Translator, TranslationOptions, GenerationStepResult};
+/// use ct2rs::{Config, Translator, TranslationOptions, GenerationStepResult};
 ///
 /// # fn main() -> Result<()> {
 /// let sources = vec![
@@ -270,8 +262,7 @@ impl GenerationStepResult {
 /// use std::io::{stdout, Write};
 /// use anyhow::Result;
 ///
-/// use ct2rs::config::Config;
-/// use ct2rs::{Translator, TranslationOptions, GenerationStepResult};
+/// use ct2rs::{Config, Translator, TranslationOptions, GenerationStepResult};
 ///
 /// # fn main() -> Result<()> {
 /// let sources = vec![
@@ -293,7 +284,7 @@ impl GenerationStepResult {
 /// # }
 /// ```
 pub struct Translator<T: Tokenizer> {
-    translator: translator::Translator,
+    translator: sys::Translator,
     tokenizer: T,
 }
 
@@ -331,8 +322,7 @@ impl<T: Tokenizer> Translator<T> {
     ///
     /// ```no_run
     /// # use anyhow::Result;
-    /// use ct2rs::{TranslationOptions, Translator};
-    /// use ct2rs::config::Config;
+    /// use ct2rs::{Config, TranslationOptions, Translator};
     /// use ct2rs::sentencepiece::Tokenizer;
     ///
     /// # fn main() -> Result<()> {
@@ -347,7 +337,7 @@ impl<T: Tokenizer> Translator<T> {
     ///
     pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Translator {
-            translator: translator::Translator::new(path, config)?,
+            translator: sys::Translator::new(path, config)?,
             tokenizer,
         })
     }
@@ -540,8 +530,7 @@ impl<T: Tokenizer> Translator<T> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::config::{Config, Device};
-/// use ct2rs::{Generator, GenerationOptions};
+/// use ct2rs::{Config, Device, Generator, GenerationOptions};
 ///
 /// # fn main() -> Result<()> {
 /// let generator = Generator::new("/path/to/model", &Config::default())?;
@@ -562,10 +551,9 @@ impl<T: Tokenizer> Translator<T> {
 ///
 /// ```no_run
 /// use std::io::{stdout, Write};
-/// use anyhow::Result;
+/// # use anyhow::Result;
 ///
-/// use ct2rs::config::{Config, Device};
-/// use ct2rs::{Generator, GenerationOptions};
+/// use ct2rs::{Config, Device, Generator, GenerationOptions};
 ///
 /// # fn main() -> Result<()> {
 /// use ct2rs::GenerationStepResult;
@@ -587,7 +575,7 @@ impl<T: Tokenizer> Translator<T> {
 /// # }
 /// ```
 pub struct Generator<T: Tokenizer> {
-    generator: generator::Generator,
+    generator: sys::Generator,
     tokenizer: T,
 }
 
@@ -626,8 +614,7 @@ impl<T: Tokenizer> Generator<T> {
     ///
     /// ```no_run
     /// # use anyhow::Result;
-    /// use ct2rs::Generator;
-    /// use ct2rs::config::Config;
+    /// use ct2rs::{Config, Generator};
     /// use ct2rs::tokenizers::Tokenizer;
     ///
     /// # fn main() -> Result<()> {
@@ -642,7 +629,7 @@ impl<T: Tokenizer> Generator<T> {
     ///
     pub fn with_tokenizer<U: AsRef<Path>>(path: U, tokenizer: T, config: &Config) -> Result<Self> {
         Ok(Generator {
-            generator: generator::Generator::new(path, config)?,
+            generator: sys::Generator::new(path, config)?,
             tokenizer,
         })
     }

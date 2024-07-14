@@ -12,7 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use cxx::UniquePtr;
 
-pub use ffi::{
+pub use self::ffi::{
     get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
     ComputeType, Device, LogLevel,
 };
@@ -21,7 +21,9 @@ pub use ffi::{
 pub(crate) mod ffi {
     /// Represents the computing device to be used.
     ///
-    /// This enum can take one of the following two values:
+    /// This enum is a Rust binding to the
+    /// [`ctranslate2.Device`](https://opennmt.net/CTranslate2/python/ctranslate2.Device.html),
+    /// which can take one of the following two values:
     /// - `CPU`
     /// - `CUDA`
     ///
@@ -32,7 +34,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `Device`:
     ///
     /// ```
-    /// use ct2rs::config::Device;
+    /// use ct2rs::sys::Device;
     ///
     /// let device = Device::default();
     /// # assert_eq!(device, Device::CPU);
@@ -77,7 +79,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `ComputeType`:
     ///
     /// ```
-    /// use ct2rs::config::ComputeType;
+    /// use ct2rs::sys::ComputeType;
     ///
     /// let compute_type = ComputeType::default();
     /// # assert_eq!(compute_type, ComputeType::DEFAULT);
@@ -113,7 +115,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `BatchType`:
     ///
     /// ```
-    /// use ct2rs::config::BatchType;
+    /// use ct2rs::sys::BatchType;
     ///
     /// let batch_type = BatchType::default();
     /// # assert_eq!(batch_type, BatchType::Examples);
@@ -143,7 +145,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `LogLevel`:
     ///
     /// ```
-    /// use ct2rs::config::LogLevel;
+    /// use ct2rs::sys::LogLevel;
     ///
     /// let log_level = LogLevel::default();
     /// # assert_eq!(log_level, LogLevel::Warning);
@@ -194,7 +196,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the log level to `Debug`.
         /// ```
-        /// use ct2rs::config::{LogLevel, set_log_level};
+        /// use ct2rs::sys::{LogLevel, set_log_level};
         ///
         /// set_log_level(LogLevel::Debug);
         /// ```
@@ -208,7 +210,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the random seed to `12345`.
         /// ```
-        /// use ct2rs::set_random_seed;
+        /// use ct2rs::sys::set_random_seed;
         ///
         /// set_random_seed(12345);
         /// ```
@@ -303,7 +305,7 @@ impl Display for LogLevel {
 /// Example of creating a default `Config`:
 ///
 /// ```
-/// use ct2rs::config::{ComputeType, Config, Device};
+/// use ct2rs::sys::{ComputeType, Config, Device};
 ///
 /// let config = Config::default();
 /// # assert_eq!(config.device, Device::default());
@@ -368,7 +370,7 @@ impl Config {
 mod tests {
     use rand::random;
 
-    use crate::config::{
+    use super::{
         get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed,
         BatchType, ComputeType, Config, Device, LogLevel,
     };

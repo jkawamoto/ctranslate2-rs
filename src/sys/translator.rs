@@ -23,9 +23,7 @@ use std::path::Path;
 use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
-use crate::config::{BatchType, Config};
-pub use crate::types::ffi::GenerationStepResult;
-use crate::types::vec_ffi_vecstr;
+use super::{config, vec_ffi_vecstr, BatchType, Config, GenerationStepResult, VecStr, VecString};
 
 trait GenerationCallback {
     fn execute(&mut self, res: GenerationStepResult) -> bool;
@@ -99,15 +97,15 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/translator.h");
+        include!("ct2rs/src/sys/types.rs.h");
 
-        type VecString = crate::types::ffi::VecString;
-        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
+        type VecString = super::VecString;
+        type VecStr<'a> = super::VecStr<'a>;
 
-        type Config = crate::config::ffi::Config;
-        type BatchType = crate::config::ffi::BatchType;
-        type GenerationStepResult = crate::types::ffi::GenerationStepResult;
+        type Config = super::config::ffi::Config;
+        type BatchType = super::BatchType;
+        type GenerationStepResult = super::GenerationStepResult;
 
         type Translator;
 
@@ -149,8 +147,8 @@ unsafe impl Sync for ffi::Translator {}
 /// Example of creating a default `TranslationOptions`:
 ///
 /// ```
-/// # use ct2rs::config::BatchType;
-/// use ct2rs::translator::TranslationOptions;
+/// # use ct2rs::sys::BatchType;
+/// use ct2rs::sys::TranslationOptions;
 ///
 /// let options = TranslationOptions::default();
 /// # assert_eq!(options.beam_size, 2);
@@ -324,7 +322,9 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
     }
 }
 
-/// A Rust binding to the
+/// A text translator.
+///
+/// This struct is a Rust binding to the
 /// [`ctranslate2::Translator`](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html).
 ///
 /// # Example
@@ -332,8 +332,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::config::{Config, Device};
-/// use ct2rs::translator::Translator;
+/// use ct2rs::sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -354,8 +353,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::config::{Config, Device};
-/// use ct2rs::translator::Translator;
+/// use ct2rs::sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -394,8 +392,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::config::Config;
-    /// use ct2rs::translator::Translator;
+    /// use ct2rs::sys::{Config, Translator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -440,8 +437,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::config::Config;
-    /// use ct2rs::translator::{Translator, TranslationOptions, GenerationStepResult};
+    /// use ct2rs::sys::{Config, GenerationStepResult, Translator, TranslationOptions};
     ///
     /// # fn main() -> Result<()> {
     /// let source_tokens = vec![
@@ -556,6 +552,9 @@ impl Translator {
 }
 
 /// A translation result.
+///
+/// This struct is a Rust binding to the
+/// [`ctranslate2.TranslationResult`](https://opennmt.net/CTranslate2/python/ctranslate2.TranslationResult.html).
 #[derive(Clone, Debug)]
 pub struct TranslationResult {
     /// Translation hypotheses.
@@ -601,9 +600,8 @@ impl TranslationResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::translator::ffi::{VecStr, VecString};
-    use crate::translator::{ffi, TranslationResult};
-    use crate::TranslationOptions;
+    use super::ffi::{VecStr, VecString};
+    use super::{ffi, TranslationOptions, TranslationResult};
 
     #[test]
     fn options_to_ffi() {

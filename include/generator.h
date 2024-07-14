@@ -8,12 +8,13 @@
 
 #pragma once
 
+#include <memory>
+
+#include <ctranslate2/generator.h>
+
 #include "rust/cxx.h"
 
 #include "config.h"
-
-#include <ctranslate2/generator.h>
-#include <memory>
 
 struct VecStr;
 struct GenerationOptions;

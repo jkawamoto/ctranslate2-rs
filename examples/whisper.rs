@@ -43,8 +43,7 @@ use rustfft::num_complex::Complex;
 use rustfft::FftPlanner;
 use serde::Deserialize;
 
-use ct2rs::storage_view::StorageView;
-use ct2rs::whisper::Whisper;
+use ct2rs::sys::{StorageView, Whisper};
 use ct2rs::{auto, Tokenizer};
 
 const PREPROCESSOR_CONFIG_FILE: &str = "preprocessor_config.json";

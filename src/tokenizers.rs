@@ -19,10 +19,9 @@
 //!
 //! ```no_run
 //! # use anyhow::Result;
-//!
-//! use ct2rs::config::Config;
+//! #
+//! use ct2rs::{Config, Translator};
 //! use ct2rs::tokenizers::Tokenizer;
-//! use ct2rs::Translator;
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";

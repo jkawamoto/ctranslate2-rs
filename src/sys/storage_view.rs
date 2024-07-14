@@ -16,14 +16,14 @@ use std::ops::Deref;
 use anyhow::Result;
 use cxx::UniquePtr;
 
-use crate::config::Device;
+use super::Device;
 
 #[cxx::bridge]
 pub(crate) mod ffi {
     unsafe extern "C++" {
         include!("ct2rs/include/storage_view.h");
 
-        type Device = crate::config::ffi::Device;
+        type Device = super::Device;
 
         type StorageView;
 
@@ -43,7 +43,9 @@ pub(crate) mod ffi {
     }
 }
 
-/// A Rust binding to the
+/// An allocated buffer with shape information.
+///
+/// This struct is a Rust binding to the
 /// [`ctranslate2::StorageView`](https://opennmt.net/CTranslate2/python/ctranslate2.StorageView.html).
 pub struct StorageView<'a> {
     ptr: UniquePtr<ffi::StorageView>,
@@ -103,8 +105,7 @@ unsafe impl Sync for StorageView<'_> {}
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Device;
-    use crate::storage_view::StorageView;
+    use super::{Device, StorageView};
 
     #[test]
     fn test_constructor() {

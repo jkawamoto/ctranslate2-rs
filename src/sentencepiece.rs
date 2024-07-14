@@ -21,8 +21,7 @@
 //! ```no_run
 //! # use anyhow::Result;
 //! #
-//! use ct2rs::config::Config;
-//! use ct2rs::Generator;
+//! use ct2rs::{Config, Generator};
 //! use ct2rs::sentencepiece::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
