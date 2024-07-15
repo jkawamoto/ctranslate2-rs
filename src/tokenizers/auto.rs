@@ -21,7 +21,7 @@
 //!
 //! ```no_run
 //! # use anyhow::Result;
-//! use ct2rs::auto::Tokenizer as AutoTokenizer;
+//! use ct2rs::tokenizers::auto::Tokenizer as AutoTokenizer;
 //! use ct2rs::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
@@ -42,6 +42,8 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
+use super::{bpe, hf, sentencepiece};
+
 /// A tokenizer that automatically determines the appropriate tokenizer.
 pub struct Tokenizer {
     tokenizer: Box<dyn crate::Tokenizer + Sync + Send>,
@@ -51,11 +53,11 @@ impl Tokenizer {
     /// Create a tokenizer instance by specifying the path to a directory containing model files.
     pub fn new<T: AsRef<Path>>(path: T) -> Result<Self> {
         Ok(Self {
-            tokenizer: if let Ok(t) = crate::tokenizers::Tokenizer::new(&path) {
+            tokenizer: if let Ok(t) = hf::Tokenizer::new(&path) {
                 Box::new(t)
-            } else if let Ok(t) = crate::sentencepiece::Tokenizer::new(&path) {
+            } else if let Ok(t) = sentencepiece::Tokenizer::new(&path) {
                 Box::new(t)
-            } else if let Ok(t) = crate::bpe::new(&path, None) {
+            } else if let Ok(t) = bpe::new(&path, None) {
                 Box::new(t)
             } else {
                 bail!("failed to create a tokenizer")

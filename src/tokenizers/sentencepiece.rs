@@ -22,7 +22,7 @@
 //! # use anyhow::Result;
 //! #
 //! use ct2rs::{Config, Generator};
-//! use ct2rs::sentencepiece::Tokenizer;
+//! use ct2rs::tokenizers::sentencepiece::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";

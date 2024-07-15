@@ -22,12 +22,12 @@
 //! To handle human-readable strings, a tokenizer is necessary.
 //! The [`Translator`] and [`Generator`] utilize Hugging Face and SentencePiece tokenizers
 //! to convert between strings and token sequences.
-//! The [`auto::Tokenizer`] automatically determines which tokenizer to use and constructs it
+//! The [`tokenizers::auto::Tokenizer`] automatically determines which tokenizer to use and constructs it
 //! appropriately.
 //!
 //! ## Example:
-//! ### [auto::Tokenizer]
-//! Here is an example of using [`auto::Tokenizer`] to build a Translator and translate a string:
+//! ### [tokenizers::auto::Tokenizer]
+//! Here is an example of using [`tokenizers::auto::Tokenizer`] to build a Translator and translate a string:
 //!
 //! ```no_run
 //! # use anyhow::Result;
@@ -49,14 +49,14 @@
 //! # }
 //! ```
 //!
-//! ### [tokenizers::Tokenizer]
+//! ### [tokenizers::hf::Tokenizer]
 //! The following example translates English to German and Japanese using the tokenizer provided by
 //! the Hugging Face's [`tokenizers` crate](https://docs.rs/tokenizers/).
 //! ```no_run
 //! # use anyhow::Result;
 //!
 //! use ct2rs::{Config, TranslationOptions, Translator};
-//! use ct2rs::tokenizers::Tokenizer;
+//! use ct2rs::tokenizers::hf::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
@@ -80,13 +80,13 @@
 //! # }
 //! ```
 //!
-//! ### [sentencepiece::Tokenizer]
+//! ### [tokenizers::sentencepiece::Tokenizer]
 //! The following example generates text using the tokenizer provided by
 //! [Sentencepiece crate](https://docs.rs/sentencepiece/).
 //! ```no_run
 //! # use anyhow::Result;
 //! use ct2rs::{Config, Device, Generator, GenerationOptions};
-//! use ct2rs::sentencepiece::Tokenizer;
+//! use ct2rs::tokenizers::sentencepiece::Tokenizer;
 //!
 //! # fn main() -> Result<()> {
 //! let path = "/path/to/model";
@@ -134,67 +134,18 @@ use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
-use crate::auto::Tokenizer as AutoTokenizer;
-use crate::sys::types;
+use tokenizer::encode_all;
+pub use tokenizer::Tokenizer;
+use tokenizers::auto::Tokenizer as AutoTokenizer;
+
 pub use crate::sys::{
     set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, GenerationOptions,
     LogLevel, TranslationOptions,
 };
 
-pub mod auto;
-pub mod bpe;
-pub mod sentencepiece;
 pub mod sys;
+mod tokenizer;
 pub mod tokenizers;
-
-/// Defines the necessary functions for a tokenizer.
-///
-/// This trait provides the core functionality needed to convert strings to sequences of tokens
-/// and vice versa. It is essential for text processing tasks such as natural language processing,
-/// where text needs to be broken down into manageable pieces or reconstructed from tokenized forms.
-///
-/// Currently, this crate implements two tokenizers:
-/// * [`tokenizers::Tokenizer`]: the tokenizer provided by the Hugging Face's
-///   [`tokenizers` crate](https://docs.rs/tokenizers/),
-/// * [`sentencepiece::Tokenizer`]: the tokenizer based on
-///   [Sentencepiece crate](https://docs.rs/sentencepiece/).
-pub trait Tokenizer {
-    /// Encodes a given string into a sequence of tokens.
-    ///
-    /// This function takes a reference to a string and returns a vector of token strings
-    /// resulting from the tokenization process.
-    ///
-    /// # Arguments
-    /// * `input` - A reference to the string to be tokenized.
-    ///
-    /// # Returns
-    /// A `Result` containing either the vector of tokens if successful or an error if the
-    /// tokenization fails.
-    fn encode(&self, input: &str) -> Result<Vec<String>>;
-
-    /// Decodes a given sequence of tokens back into a single string.
-    ///
-    /// This function takes a vector of token strings and reconstructs the original string.
-    ///
-    /// # Arguments
-    /// * `tokens` - A vector of strings representing the tokens to be decoded.
-    ///
-    /// # Returns
-    /// A `Result` containing either the reconstructed string if successful or an error if the
-    /// decoding fails.
-    fn decode(&self, tokens: Vec<String>) -> Result<String>;
-}
-
-#[inline]
-fn encode_all<T: Tokenizer, U: AsRef<str>>(
-    tokenizer: &T,
-    sources: &[U],
-) -> Result<Vec<Vec<String>>> {
-    sources
-        .iter()
-        .map(|s| tokenizer.encode(s.as_ref()))
-        .collect()
-}
 
 /// The result for a single generation step.
 #[derive(Clone, Debug)]
@@ -216,7 +167,7 @@ pub struct GenerationStepResult {
 }
 
 impl GenerationStepResult {
-    fn from_ffi<T: Tokenizer>(r: types::ffi::GenerationStepResult, tokenizer: &T) -> Result<Self> {
+    fn from_ffi<T: Tokenizer>(r: sys::GenerationStepResult, tokenizer: &T) -> Result<Self> {
         let text = tokenizer.decode(vec![r.token])?;
         Ok(Self {
             step: r.step,
@@ -289,7 +240,7 @@ pub struct Translator<T: Tokenizer> {
 }
 
 impl Translator<AutoTokenizer> {
-    /// Initializes the translator with [`auto::Tokenizer`].
+    /// Initializes the translator with [`tokenizers::auto::Tokenizer`].
     ///
     /// # Arguments
     /// * `path` - A path to the directory containing the language model to be loaded.
@@ -323,7 +274,7 @@ impl<T: Tokenizer> Translator<T> {
     /// ```no_run
     /// # use anyhow::Result;
     /// use ct2rs::{Config, TranslationOptions, Translator};
-    /// use ct2rs::sentencepiece::Tokenizer;
+    /// use ct2rs::tokenizers::sentencepiece::Tokenizer;
     ///
     /// # fn main() -> Result<()> {
     /// let translator = Translator::with_tokenizer(
@@ -376,7 +327,7 @@ impl<T: Tokenizer> Translator<T> {
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
-            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+            let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
                 if let Err(e) =
                     GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
@@ -457,7 +408,7 @@ impl<T: Tokenizer> Translator<T> {
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
-            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+            let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
                 if let Err(e) =
                     GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
@@ -580,7 +531,7 @@ pub struct Generator<T: Tokenizer> {
 }
 
 impl Generator<AutoTokenizer> {
-    /// Initializes the generator with [`auto::Tokenizer`].
+    /// Initializes the generator with [`tokenizers::auto::Tokenizer`].
     ///
     /// # Arguments
     /// * `path` - A path to the directory containing the language model to be loaded.
@@ -615,7 +566,7 @@ impl<T: Tokenizer> Generator<T> {
     /// ```no_run
     /// # use anyhow::Result;
     /// use ct2rs::{Config, Generator};
-    /// use ct2rs::tokenizers::Tokenizer;
+    /// use ct2rs::tokenizers::hf::Tokenizer;
     ///
     /// # fn main() -> Result<()> {
     /// let generator = Generator::with_tokenizer(
@@ -673,7 +624,7 @@ impl<T: Tokenizer> Generator<T> {
     {
         let output = if let Some(callback) = callback {
             let mut callback_result = Ok(());
-            let mut wrapped_callback = |r: types::ffi::GenerationStepResult| -> bool {
+            let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
                 if let Err(e) =
                     GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {

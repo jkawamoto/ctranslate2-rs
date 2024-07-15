@@ -34,7 +34,7 @@ use tokenizers::models::bpe::BPE;
 use tokenizers::processors::roberta::RobertaProcessing;
 use tokenizers::Tokenizer as HFTokenizer;
 
-use crate::tokenizers::Tokenizer;
+use super::hf::Tokenizer;
 
 const VOCAB_FILE: &str = "vocab.json";
 const MERGES_FILE: &str = "merges.txt";
