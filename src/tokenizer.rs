@@ -13,12 +13,6 @@
 /// This trait provides the core functionality needed to convert strings to sequences of tokens
 /// and vice versa. It is essential for text processing tasks such as natural language processing,
 /// where text needs to be broken down into manageable pieces or reconstructed from tokenized forms.
-///
-/// Currently, this crate implements two tokenizers:
-/// * [`tokenizers::hf::Tokenizer`][crate::tokenizers::hf::Tokenizer]: the tokenizer provided by the
-///    Hugging Face's [`tokenizers` crate](https://docs.rs/tokenizers/),
-/// * [`tokenizers::sentencepiece::Tokenizer`][crate::tokenizers::sentencepiece::Tokenizer]: the
-///   tokenizer based on [Sentencepiece crate](https://docs.rs/sentencepiece/).
 pub trait Tokenizer {
     /// Encodes a given string into a sequence of tokens.
     ///

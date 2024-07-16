@@ -8,15 +8,6 @@
 
 //! This module provides a Rust binding to the
 //! [`ctranslate2::Translator`](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html).
-//!
-//! The main structure provided by this module is the [`Translator`] structure, which serves as
-//! the interface to the translation functionalities of the `ctranslate2` library.
-//!
-//! In addition to the `Translator`, this module also offers various supportive structures such
-//! as [`TranslationOptions`] and [`TranslationResult`].
-//!
-//! For more detailed information on each structure and its usage, please refer to their respective
-//! documentation within this module.
 
 use std::path::Path;
 
@@ -337,7 +328,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
 /// let res = translator.translate_batch(
-///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &[vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 ///     &Default::default(),
 ///     None,
 /// )?;
@@ -358,8 +349,8 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
 /// let res = translator.translate_batch_with_target_prefix(
-///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
-///     &vec![vec!["jpn_Jpan"]],
+///     &[vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &[vec!["jpn_Jpan"]],
 ///     &Default::default(),
 ///     None,
 /// )?;
@@ -440,7 +431,7 @@ impl Translator {
     /// use ct2rs::sys::{Config, GenerationStepResult, Translator, TranslationOptions};
     ///
     /// # fn main() -> Result<()> {
-    /// let source_tokens = vec![
+    /// let source_tokens = [
     ///     vec!["▁Hall", "o", "▁World", "!", "</s>"],
     ///     vec![
     ///         "▁This", "▁library", "▁is", "▁a", "▁", "Rust", "▁", "binding", "s", "▁of",

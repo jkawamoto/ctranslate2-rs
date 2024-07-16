@@ -8,19 +8,6 @@
 
 //! This module provides Rust bindings for the
 //! [`ctranslate2::Generator`](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html).
-//!
-//! The [`Generator`] structure is the primary interface in this module, offering the capability
-//! to generate text based on a trained model. It is designed for tasks such as text generation,
-//! autocompletion, and other similar language generation tasks.
-//!
-//! Alongside the `Generator`, this module also includes structures that are critical for
-//! controlling and understanding the generation process:
-//!
-//! - [`GenerationOptions`]: A structure containing configuration options for the generation
-//!   process,
-//!
-//! - [`GenerationResult`]: A structure that holds the results of the generation process.
-//!
 
 use std::path::Path;
 
@@ -149,7 +136,7 @@ unsafe impl Sync for ffi::Generator {}
 /// # fn main() -> Result<()> {
 /// let generator = Generator::new("/path/to/model", &Config::default())?;
 /// let res = generator.generate_batch(
-///     &vec![vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
+///     &[vec!["▁Hello", "▁world", "!", "</s>", "<unk>"]],
 ///     &GenerationOptions::default(),
 ///     None
 /// )?;
@@ -235,7 +222,7 @@ impl Generator {
     /// use ct2rs::sys::{Config, Generator, GenerationOptions, GenerationStepResult};
     ///
     /// # fn main() -> Result<()> {
-    /// let start_tokens = vec![vec!["<s>".to_string()]];
+    /// let start_tokens = [vec!["<s>".to_string()]];
     /// let options = GenerationOptions::default();
     /// let mut callback = |step_result: GenerationStepResult| -> bool {
     ///     println!("{:?}", step_result);

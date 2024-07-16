@@ -14,7 +14,7 @@
 //! which simplifies the selection process by automatically choosing the correct tokenizer for a
 //! given model.
 //!
-//! ## Usage
+//! ## Example
 //! This tokenizer is particularly useful when working with different types of models where
 //! it is not feasible to manually specify the tokenizer each time. It is ideal for scenarios
 //! where ease of use and flexibility are more critical than the absolute optimal performance.

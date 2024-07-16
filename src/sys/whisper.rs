@@ -8,14 +8,6 @@
 
 //! This module provides a Rust binding to the
 //! [`ctranslate2::models::Whisper`](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html).
-//!
-//! The main structure provided by this module is the [`Whisper`] structure.
-//!
-//! In addition to the `Whisper`, this module also offers various supportive structures such
-//! as [`WhisperOptions`], [`DetectionResult`], and [`WhisperGenerationResult`].
-//!
-//! For more detailed information on each structure and its usage, please refer to their respective
-//! documentation within this module.
 
 use std::ffi::OsString;
 use std::fmt::{Debug, Formatter};
