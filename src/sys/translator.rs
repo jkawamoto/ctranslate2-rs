@@ -9,6 +9,8 @@
 //! This module provides a Rust binding to the
 //! [`ctranslate2::Translator`](https://opennmt.net/CTranslate2/python/ctranslate2.Translator.html).
 
+use std::ffi::{OsStr, OsString};
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
 use anyhow::{anyhow, Error, Result};
@@ -361,6 +363,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 /// # }
 /// ```
 pub struct Translator {
+    model: OsString,
     ptr: UniquePtr<ffi::Translator>,
 }
 
@@ -394,6 +397,10 @@ impl Translator {
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Translator> {
         let model_path = model_path.as_ref();
         Ok(Translator {
+            model: model_path
+                .file_name()
+                .map(OsStr::to_os_string)
+                .unwrap_or_default(),
             ptr: ffi::translator(
                 model_path
                     .to_str()
@@ -542,6 +549,17 @@ impl Translator {
     }
 }
 
+impl Debug for Translator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Translator")
+            .field("model", &self.model)
+            .field("queued_batches", &self.num_queued_batches())
+            .field("active_batches", &self.num_active_batches())
+            .field("replicas", &self.num_replicas())
+            .finish()
+    }
+}
+
 /// A translation result.
 ///
 /// This struct is a Rust binding to the
@@ -591,6 +609,8 @@ impl TranslationResult {
 
 #[cfg(test)]
 mod tests {
+    use crate::sys::Translator;
+
     use super::ffi::{VecStr, VecString};
     use super::{ffi, TranslationOptions, TranslationResult};
 
@@ -686,5 +706,13 @@ mod tests {
         assert_eq!(res.score(), None);
         assert_eq!(res.num_hypotheses(), 0);
         assert!(!res.has_scores());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_translator_debug() {
+        let translator = Translator::new("data/t5-small", &Default::default()).unwrap();
+
+        assert!(format!("{:?}", translator).contains("t5-small"));
     }
 }
