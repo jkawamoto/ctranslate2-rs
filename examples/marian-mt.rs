@@ -45,8 +45,7 @@ use std::time;
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::config::{Config, Device};
-use ct2rs::Translator;
+use ct2rs::{Config, Device, Translator};
 
 /// Translate a file using Marian-MT models.
 #[derive(Parser, Debug)]

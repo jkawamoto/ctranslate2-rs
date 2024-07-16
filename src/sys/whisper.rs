@@ -8,14 +8,6 @@
 
 //! This module provides a Rust binding to the
 //! [`ctranslate2::models::Whisper`](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html).
-//!
-//! The main structure provided by this module is the [`Whisper`] structure.
-//!
-//! In addition to the `Whisper`, this module also offers various supportive structures such
-//! as [`WhisperOptions`], [`DetectionResult`], and [`WhisperGenerationResult`].
-//!
-//! For more detailed information on each structure and its usage, please refer to their respective
-//! documentation within this module.
 
 use std::ffi::OsString;
 use std::fmt::{Debug, Formatter};
@@ -24,21 +16,23 @@ use std::path::Path;
 use anyhow::{anyhow, Result};
 use cxx::UniquePtr;
 
-use crate::config::Config;
-use crate::storage_view::StorageView;
-use crate::types::vec_ffi_vecstr;
-use crate::whisper::ffi::VecDetectionResult;
-pub use crate::whisper::ffi::{DetectionResult, WhisperOptions};
+use super::{
+    config, storage_view, vec_ffi_vecstr, Config, StorageView, VecStr, VecString, VecUSize,
+};
+
+use self::ffi::VecDetectionResult;
+pub use self::ffi::{DetectionResult, WhisperOptions};
 
 #[cxx::bridge]
 mod ffi {
     /// Options for whisper generation.
+    ///
     /// # Examples
     ///
     /// Example of creating a default `TranslationOptions`:
     ///
     /// ```
-    /// use ct2rs::whisper::WhisperOptions;
+    /// use ct2rs::sys::WhisperOptions;
     ///
     /// let options = WhisperOptions::default();
     /// ```
@@ -102,16 +96,16 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/src/types.rs.h");
         include!("ct2rs/include/whisper.h");
+        include!("ct2rs/src/sys/types.rs.h");
 
-        type VecStr<'a> = crate::types::ffi::VecStr<'a>;
-        type VecString = crate::types::ffi::VecString;
-        type VecUSize = crate::types::ffi::VecUSize;
+        type VecStr<'a> = super::VecStr<'a>;
+        type VecString = super::VecString;
+        type VecUSize = super::VecUSize;
 
-        type Config = crate::config::ffi::Config;
+        type Config = super::config::ffi::Config;
 
-        type StorageView = crate::storage_view::ffi::StorageView;
+        type StorageView = super::storage_view::ffi::StorageView;
 
         type Whisper;
 
@@ -165,6 +159,9 @@ impl Default for WhisperOptions {
 }
 
 /// A generation result from the Whisper model.
+///
+/// This struct is a Rust binding to the
+/// [`ctranslate2.models.WhisperGenerationResult`](https://opennmt.net/CTranslate2/python/ctranslate2.models.WhisperGenerationResult.html).
 #[derive(Clone, Debug)]
 pub struct WhisperGenerationResult {
     /// Generated sequences of tokens.
@@ -212,7 +209,9 @@ impl From<VecDetectionResult> for Vec<DetectionResult> {
     }
 }
 
-/// A Rust binding to the
+/// Implements the Whisper speech recognition model published by OpenAI.
+///
+/// This struct is a Rust binding to the
 /// [`ctranslate2::models::Whisper`](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html).
 pub struct Whisper {
     model: OsString,
@@ -314,7 +313,7 @@ unsafe impl Sync for Whisper {}
 
 #[cfg(test)]
 mod tests {
-    use crate::whisper::{ffi, WhisperGenerationResult, WhisperOptions};
+    use super::{ffi, WhisperGenerationResult, WhisperOptions};
 
     #[test]
     fn test_default_options() {

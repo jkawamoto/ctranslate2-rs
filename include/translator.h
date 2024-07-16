@@ -8,12 +8,13 @@
 
 #pragma once
 
+#include <memory>
+
+#include <ctranslate2/translator.h>
+
 #include "rust/cxx.h"
 
 #include "config.h"
-
-#include <ctranslate2/translator.h>
-#include <memory>
 
 struct VecStr;
 struct TranslationOptions;

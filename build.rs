@@ -14,21 +14,8 @@ use walkdir::WalkDir;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/types.rs");
-    println!("cargo:rerun-if-changed=src/config.rs");
-    println!("cargo:rerun-if-changed=src/translator.rs");
-    println!("cargo:rerun-if-changed=src/translator.cpp");
-    println!("cargo:rerun-if-changed=src/generator.rs");
-    println!("cargo:rerun-if-changed=src/generator.cpp");
-    println!("cargo:rerun-if-changed=src/storage_view.rs");
-    println!("cargo:rerun-if-changed=src/whisper.rs");
-    println!("cargo:rerun-if-changed=src/whisper.cpp");
-    println!("cargo:rerun-if-changed=include/types.h");
-    println!("cargo:rerun-if-changed=include/config.h");
-    println!("cargo:rerun-if-changed=include/translator.h");
-    println!("cargo:rerun-if-changed=include/generator.h");
-    println!("cargo:rerun-if-changed=include/storage_view.h");
-    println!("cargo:rerun-if-changed=include/whisper.h");
+    println!("cargo:rerun-if-changed=src/sys");
+    println!("cargo:rerun-if-changed=include");
     println!("cargo:rerun-if-changed=CTranslate2");
     println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
     if let Ok(library_path) = env::var("LIBRARY_PATH") {
@@ -84,17 +71,17 @@ fn main() {
     let ctranslate2 = cmake.build();
     link_libraries(ctranslate2.join("build"));
 
-    cxx_build::bridges(vec![
-        "src/types.rs",
-        "src/config.rs",
-        "src/translator.rs",
-        "src/generator.rs",
-        "src/storage_view.rs",
-        "src/whisper.rs",
+    cxx_build::bridges([
+        "src/sys/types.rs",
+        "src/sys/config.rs",
+        "src/sys/translator.rs",
+        "src/sys/generator.rs",
+        "src/sys/storage_view.rs",
+        "src/sys/whisper.rs",
     ])
-    .file("src/translator.cpp")
-    .file("src/generator.cpp")
-    .file("src/whisper.cpp")
+    .file("src/sys/translator.cpp")
+    .file("src/sys/generator.cpp")
+    .file("src/sys/whisper.cpp")
     .include("CTranslate2/include")
     .std("c++17")
     .static_crt(cfg!(target_os = "windows"))

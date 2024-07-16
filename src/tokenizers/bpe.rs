@@ -8,7 +8,7 @@
 
 //! This module provides a tokenizer based on the Byte Pair Encoding (BPE) model.
 //!
-//! Byte Pair Encoding is a subword tokenization technique that can dynamically adjust
+//! Byte Pair Encoding is a sub-word tokenization technique that can dynamically adjust
 //! the vocabulary based on the provided corpus, often leading to more efficient
 //! representation of text data in machine learning models. For a deeper understanding
 //! of BPE, refer to the [original paper](https://www.aclweb.org/anthology/P16-1162/).
@@ -21,10 +21,26 @@
 //! documentation for
 //! [BPEDecoder](https://docs.rs/tokenizers/latest/tokenizers/decoders/bpe/struct.BPEDecoder.html).
 //!
-//! ## Usage
 //! The tokenizer instances created can be utilized in conjunction with structures like
-//! `crate::Translator` and `crate::Generator` for tasks such as translation or text generation.
+//! [`Translator`][crate::Translator] and [`Generator`][crate::Generator] for tasks such as
+//! translation or text generation.
 //!
+//! ## Example
+//! Here is an example of how to create an instance of the Tokenizer
+//! and then use it to create an instance of the [`Generator`][crate::Generator] structure:
+//!
+//! ```no_run
+//! # use anyhow::Result;
+//! #
+//! use ct2rs::{Config, Generator};
+//! use ct2rs::tokenizers::bpe;
+//!
+//! # fn main() -> Result<()> {
+//! let path = "/path/to/model";
+//! let t = Generator::with_tokenizer(&path, bpe::new(&path, None)?, &Config::default())?;
+//! # Ok(())
+//! # }
+//! ```
 
 use std::path::Path;
 
@@ -34,7 +50,7 @@ use tokenizers::models::bpe::BPE;
 use tokenizers::processors::roberta::RobertaProcessing;
 use tokenizers::Tokenizer as HFTokenizer;
 
-use crate::tokenizers::Tokenizer;
+use super::hf::Tokenizer;
 
 const VOCAB_FILE: &str = "vocab.json";
 const MERGES_FILE: &str = "merges.txt";

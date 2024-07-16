@@ -12,7 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use cxx::UniquePtr;
 
-pub use ffi::{
+pub use self::ffi::{
     get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType,
     ComputeType, Device, LogLevel,
 };
@@ -21,18 +21,20 @@ pub use ffi::{
 pub(crate) mod ffi {
     /// Represents the computing device to be used.
     ///
-    /// This enum can take one of the following two values:
-    /// - `CPU`
-    /// - `CUDA`
+    /// This enum is a Rust binding to the
+    /// [`ctranslate2.Device`](https://opennmt.net/CTranslate2/python/ctranslate2.Device.html),
+    /// which can take one of the following two values:
+    /// - [`CPU`][Device::CPU]
+    /// - [`CUDA`][Device::CUDA]
     ///
-    /// The default setting for this enum is `CPU`.
+    /// The default setting for this enum is [`CPU`][Device::CPU].
     ///
     /// # Examples
     ///
     /// Example of creating a default `Device`:
     ///
     /// ```
-    /// use ct2rs::config::Device;
+    /// use ct2rs::sys::Device;
     ///
     /// let device = Device::default();
     /// # assert_eq!(device, Device::CPU);
@@ -41,31 +43,29 @@ pub(crate) mod ffi {
     #[derive(Copy, Clone, Debug)]
     #[repr(i32)]
     enum Device {
+        /// Use CPU.
         CPU,
+        /// Use GPU (CUDA).
         CUDA,
     }
 
     /// Model computation type.
     ///
     /// This enum can take one of the following values:
-    /// - `DEFAULT`: Keeps the same quantization that was used during model conversion.
-    ///   This is the default setting.
-    /// - `AUTO`: Uses the fastest computation type that is supported on this system and device.
-    /// - `FLOAT32`: Utilizes 32-bit floating-point precision.
-    /// - `INT8`: Uses 8-bit integer precision.
-    /// - `INT8_FLOAT32`: Combines 8-bit integer quantization with 32-bit floating-point
-    ///   computation.
-    /// - `INT8_FLOAT16`: Combines 8-bit integer quantization with 16-bit floating-point
-    ///   computation.
-    /// - `INT8_BFLOAT16`: Combines 8-bit integer quantization with Brain Floating Point (16-bit)
-    ///   computation.
-    /// - `INT16`: Uses 16-bit integer precision.
-    /// - `FLOAT16`: Utilizes 16-bit floating-point precision (half precision).
-    /// - `BFLOAT16`: Uses Brain Floating Point (16-bit) precision.
+    /// - [`DEFAULT`][ComputeType::DEFAULT]
+    /// - [`AUTO`][ComputeType::AUTO]
+    /// - [`FLOAT32`][ComputeType::FLOAT32]
+    /// - [`INT8`][ComputeType::INT8]
+    /// - [`INT8_FLOAT32`][ComputeType::INT8_FLOAT32]
+    /// - [`INT8_FLOAT16`][ComputeType::INT8_FLOAT16]
+    /// - [`INT8_BFLOAT16`][ComputeType::INT8_BFLOAT16]
+    /// - [`INT16`][ComputeType::INT16]
+    /// - [`FLOAT16`][ComputeType::FLOAT16]
+    /// - [`BFLOAT16`][ComputeType::BFLOAT16]
     ///
-    /// The default setting for this enum is `DEFAULT`, meaning that unless specified otherwise,
-    /// the computation will proceed with the same quantization level as was used during the model's
-    /// conversion.
+    /// The default setting for this enum is [`DEFAULT`][ComputeType::DEFAULT], meaning that unless
+    /// specified otherwise, the computation will proceed with the same quantization level as was
+    /// used during the model's conversion.
     ///
     /// See also:
     /// [Quantization](https://opennmt.net/CTranslate2/quantization.html#quantize-on-model-loading)
@@ -77,7 +77,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `ComputeType`:
     ///
     /// ```
-    /// use ct2rs::config::ComputeType;
+    /// use ct2rs::sys::ComputeType;
     ///
     /// let compute_type = ComputeType::default();
     /// # assert_eq!(compute_type, ComputeType::DEFAULT);
@@ -86,34 +86,42 @@ pub(crate) mod ffi {
     #[derive(Copy, Clone, Debug)]
     #[repr(i32)]
     enum ComputeType {
+        /// Keeps the same quantization that was used during model conversion.
         DEFAULT,
+        /// Uses the fastest computation type that is supported on this system and device.
         AUTO,
+        /// Utilizes 32-bit floating-point precision.
         FLOAT32,
+        /// Uses 8-bit integer precision.
         INT8,
+        /// Combines 8-bit integer quantization with 32-bit floating-point computation.
         INT8_FLOAT32,
+        /// Combines 8-bit integer quantization with 16-bit floating-point computation.
         INT8_FLOAT16,
+        /// Combines 8-bit integer quantization with Brain Floating Point (16-bit) computation.
         INT8_BFLOAT16,
+        /// Uses 16-bit integer precision.
         INT16,
+        /// Utilizes 16-bit floating-point precision (half precision).
         FLOAT16,
+        /// Uses Brain Floating Point (16-bit) precision.
         BFLOAT16,
     }
 
-    /// Specifies how the `max_batch_size` should be calculated,
-    /// whether by the number of "examples" or "tokens".
+    /// Specifies how the `max_batch_size` should be calculated.
     ///
     /// This enum can take one of the following two values:
-    /// - `Examples`: The batch size is calculated based on the number of individual examples.
-    /// - `Tokens`: The batch size is calculated based on the total number of tokens across all
-    ///    examples.
+    /// - [`Examples`][BatchType::Examples]
+    /// - [`Tokens`][BatchType::Tokens]
     ///
-    /// The default setting for this enum is `Examples`.
+    /// The default setting for this enum is [`Examples`][BatchType::Examples].
     ///
     /// # Examples
     ///
     /// Example of creating a default `BatchType`:
     ///
     /// ```
-    /// use ct2rs::config::BatchType;
+    /// use ct2rs::sys::BatchType;
     ///
     /// let batch_type = BatchType::default();
     /// # assert_eq!(batch_type, BatchType::Examples);
@@ -121,29 +129,31 @@ pub(crate) mod ffi {
     #[derive(Copy, Clone, Debug)]
     #[repr(i32)]
     enum BatchType {
+        /// The batch size is calculated based on the number of individual examples.
         Examples,
+        /// The batch size is calculated based on the total number of tokens across all examples.
         Tokens,
     }
 
     /// Logging level.
     ///
     /// This enum can take one of the following values:
-    /// - `Off`
-    /// - `Critical`
-    /// - `Error`
-    /// - `Warning`
-    /// - `Info`
-    /// - `Debug`
-    /// - `Trace`
+    /// - [`Off`][LogLevel::Off]
+    /// - [`Critical`][LogLevel::Critical]
+    /// - [`Error`][LogLevel::Error]
+    /// - [`Warning`][LogLevel::Warning]
+    /// - [`Info`][LogLevel::Info]
+    /// - [`Debug`][LogLevel::Debug]
+    /// - [`Trace`][LogLevel::Trace]
     ///
-    /// The default setting for this enum is `Warning`.
+    /// The default setting for this enum is [`Warning`][LogLevel::Warning].
     ///
     /// # Examples
     ///
     /// Example of creating a default `LogLevel`:
     ///
     /// ```
-    /// use ct2rs::config::LogLevel;
+    /// use ct2rs::sys::LogLevel;
     ///
     /// let log_level = LogLevel::default();
     /// # assert_eq!(log_level, LogLevel::Warning);
@@ -194,7 +204,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the log level to `Debug`.
         /// ```
-        /// use ct2rs::config::{LogLevel, set_log_level};
+        /// use ct2rs::sys::{LogLevel, set_log_level};
         ///
         /// set_log_level(LogLevel::Debug);
         /// ```
@@ -208,7 +218,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the random seed to `12345`.
         /// ```
-        /// use ct2rs::set_random_seed;
+        /// use ct2rs::sys::set_random_seed;
         ///
         /// set_random_seed(12345);
         /// ```
@@ -303,7 +313,7 @@ impl Display for LogLevel {
 /// Example of creating a default `Config`:
 ///
 /// ```
-/// use ct2rs::config::{ComputeType, Config, Device};
+/// use ct2rs::sys::{ComputeType, Config, Device};
 ///
 /// let config = Config::default();
 /// # assert_eq!(config.device, Device::default());
@@ -368,7 +378,7 @@ impl Config {
 mod tests {
     use rand::random;
 
-    use crate::config::{
+    use super::{
         get_device_count, get_log_level, get_random_seed, set_log_level, set_random_seed,
         BatchType, ComputeType, Config, Device, LogLevel,
     };

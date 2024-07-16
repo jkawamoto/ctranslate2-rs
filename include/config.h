@@ -8,12 +8,13 @@
 
 #pragma once
 
-#include "rust/cxx.h"
+#include <memory>
 
 #include <ctranslate2/logging.h>
 #include <ctranslate2/random.h>
 #include <ctranslate2/replica_pool.h>
-#include <memory>
+
+#include "rust/cxx.h"
 
 using ctranslate2::BatchType;
 using ctranslate2::ComputeType;

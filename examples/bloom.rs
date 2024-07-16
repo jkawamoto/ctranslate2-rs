@@ -44,8 +44,7 @@ use std::{io, time};
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::config::{Config, Device};
-use ct2rs::{GenerationOptions, Generator};
+use ct2rs::{Config, Device, GenerationOptions, Generator};
 
 /// Generate text using BLOOM models.
 #[derive(Parser, Debug)]
