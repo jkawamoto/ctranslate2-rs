@@ -8,6 +8,7 @@
 
 //! This module provides a text generator with a tokenizer.
 
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -226,5 +227,23 @@ impl<T: Tokenizer> Generator<T> {
     #[inline]
     pub fn num_replicas(&self) -> anyhow::Result<usize> {
         self.generator.num_replicas()
+    }
+}
+
+impl<T: Tokenizer> Debug for Generator<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.generator)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Generator;
+
+    #[test]
+    #[ignore]
+    fn test_generator_debug() {
+        let g = Generator::new("data/bloom-560m", &Default::default()).unwrap();
+        assert!(format!("{:?}", g).contains("bloom-560m"));
     }
 }

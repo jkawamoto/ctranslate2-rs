@@ -8,6 +8,7 @@
 
 //! This module provides a text translator with a tokenizer.
 
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -312,5 +313,23 @@ impl<T: Tokenizer> Translator<T> {
     #[inline]
     pub fn num_replicas(&self) -> anyhow::Result<usize> {
         self.translator.num_replicas()
+    }
+}
+
+impl<T: Tokenizer> Debug for Translator<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.translator)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::sys::Translator;
+
+    #[test]
+    #[ignore]
+    fn test_generator_debug() {
+        let t = Translator::new("data/t5-small", &Default::default()).unwrap();
+        assert!(format!("{:?}", t).contains("t5-small"));
     }
 }

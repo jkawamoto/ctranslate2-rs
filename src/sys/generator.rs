@@ -9,6 +9,8 @@
 //! This module provides Rust bindings for the
 //! [`ctranslate2::Generator`](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html).
 
+use std::ffi::{OsStr, OsString};
+use std::fmt::{Debug, Formatter};
 use std::path::Path;
 
 use anyhow::{anyhow, Error, Result};
@@ -147,6 +149,7 @@ unsafe impl Sync for ffi::Generator {}
 /// # }
 /// ```
 pub struct Generator {
+    model: OsString,
     ptr: UniquePtr<ffi::Generator>,
 }
 
@@ -180,6 +183,10 @@ impl Generator {
     pub fn new<T: AsRef<Path>>(model_path: T, config: &Config) -> Result<Generator> {
         let model_path = model_path.as_ref();
         Ok(Generator {
+            model: model_path
+                .file_name()
+                .map(OsStr::to_os_string)
+                .unwrap_or_default(),
             ptr: ffi::generator(
                 model_path
                     .to_str()
@@ -268,6 +275,17 @@ impl Generator {
     #[inline]
     pub fn num_replicas(&self) -> Result<usize> {
         self.ptr.num_replicas().map_err(Error::from)
+    }
+}
+
+impl Debug for Generator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Generator")
+            .field("model", &self.model)
+            .field("queued_batches", &self.num_queued_batches())
+            .field("active_batches", &self.num_active_batches())
+            .field("replicas", &self.num_replicas())
+            .finish()
     }
 }
 
@@ -475,7 +493,16 @@ impl GenerationResult {
 #[cfg(test)]
 mod tests {
     use super::ffi::{VecStr, VecString, VecUSize};
+    use super::Generator;
     use super::{ffi, GenerationOptions, GenerationResult};
+
+    #[test]
+    #[ignore]
+    fn test_generator_debug() {
+        let generator = Generator::new("data/bloom-560m", &Default::default()).unwrap();
+
+        assert!(format!("{:?}", generator).contains("bloom-560m"));
+    }
 
     #[test]
     fn options_to_ffi() {
