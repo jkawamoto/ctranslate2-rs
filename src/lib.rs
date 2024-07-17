@@ -71,14 +71,12 @@
 #[cfg(feature = "mkl")]
 extern crate intel_mkl_src;
 
-pub use generator::Generator;
+pub use generator::{GenerationOptions, Generator};
 pub use result::GenerationStepResult;
-pub use sys::{
-    set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, GenerationOptions,
-    LogLevel, TranslationOptions,
-};
+pub use sys::{set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel};
 pub use tokenizer::Tokenizer;
 pub use translator::Translator;
+pub use translator::{TranslationOptions, Translator};
 
 mod generator;
 mod result;

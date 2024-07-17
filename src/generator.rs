@@ -13,9 +13,11 @@ use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
+pub use sys::GenerationOptions;
+
 use crate::tokenizer::encode_all;
 
-use super::{sys, Config, GenerationOptions, GenerationStepResult, Tokenizer};
+use super::{sys, Config, GenerationStepResult, Tokenizer};
 
 /// A text generator with a tokenizer.
 ///
