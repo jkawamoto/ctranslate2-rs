@@ -17,7 +17,7 @@
 //!   [ctranslate2::Whisper](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html)
 //!   provided by CTranslate2, specifically [`sys::Translator`], [`sys::Generator`], and
 //!   [`sys::Whisper`].
-//! * More user-friendly versions of these, [`Translator`] and [`Generator`],
+//! * More user-friendly versions of these, [`Translator`], [`Generator`], and [`Whisper`],
 //!   which incorporate tokenizers for easier handling.
 //!
 //! # Basic Usage
@@ -75,8 +75,8 @@ pub use generator::{GenerationOptions, Generator};
 pub use result::GenerationStepResult;
 pub use sys::{set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel};
 pub use tokenizer::Tokenizer;
-pub use translator::Translator;
 pub use translator::{TranslationOptions, Translator};
+pub use whisper::{Whisper, WhisperOptions};
 
 mod generator;
 mod result;
@@ -84,3 +84,4 @@ pub mod sys;
 mod tokenizer;
 pub mod tokenizers;
 mod translator;
+mod whisper;
