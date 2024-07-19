@@ -13,8 +13,10 @@ use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
+pub use sys::TranslationOptions;
+
 use super::tokenizer::encode_all;
-use super::{sys, Config, GenerationStepResult, Tokenizer, TranslationOptions};
+use super::{sys, Config, GenerationStepResult, Tokenizer};
 
 /// A text translator with a tokenizer.
 ///
@@ -324,11 +326,11 @@ impl<T: Tokenizer> Debug for Translator<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::sys::Translator;
+    use crate::Translator;
 
     #[test]
     #[ignore]
-    fn test_generator_debug() {
+    fn test_translator_debug() {
         let t = Translator::new("data/t5-small", &Default::default()).unwrap();
         assert!(format!("{:?}", t).contains("t5-small"));
     }

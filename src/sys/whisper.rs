@@ -29,7 +29,7 @@ mod ffi {
     ///
     /// # Examples
     ///
-    /// Example of creating a default `TranslationOptions`:
+    /// Example of creating a default `WhisperOptions`:
     ///
     /// ```
     /// use ct2rs::sys::WhisperOptions;
@@ -213,13 +213,78 @@ impl From<VecDetectionResult> for Vec<DetectionResult> {
 ///
 /// This struct is a Rust binding to the
 /// [`ctranslate2::models::Whisper`](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html).
+///
+/// # Example
+/// ```no_run
+/// # use anyhow::Result;
+/// #
+/// use ct2rs::sys::{Config, StorageView, Whisper};
+///
+/// # fn main() -> Result<()>{
+/// let whisper = Whisper::new("/path/to/model", Config::default())?;
+///
+/// let batch_size = 1;
+/// let n_mels = whisper.n_mels();
+/// let chunk_length = 3000;
+///
+/// // Calculate Mel spectrogram of the source audio and store it in `mel_spectrogram`.
+/// // The length of the vector should be `batch_size` x `n_mels` x `chunk_length`.
+/// let mut mel_spectrogram = vec![];
+///
+/// let storage_view = StorageView::new(
+///     &[batch_size, n_mels, chunk_length],
+///     &mut mel_spectrogram,
+///     Default::default()
+/// )?;
+///
+/// // Detect language.
+/// let lang = whisper.detect_language(&storage_view)?;
+///
+/// // Transcribe.
+/// let res = whisper.generate(
+///     &storage_view,
+///     &[vec![
+///         "<|startoftranscript|>",
+///         &lang[0][0].language,
+///         "<|transcribe|>",
+///         "<|notimestamps|>",
+///     ]],
+///     &Default::default(),
+/// )?;
+/// # Ok(())
+/// # }
+/// ```
 pub struct Whisper {
     model: OsString,
     ptr: UniquePtr<ffi::Whisper>,
 }
 
 impl Whisper {
-    /// Initializes a Whisper model from a converted model.
+    /// Creates and initializes an instance of `Whisper`.
+    ///
+    /// This function constructs a new `Whisper` by loading a language model from the specified
+    /// `model_path` and applying the provided `config` settings.
+    ///
+    /// # Arguments
+    /// * `model_path` - A path to the directory containing the language model to be loaded.
+    /// * `config` - A reference to a [`Config`] structure that specifies various settings
+    ///   and configurations for the `Whisper`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Whisper`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use anyhow::Result;
+    /// #
+    /// use ct2rs::sys::{Config, Whisper};
+    ///
+    /// # fn main() -> Result<()> {
+    /// let whisper = Whisper::new("/path/to/model", Config::default())?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn new<T: AsRef<Path>>(model_path: T, config: Config) -> Result<Self> {
         let model_path = model_path.as_ref();
         Ok(Self {
@@ -237,19 +302,38 @@ impl Whisper {
     }
 
     /// Encodes the input features and generates from the given prompt.
+    ///
+    /// # Arguments
+    /// * `features` – A [`StorageView`] consisting of Mel spectrogram of the audio,
+    ///   as a float array with shape `[batch_size, n_mels, chunk_length]`.
+    ///   [`n_mels`][Whisper::n_mels] method gives the expected `n_mels` in the shape.
+    /// * `prompts` – Batch of initial string tokens.
+    /// * `options` - Settings.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of [`WhisperGenerationResult`] if successful,
+    /// or an error if the translation fails.
     pub fn generate<T: AsRef<str>>(
         &self,
         features: &StorageView,
         prompts: &[Vec<T>],
-        opts: &WhisperOptions,
+        options: &WhisperOptions,
     ) -> Result<Vec<WhisperGenerationResult>> {
         self.ptr
-            .generate(features, &vec_ffi_vecstr(prompts), opts)
+            .generate(features, &vec_ffi_vecstr(prompts), options)
             .map(|res| res.into_iter().map(WhisperGenerationResult::from).collect())
             .map_err(|e| anyhow!("failed to generate: {e}"))
     }
 
     /// Returns the probability of each language.
+    ///
+    /// # Arguments
+    /// * `features` – [`StorageView`] consisting of Mel spectrogram of the audio, as a float array
+    ///   with shape `[batch_size, n_mels, chunk_length]`.
+    ///
+    /// # Returns
+    /// For each batch, a list of [`DetectionResult`] ordered from best to worst probability.
+    /// This result is wrapped by `Result`.
     pub fn detect_language(&self, features: &StorageView) -> Result<Vec<Vec<DetectionResult>>> {
         self.ptr
             .detect_language(features)
@@ -308,12 +392,12 @@ impl Debug for Whisper {
     }
 }
 
-unsafe impl Send for Whisper {}
-unsafe impl Sync for Whisper {}
+unsafe impl Send for ffi::Whisper {}
+unsafe impl Sync for ffi::Whisper {}
 
 #[cfg(test)]
 mod tests {
-    use super::{ffi, WhisperGenerationResult, WhisperOptions};
+    use super::{ffi, Whisper, WhisperGenerationResult, WhisperOptions};
 
     #[test]
     fn test_default_options() {
@@ -383,5 +467,13 @@ mod tests {
         assert_eq!(res.no_speech_prob, 0.);
         assert_eq!(res.num_sequences(), 0);
         assert!(!res.has_scores());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_whisper_debug() {
+        let whisper = Whisper::new("data/whisper-tiny-ct2", Default::default()).unwrap();
+
+        assert!(format!("{:?}", whisper).contains("whisper-tiny-ct2"));
     }
 }

@@ -120,7 +120,5 @@ mod tests {
         assert_eq!(v.rank(), rank);
         assert!(!v.empty());
         assert_eq!(v.device(), Device::CPU);
-
-        println!("{:?}", v);
     }
 }
