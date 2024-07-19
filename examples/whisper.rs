@@ -26,9 +26,8 @@
 //! Then, execute the sample code below with the following command:
 //!
 //! ```bash
-//! cargo run --example whisper -- ./whisper-tiny-ct2 audio.wav
+//! cargo run -F whisper --example whisper -- ./whisper-tiny-ct2 audio.wav
 //! ```
-//!
 
 use std::path::{Path, PathBuf};
 
@@ -37,6 +36,9 @@ use clap::Parser;
 use hound::WavReader;
 
 use ct2rs::Whisper;
+
+#[cfg(not(feature = "whisper"))]
+compile_error!("This example requires 'whisper' feature.");
 
 /// Transcribe a file using Whisper models.
 #[derive(Parser, Debug)]

@@ -36,10 +36,10 @@ sentencepiece = "0.11.2"
 tokenizers = "0.19.1"
 
 # Dependencies for Whisper model
-ndarray = "0.15.6"
-rustfft = "6.2.0"
-serde = { version = "1.0.202", features = ["derive"] }
-serde_json = "1.0.117"
+ndarray = { version = "0.15.6", optional = true }
+rustfft = { version = "6.2.0", optional = true }
+serde = { version = "1.0.204", features = ["derive"], optional = true }
+serde_json = { version = "1.0.120", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-ilp64-seq"] }
@@ -52,7 +52,7 @@ clap = { version = "4.5.7", features = ["derive"] }
 rand = "0.8.5"
 
 # Dependencies for Whisper example
-hound = "3.5.1"
+hound = { version = "3.5.1" }
 
 [build-dependencies]
 cmake = "0.1.50"
@@ -61,6 +61,9 @@ walkdir = "2.5.0"
 
 [features]
 default = ["ruy", "accelerate"]
+whisper = ["dep:ndarray", "dep:rustfft", "dep:serde", "dep:serde_json"]
+
+# Features to select backends.
 mkl = ["dep:intel-mkl-src"]
 openblas = []
 ruy = []
@@ -106,3 +109,6 @@ name = "stream"
 
 [[example]]
 name = "whisper"
+
+[package.metadata.docs.rs]
+features = ["whisper"]

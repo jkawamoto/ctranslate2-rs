@@ -14,14 +14,14 @@ use std::io::BufReader;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
-use ndarray::{Array2, Axis, stack};
-use rustfft::FftPlanner;
+use ndarray::{stack, Array2, Axis};
 use rustfft::num_complex::Complex;
+use rustfft::FftPlanner;
 use serde::Deserialize;
 
-use super::{Config, sys, Tokenizer};
 pub use super::sys::WhisperOptions;
 use super::tokenizers::hf;
+use super::{sys, Config, Tokenizer};
 
 const PREPROCESSOR_CONFIG_FILE: &str = "preprocessor_config.json";
 
@@ -84,7 +84,7 @@ impl Whisper {
     /// * `options` - Settings.
     ///
     /// # Returns
-    /// Returns a `Result` containing a vector of [`WhisperGenerationResult`] if successful,
+    /// Returns a `Result` containing a vector of transcribed strings if successful,
     /// or an error if the translation fails.
     pub fn generate(
         &self,

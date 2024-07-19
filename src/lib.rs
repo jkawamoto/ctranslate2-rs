@@ -17,7 +17,8 @@
 //!   [ctranslate2::Whisper](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html)
 //!   provided by CTranslate2, specifically [`sys::Translator`], [`sys::Generator`], and
 //!   [`sys::Whisper`].
-//! * More user-friendly versions of these, [`Translator`], [`Generator`], and [`Whisper`],
+//! * More user-friendly versions of these, [`Translator`], [`Generator`],
+//!   and [`Whisper`] (`whisper` feature is required),
 //!   which incorporate tokenizers for easier handling.
 //!
 //! # Basic Usage
@@ -27,7 +28,7 @@
 //! ```no_run
 //! # use anyhow::Result;
 //! #
-//! use ct2rs::{Config, Translator, TranslationOptions, GenerationStepResult};
+//! use ct2rs::{Config, Translator, TranslationOptions};
 //!
 //! # fn main() -> Result<()> {
 //! let sources = vec![
@@ -67,6 +68,9 @@
 //! [the example code](https://github.com/jkawamoto/ctranslate2-rs/blob/main/examples/stream.rs)
 //! for more information.
 //!
+//!
+
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "mkl")]
 extern crate intel_mkl_src;
@@ -76,6 +80,8 @@ pub use result::GenerationStepResult;
 pub use sys::{set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel};
 pub use tokenizer::Tokenizer;
 pub use translator::{TranslationOptions, Translator};
+#[cfg(feature = "whisper")]
+#[cfg_attr(docsrs, doc(cfg(feature = "whisper")))]
 pub use whisper::{Whisper, WhisperOptions};
 
 mod generator;
@@ -84,4 +90,7 @@ pub mod sys;
 mod tokenizer;
 pub mod tokenizers;
 mod translator;
+
+#[cfg(feature = "whisper")]
+#[cfg_attr(docsrs, doc(cfg(feature = "whisper")))]
 mod whisper;
