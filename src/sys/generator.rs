@@ -289,6 +289,20 @@ impl Debug for Generator {
     }
 }
 
+// Releasing `UniquePtr<Generator>` invokes joining threads.
+// However, on Windows, this causes a deadlock.
+// As a workaround, it is bypassed here.
+// See also https://github.com/jkawamoto/ctranslate2-rs/issues/64
+#[cfg(target_os = "windows")]
+impl Drop for Generator {
+    fn drop(&mut self) {
+        let ptr = std::mem::replace(&mut self.ptr, UniquePtr::null());
+        unsafe {
+            std::ptr::drop_in_place(ptr.into_raw());
+        }
+    }
+}
+
 /// The set of generation options.
 ///
 /// # Examples
