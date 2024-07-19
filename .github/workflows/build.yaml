@@ -41,9 +41,9 @@ jobs:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.feature }}"
 
   build-linux:
     strategy:
@@ -75,9 +75,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.feature }}"
 
   build-windows:
     strategy:
@@ -93,6 +93,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.feature }}"
