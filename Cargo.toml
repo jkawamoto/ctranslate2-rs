@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.8.5"
+version = "0.9.0"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs"
@@ -31,7 +31,7 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
 anyhow = "1.0.86"
-cxx = { version = "1.0.123", features = ["c++17"] }
+cxx = { version = "1.0.124", features = ["c++17"] }
 sentencepiece = "0.11.2"
 tokenizers = "0.19.1"
 
@@ -48,7 +48,7 @@ intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-il
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 [dev-dependencies]
-clap = { version = "4.5.7", features = ["derive"] }
+clap = { version = "4.5.9", features = ["derive"] }
 rand = "0.8.5"
 
 # Dependencies for Whisper example
@@ -56,7 +56,7 @@ hound = { version = "3.5.1" }
 
 [build-dependencies]
 cmake = "0.1.50"
-cxx-build = "1.0.123"
+cxx-build = "1.0.124"
 walkdir = "2.5.0"
 
 [features]
