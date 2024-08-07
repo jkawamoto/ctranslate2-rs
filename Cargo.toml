@@ -60,7 +60,7 @@ cxx-build = "1.0.124"
 walkdir = "2.5.0"
 
 [features]
-default = ["ruy", "accelerate"]
+default = ["ruy"]
 whisper = ["dep:ndarray", "dep:rustfft", "dep:serde", "dep:serde_json"]
 
 # Features to select backends.

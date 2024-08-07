@@ -57,13 +57,13 @@ fn main() {
         cmake.define("WITH_MKL", "ON");
     }
     if cfg!(feature = "openblas") {
-        cmake.define("WITH_OPENBLAS", "ON");
         println!("cargo:rustc-link-lib=static=openblas");
+        cmake.define("WITH_OPENBLAS", "ON");
     }
     if cfg!(feature = "ruy") {
         cmake.define("WITH_RUY", "ON");
     }
-    if cfg!(all(feature = "accelerate", target_os = "macos")) {
+    if cfg!(feature = "accelerate") {
         println!("cargo:rustc-link-lib=framework=Accelerate");
         cmake.define("WITH_ACCELERATE", "ON");
     }
