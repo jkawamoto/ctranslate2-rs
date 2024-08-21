@@ -36,8 +36,8 @@ sentencepiece = "0.11.2"
 tokenizers = "0.19.1"
 
 # Dependencies for Whisper model
+mel_spec = { version = "0.2.5", optional = true }
 ndarray = { version = "0.15.6", optional = true }
-rustfft = { version = "6.2.0", optional = true }
 serde = { version = "1.0.204", features = ["derive"], optional = true }
 serde_json = { version = "1.0.120", optional = true }
 
@@ -61,7 +61,7 @@ walkdir = "2.5.0"
 
 [features]
 default = ["ruy"]
-whisper = ["dep:ndarray", "dep:rustfft", "dep:serde", "dep:serde_json"]
+whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
 
 # Features to select backends.
 mkl = ["dep:intel-mkl-src"]
