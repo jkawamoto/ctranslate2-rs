@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs"
@@ -24,22 +24,22 @@ include = [
     "!/CTranslate2/**/docs",
     "!/CTranslate2/**/media",
 ]
-keywords = ["ctranslate2", "bindings", "llm"]
+keywords = ["ctranslate2", "bindings", "llm", "whisper"]
 license = "MIT"
 repository = "https://github.com/jkawamoto/ctranslate2-rs"
 description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
 anyhow = "1.0.86"
-cxx = { version = "1.0.124", features = ["c++17"] }
+cxx = { version = "1.0.126", features = ["c++17"] }
 sentencepiece = "0.11.2"
-tokenizers = "0.19.1"
+tokenizers = "0.20.0"
 
 # Dependencies for Whisper model
 mel_spec = { version = "0.2.5", optional = true }
 ndarray = { version = "0.15.6", optional = true }
-serde = { version = "1.0.204", features = ["derive"], optional = true }
-serde_json = { version = "1.0.120", optional = true }
+serde = { version = "1.0.208", features = ["derive"], optional = true }
+serde_json = { version = "1.0.125", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-ilp64-seq"] }
@@ -48,15 +48,15 @@ intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-il
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 [dev-dependencies]
-clap = { version = "4.5.9", features = ["derive"] }
+clap = { version = "4.5.16", features = ["derive"] }
 rand = "0.8.5"
 
 # Dependencies for Whisper example
 hound = { version = "3.5.1" }
 
 [build-dependencies]
-cmake = "0.1.50"
-cxx-build = "1.0.124"
+cmake = "0.1.51"
+cxx-build = "1.0.126"
 walkdir = "2.5.0"
 
 [features]

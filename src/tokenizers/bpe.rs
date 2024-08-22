@@ -86,13 +86,13 @@ pub fn from_file<T: AsRef<Path>, U: AsRef<Path>>(
         .map_err(|err| anyhow!("failed to build a tokenizer: {err}"))?,
     ));
 
-    res.with_decoder(match decoder_suffix {
+    res.with_decoder(Some(match decoder_suffix {
         None => BPEDecoder::default(),
         Some(s) => BPEDecoder::new(s),
-    })
-    .with_post_processor(
+    }))
+    .with_post_processor(Some(
         RobertaProcessing::new(("</s>".to_string(), 2), ("<s>".to_string(), 0)).trim_offsets(true),
-    );
+    ));
 
     Ok(res)
 }
