@@ -1,4 +1,4 @@
-// whisper.py.rs
+// whisper.rs
 //
 // Copyright (c) 2023-2024 Junpei Kawamoto
 //
@@ -14,9 +14,9 @@ use std::io::BufReader;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
-use ndarray::{stack, Array2, Axis};
-use rustfft::num_complex::Complex;
-use rustfft::FftPlanner;
+use mel_spec::mel::{log_mel_spectrogram, norm_mel};
+use mel_spec::stft::Spectrogram;
+use ndarray::{s, stack, Array2, Axis};
 use serde::Deserialize;
 
 pub use super::sys::WhisperOptions;
@@ -31,7 +31,7 @@ const PREPROCESSOR_CONFIG_FILE: &str = "preprocessor_config.json";
 /// ```no_run
 /// use ct2rs::Whisper;
 ///
-/// # fn main() -> anyhow::Result<()>{ ///
+/// # fn main() -> anyhow::Result<()>{
 /// let whisper = Whisper::new("/path/to/model", Default::default())?;
 ///
 /// let sampling_rate = whisper.sampling_rate();
@@ -93,21 +93,22 @@ impl Whisper {
         timestamp: bool,
         options: &WhisperOptions,
     ) -> Result<Vec<String>> {
+        let mut stft = Spectrogram::new(self.config.n_fft, self.config.hop_length);
+
         let mut mel_spectrogram_vec = vec![];
         for chunk in samples.chunks(self.config.n_samples) {
-            let stft = if chunk.len() < self.config.n_samples {
-                let mut padded_chunk = Vec::with_capacity(self.config.n_samples);
-                padded_chunk.extend_from_slice(chunk);
-                padded_chunk
-                    .extend(std::iter::repeat(0.0).take(self.config.n_samples - chunk.len()));
-
-                stft(&padded_chunk, self.config.n_fft, self.config.hop_length)
-            } else {
-                stft(chunk, self.config.n_fft, self.config.hop_length)
-            };
-
-            // Compute Mel Spectrogram
-            mel_spectrogram_vec.push(mel_spectrogram(&stft, &self.config.mel_filters));
+            let mut mel_spectrogram_per_chunk =
+                Array2::zeros((self.config.feature_size, self.config.nb_max_frames));
+            for (i, flame) in chunk.chunks(self.config.hop_length).enumerate() {
+                if let Some(fft_frame) = stft.add(flame) {
+                    let mel = norm_mel(&log_mel_spectrogram(&fft_frame, &self.config.mel_filters))
+                        .mapv(|v| v as f32);
+                    mel_spectrogram_per_chunk
+                        .slice_mut(s![.., i])
+                        .assign(&mel.slice(s![.., 0]));
+                }
+            }
+            mel_spectrogram_vec.push(mel_spectrogram_per_chunk);
         }
 
         let mut mel_spectrogram = stack(
@@ -231,7 +232,7 @@ struct PreprocessorConfig {
     processor_class: String,
     return_attention_mask: bool,
     sampling_rate: usize,
-    mel_filters: Array2<f32>,
+    mel_filters: Array2<f64>,
 }
 
 impl PreprocessorConfig {
@@ -253,7 +254,7 @@ impl PreprocessorConfig {
             processor_class: String,
             return_attention_mask: bool,
             sampling_rate: usize,
-            mel_filters: Vec<Vec<f32>>,
+            mel_filters: Vec<Vec<f64>>,
         }
         let aux: PreprocessorConfigAux = serde_json::from_reader(reader)?;
 
@@ -283,41 +284,6 @@ impl PreprocessorConfig {
             )?,
         })
     }
-}
-
-fn stft(samples: &[f32], n_fft: usize, hop_length: usize) -> Array2<Complex<f32>> {
-    let mut planner = FftPlanner::new();
-    let fft = planner.plan_fft_forward(n_fft);
-
-    let n_frames = (samples.len() - 1) / hop_length + 1;
-    let mut stft = Array2::zeros((n_fft / 2 + 1, n_frames));
-
-    let mut padded_samples = samples.to_vec();
-    padded_samples.extend(vec![0.0; n_fft]);
-
-    for (i, frame) in padded_samples
-        .windows(n_fft)
-        .step_by(hop_length)
-        .take(n_frames)
-        .enumerate()
-    {
-        let mut fft_input: Vec<Complex<f32>> =
-            frame.iter().map(|&x| Complex::new(x, 0.0)).collect();
-        fft.process(&mut fft_input);
-        for (j, value) in fft_input.iter().take(n_fft / 2 + 1).enumerate() {
-            stft[[j, i]] = *value;
-        }
-    }
-
-    stft
-}
-
-fn mel_spectrogram(stft: &Array2<Complex<f32>>, mel_filter_bank: &Array2<f32>) -> Array2<f32> {
-    let spectrum = stft.mapv(|x| x.norm_sqr());
-
-    let res = mel_filter_bank.dot(&spectrum).mapv(|x| x.log10());
-    let global_max = res.fold(f32::NEG_INFINITY, |a, &b| a.max(b));
-    res.mapv(|x| (x.max(global_max - 8.0) + 4.0) / 4.0)
 }
 
 #[cfg(test)]
