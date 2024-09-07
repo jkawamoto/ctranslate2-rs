@@ -76,6 +76,9 @@
 extern crate intel_mkl_src;
 
 pub use generator::{GenerationOptions, Generator};
+#[cfg(feature = "hub")]
+#[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
+pub use hub::download_model;
 pub use result::GenerationStepResult;
 pub use sys::{set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel};
 pub use tokenizer::Tokenizer;
@@ -94,3 +97,7 @@ mod translator;
 #[cfg(feature = "whisper")]
 #[cfg_attr(docsrs, doc(cfg(feature = "whisper")))]
 mod whisper;
+
+#[cfg(feature = "hub")]
+#[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
+mod hub;
