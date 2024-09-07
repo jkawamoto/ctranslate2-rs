@@ -414,7 +414,7 @@ unsafe impl Sync for ffi::Whisper {}
 
 #[cfg(test)]
 mod tests {
-    use super::{ffi, Whisper, WhisperGenerationResult, WhisperOptions};
+    use super::{ffi, WhisperGenerationResult, WhisperOptions};
 
     #[test]
     fn test_default_options() {
@@ -487,11 +487,21 @@ mod tests {
         assert!(!res.has_scores());
     }
 
-    #[test]
-    #[ignore]
-    fn test_whisper_debug() {
-        let whisper = Whisper::new("data/whisper-tiny-ct2", Default::default()).unwrap();
+    #[cfg(feature = "hub")]
+    mod hub {
+        use crate::download_model;
+        use crate::sys::Whisper;
 
-        assert!(format!("{:?}", whisper).contains("whisper-tiny-ct2"));
+        const MODEL_ID: &str = "jkawamoto/whisper-tiny-ct2";
+
+        #[test]
+        #[ignore]
+        fn test_whisper_debug() {
+            let model_path = download_model(MODEL_ID).unwrap();
+
+            let whisper = Whisper::new(&model_path, Default::default()).unwrap();
+            assert!(format!("{:?}", whisper)
+                .contains(model_path.file_name().unwrap().to_str().unwrap()));
+        }
     }
 }
