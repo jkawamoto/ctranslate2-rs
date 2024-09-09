@@ -62,6 +62,7 @@ walkdir = "2.5.0"
 [features]
 default = ["ruy"]
 whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
+flash-attention = []
 
 # Features to select backends.
 mkl = ["dep:intel-mkl-src"]

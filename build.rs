@@ -67,6 +67,9 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Accelerate");
         cmake.define("WITH_ACCELERATE", "ON");
     }
+    if cfg!(feature = "flash-attention") {
+        cmake.define("WITH_FLASH_ATTN", "ON");
+    }
 
     let ctranslate2 = cmake.build();
     link_libraries(ctranslate2.join("build"));
