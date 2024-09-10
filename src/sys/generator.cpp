@@ -33,8 +33,8 @@ inline std::function<bool(ctranslate2::GenerationStepResult)> convert_callback(
                 res.token_id,
                 res.hypothesis_id,
                 rust::String(res.token),
-                res.log_prob.has_value(),
-                res.log_prob.value_or(0),
+                res.score.has_value(),
+                res.score.value_or(0),
                 res.is_last,
             }
         );
@@ -73,6 +73,7 @@ Generator::generate_batch(
             options.sampling_temperature,
             options.num_hypotheses,
             options.return_scores,
+            options.return_logits_vocab,
             options.return_alternatives,
             options.min_alternative_expansion_prob,
             from_rust(options.static_prompt),

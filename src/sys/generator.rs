@@ -66,6 +66,7 @@ mod ffi {
         sampling_temperature: f32,
         num_hypotheses: usize,
         return_scores: bool,
+        return_logits_vocab: bool,
         return_alternatives: bool,
         min_alternative_expansion_prob: f32,
         static_prompt: Vec<&'a str>,
@@ -329,6 +330,7 @@ impl Drop for Generator {
 /// # assert_eq!(options.sampling_temperature, 1.);
 /// # assert_eq!(options.num_hypotheses, 1);
 /// # assert!(!options.return_scores);
+/// # assert!(!options.return_logits_vocab);
 /// # assert!(!options.return_alternatives);
 /// # assert_eq!(options.min_alternative_expansion_prob, 0.);
 /// # assert!(options.static_prompt.is_empty());
@@ -381,6 +383,8 @@ pub struct GenerationOptions<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> {
     pub num_hypotheses: usize,
     /// Include scores in the result. (default: false)
     pub return_scores: bool,
+    /// Include log probs of each token in the result. (default: false)
+    pub return_logits_vocab: bool,
     /// Return alternatives at the first unconstrained decoding position. This is typically
     /// used with a prefix to provide alternatives at a specific location. (default: false)
     pub return_alternatives: bool,
@@ -420,6 +424,7 @@ impl Default for GenerationOptions<String, String, String> {
             sampling_temperature: 1.,
             num_hypotheses: 1,
             return_scores: false,
+            return_logits_vocab: false,
             return_alternatives: false,
             min_alternative_expansion_prob: 0.,
             static_prompt: vec![],
@@ -451,6 +456,7 @@ impl<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> GenerationOptions<T, U, V> {
             sampling_temperature: self.sampling_temperature,
             num_hypotheses: self.num_hypotheses,
             return_scores: self.return_scores,
+            return_logits_vocab: self.return_logits_vocab,
             return_alternatives: self.return_alternatives,
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
             static_prompt: self.static_prompt.iter().map(AsRef::as_ref).collect(),

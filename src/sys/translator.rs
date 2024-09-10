@@ -68,6 +68,7 @@ mod ffi {
         num_hypotheses: usize,
         return_scores: bool,
         return_attention: bool,
+        return_logits_vocab: bool,
         return_alternatives: bool,
         min_alternative_expansion_prob: f32,
         replace_unknowns: bool,
@@ -165,6 +166,7 @@ unsafe impl Sync for ffi::Translator {}
 /// # assert_eq!(options.num_hypotheses, 1);
 /// # assert!(!options.return_scores);
 /// # assert!(!options.return_attention);
+/// # assert!(!options.return_logits_vocab);
 /// # assert!(!options.return_alternatives);
 /// # assert_eq!(options.min_alternative_expansion_prob, 0.);
 /// # assert!(!options.replace_unknowns);
@@ -232,6 +234,8 @@ pub struct TranslationOptions<T: AsRef<str>, U: AsRef<str>> {
     pub return_scores: bool,
     /// Store attention vectors in the TranslationResult class. (default: false)
     pub return_attention: bool,
+    /// Store log probs matrix in the TranslationResult class. (default: false)
+    pub return_logits_vocab: bool,
     /// Return alternatives at the first unconstrained decoding position. This is typically
     /// used with a target prefix to provide alternatives at a specific location in the
     /// translation. (default: false)
@@ -273,6 +277,7 @@ impl Default for TranslationOptions<String, String> {
             num_hypotheses: 1,
             return_scores: false,
             return_attention: false,
+            return_logits_vocab: false,
             return_alternatives: false,
             min_alternative_expansion_prob: 0.,
             replace_unknowns: false,
@@ -306,6 +311,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
             num_hypotheses: self.num_hypotheses,
             return_scores: self.return_scores,
             return_attention: self.return_attention,
+            return_logits_vocab: self.return_logits_vocab,
             return_alternatives: self.return_alternatives,
             min_alternative_expansion_prob: self.min_alternative_expansion_prob,
             replace_unknowns: self.replace_unknowns,

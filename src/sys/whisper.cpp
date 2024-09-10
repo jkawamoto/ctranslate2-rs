@@ -34,6 +34,7 @@ Vec<WhisperGenerationResult> Whisper::generate(
             opts.sampling_temperature,
             opts.num_hypotheses,
             opts.return_scores,
+            opts.return_logits_vocab,
             opts.return_no_speech_prob,
             opts.max_initial_timestamp_index,
             opts.suppress_blank,
