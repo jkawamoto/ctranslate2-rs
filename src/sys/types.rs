@@ -31,10 +31,10 @@ pub(crate) mod ffi {
         pub hypothesis_id: usize,
         /// String value of the generated token.
         pub token: String,
-        /// true if return_log_prob was enabled
-        pub has_log_prob: bool,
-        /// Log probability of the token.
-        pub log_prob: f32,
+        /// true if score is given.
+        pub has_score: bool,
+        ///  Score of the token.
+        pub score: f32,
         /// Whether this step is the last generation step for this batch.
         pub is_last: bool,
     }

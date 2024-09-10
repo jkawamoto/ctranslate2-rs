@@ -62,6 +62,8 @@ mod ffi {
         pub num_hypotheses: usize,
         /// Include scores in the result. (default: false)
         pub return_scores: bool,
+        /// Include log probs of each token in the result. (default: false)
+        pub return_logits_vocab: bool,
         /// Include the probability of the no speech token in the result. (default: false)
         pub return_no_speech_prob: bool,
         /// Maximum index of the first predicted timestamp. (default: 50)
@@ -150,6 +152,7 @@ impl Default for WhisperOptions {
             sampling_temperature: 1.,
             num_hypotheses: 1,
             return_scores: false,
+            return_logits_vocab: false,
             return_no_speech_prob: false,
             max_initial_timestamp_index: 50,
             suppress_blank: true,
@@ -427,6 +430,7 @@ mod tests {
         assert_eq!(opts.sampling_temperature, 1.);
         assert_eq!(opts.num_hypotheses, 1);
         assert!(!opts.return_scores);
+        assert!(!opts.return_logits_vocab);
         assert!(!opts.return_no_speech_prob);
         assert_eq!(opts.max_initial_timestamp_index, 50);
         assert!(opts.suppress_blank);

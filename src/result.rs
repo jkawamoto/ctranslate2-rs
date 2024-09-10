@@ -21,10 +21,8 @@ pub struct GenerationStepResult {
     pub hypothesis_id: usize,
     /// The generated text.
     pub text: String,
-    /// true if return_log_prob was enabled
-    pub has_log_prob: bool,
-    /// Log probability of the token.
-    pub log_prob: f32,
+    /// Score of the token.
+    pub score: Option<f32>,
     /// Whether this step is the last step for this batch.
     pub is_last: bool,
 }
@@ -40,8 +38,7 @@ impl GenerationStepResult {
             batch_id: r.batch_id,
             hypothesis_id: r.hypothesis_id,
             text,
-            has_log_prob: r.has_log_prob,
-            log_prob: r.log_prob,
+            score: if r.has_score { Some(r.score) } else { None },
             is_last: r.is_last,
         })
     }
