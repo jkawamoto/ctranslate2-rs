@@ -41,6 +41,9 @@ ndarray = { version = "0.15.6", optional = true }
 serde = { version = "1.0.210", features = ["derive"], optional = true }
 serde_json = { version = "1.0.128", optional = true }
 
+# Dependencies for Hugging Face integration
+hf-hub = { version = "0.3.2", optional = true }
+
 [target.'cfg(windows)'.dependencies]
 intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-ilp64-seq"] }
 
@@ -63,6 +66,7 @@ walkdir = "2.5.0"
 default = ["ruy"]
 whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
 flash-attention = []
+hub = ["dep:hf-hub"]
 
 # Features to select backends.
 mkl = ["dep:intel-mkl-src"]

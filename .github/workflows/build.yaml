@@ -5,6 +5,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: check-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -42,9 +46,9 @@ jobs:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
 
   build-linux:
     strategy:
@@ -77,9 +81,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        if: ${{ matrix.backend != 'mkl' }}
 
   build-windows:
     strategy:
@@ -96,6 +101,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored

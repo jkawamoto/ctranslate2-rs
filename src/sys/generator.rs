@@ -513,16 +513,7 @@ impl GenerationResult {
 #[cfg(test)]
 mod tests {
     use super::ffi::{VecStr, VecString, VecUSize};
-    use super::Generator;
     use super::{ffi, GenerationOptions, GenerationResult};
-
-    #[test]
-    #[ignore]
-    fn test_generator_debug() {
-        let generator = Generator::new("data/bloom-560m", &Default::default()).unwrap();
-
-        assert!(format!("{:?}", generator).contains("bloom-560m"));
-    }
 
     #[test]
     fn options_to_ffi() {
@@ -624,5 +615,22 @@ mod tests {
         assert!(res.scores.is_empty());
         assert_eq!(res.num_sequences(), 0);
         assert!(!res.has_scores());
+    }
+
+    #[cfg(feature = "hub")]
+    mod hub {
+        use crate::download_model;
+        use crate::sys::Generator;
+
+        const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
+        #[test]
+        #[ignore]
+        fn test_generator_debug() {
+            let model_path = download_model(MODEL_ID).unwrap();
+
+            let generator = Generator::new(&model_path, &Default::default()).unwrap();
+            assert!(format!("{:?}", generator)
+                .contains(model_path.file_name().unwrap().to_str().unwrap()));
+        }
     }
 }

@@ -287,13 +287,18 @@ impl PreprocessorConfig {
 }
 
 #[cfg(test)]
+#[cfg(feature = "hub")]
 mod tests {
-    use crate::Whisper;
+    use crate::{download_model, Whisper};
+
+    const MODEL_ID: &str = "jkawamoto/whisper-tiny-ct2";
 
     #[test]
     #[ignore]
-    fn test_generator_debug() {
-        let w = Whisper::new("data/whisper-tiny-ct2", Default::default()).unwrap();
-        assert!(format!("{:?}", w).contains("whisper-tiny-ct2"));
+    fn test_whisper_debug() {
+        let model_path = download_model(MODEL_ID).unwrap();
+        let w = Whisper::new(&model_path, Default::default()).unwrap();
+
+        assert!(format!("{:?}", w).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }
 }

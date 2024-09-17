@@ -239,13 +239,40 @@ impl<T: Tokenizer> Debug for Generator<T> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "hub")]
 mod tests {
     use super::Generator;
+    use crate::{download_model, GenerationOptions};
+
+    const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
+
+    #[test]
+    #[ignore]
+    fn test_generate() {
+        let model_path = download_model(MODEL_ID).unwrap();
+        let g = Generator::new(&model_path, &Default::default()).unwrap();
+
+        let prompt = "CTranslate2 is a library";
+        let res = g
+            .generate_batch(
+                &[prompt],
+                &GenerationOptions {
+                    max_length: 32,
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+
+        assert!(res[0].0[0].starts_with(prompt));
+    }
 
     #[test]
     #[ignore]
     fn test_generator_debug() {
-        let g = Generator::new("data/bloom-560m", &Default::default()).unwrap();
-        assert!(format!("{:?}", g).contains("bloom-560m"));
+        let model_path = download_model(MODEL_ID).unwrap();
+        let g = Generator::new(&model_path, &Default::default()).unwrap();
+
+        assert!(format!("{:?}", g).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }
 }
