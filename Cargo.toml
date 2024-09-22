@@ -66,6 +66,7 @@ walkdir = "2.5.0"
 default = ["ruy"]
 whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
 flash-attention = []
+tensor-parallel = []
 hub = ["dep:hf-hub"]
 
 # Features to select backends.
