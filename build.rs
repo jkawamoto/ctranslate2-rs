@@ -67,6 +67,9 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Accelerate");
         cmake.define("WITH_ACCELERATE", "ON");
     }
+    if cfg!(feature = "tensor-parallel") {
+        cmake.define("WITH_TENSOR_PARALLEL", "ON");
+    }
     if cfg!(feature = "flash-attention") {
         cmake.define("WITH_FLASH_ATTN", "ON");
     }
