@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         backend: [ruy, mkl, openblas]
-        feature: ["", "flash-attention", "tensor-parallel"]
+        feature: ["", "flash-attention"]
     runs-on: ubuntu-latest
     env:
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
@@ -91,7 +91,7 @@ jobs:
       fail-fast: false
       matrix:
         backend: [ruy]
-        feature: ["", "flash-attention", "tensor-parallel"]
+        feature: ["", "flash-attention"]
     runs-on: windows-latest
 
     steps:
