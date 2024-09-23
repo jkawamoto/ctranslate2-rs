@@ -52,6 +52,9 @@ fn main() {
         if cfg!(feature = "cudnn") {
             cmake.define("WITH_CUDNN", "ON");
         }
+        if cfg!(feature = "cuda-dynamic-loading") {
+            cmake.define("CUDA_DYNAMIC_LOADING", "ON");
+        }
     }
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
