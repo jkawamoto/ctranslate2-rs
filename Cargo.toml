@@ -1,6 +1,6 @@
 [package]
 name = "ct2rs"
-version = "0.9.2"
+version = "0.9.3"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs"
@@ -51,7 +51,7 @@ intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-il
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 [dev-dependencies]
-clap = { version = "4.5.17", features = ["derive"] }
+clap = { version = "4.5.19", features = ["derive"] }
 rand = "0.8.5"
 
 # Dependencies for Whisper example
