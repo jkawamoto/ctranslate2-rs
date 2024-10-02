@@ -14,7 +14,7 @@ use std::io::BufReader;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
-use mel_spec::mel::{log_mel_spectrogram, norm_mel};
+use mel_spec::mel::{log_mel_spectrogram, mel, norm_mel};
 use mel_spec::stft::Spectrogram;
 use ndarray::{s, stack, Array2, Axis};
 use serde::Deserialize;
@@ -254,16 +254,25 @@ impl PreprocessorConfig {
             processor_class: String,
             return_attention_mask: bool,
             sampling_rate: usize,
-            mel_filters: Vec<Vec<f64>>,
+            mel_filters: Option<Vec<Vec<f64>>>,
         }
         let aux: PreprocessorConfigAux = serde_json::from_reader(reader)?;
 
-        let rows = aux.mel_filters.len();
-        let cols = aux
-            .mel_filters
-            .first()
-            .map(|row| row.len())
-            .unwrap_or_default();
+        let mel_filters = if let Some(mel_filters) = aux.mel_filters {
+            let rows = mel_filters.len();
+            let cols = mel_filters.first().map(|row| row.len()).unwrap_or_default();
+            Array2::from_shape_vec((rows, cols), mel_filters.into_iter().flatten().collect())?
+        } else {
+            mel(
+                aux.sampling_rate as f64,
+                aux.n_fft,
+                aux.feature_size,
+                None,
+                None,
+                false,
+                true,
+            )
+        };
 
         Ok(Self {
             chunk_length: aux.chunk_length,
@@ -278,10 +287,7 @@ impl PreprocessorConfig {
             processor_class: aux.processor_class,
             return_attention_mask: aux.return_attention_mask,
             sampling_rate: aux.sampling_rate,
-            mel_filters: Array2::from_shape_vec(
-                (rows, cols),
-                aux.mel_filters.into_iter().flatten().collect(),
-            )?,
+            mel_filters,
         })
     }
 }
