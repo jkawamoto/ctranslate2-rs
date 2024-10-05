@@ -118,4 +118,4 @@ name = "stream"
 name = "whisper"
 
 [package.metadata.docs.rs]
-features = ["whisper"]
+features = ["whisper", "hub"]
