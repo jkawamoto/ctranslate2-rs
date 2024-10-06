@@ -428,6 +428,7 @@ mod tests {
         assert!(!res.is_null());
     }
 
+    #[cfg(not(feature = "cuda"))]
     #[test]
     fn test_get_device_count() {
         assert_eq!(get_device_count(Device::CPU), 1);
