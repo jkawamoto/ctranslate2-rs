@@ -47,13 +47,25 @@ fn main() {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
         cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
-        link_libraries(cuda.join("lib"));
-        link_libraries(cuda.join("lib64"));
+        println!("cargo:rustc-link-search={}", cuda.join("lib").display());
+        println!("cargo:rustc-link-search={}", cuda.join("lib64").display());
+        println!("cargo:rustc-link-search={}", cuda.join("lib/x64").display());
+        println!("cargo:rustc-link-lib=static=cudart_static");
         if cfg!(feature = "cudnn") {
             cmake.define("WITH_CUDNN", "ON");
+            println!("cargo:rustc-link-lib=cudnn");
         }
         if cfg!(feature = "cuda-dynamic-loading") {
             cmake.define("CUDA_DYNAMIC_LOADING", "ON");
+        } else {
+            if cfg!(target_os = "windows") {
+                println!("cargo:rustc-link-lib=static=cublas");
+                println!("cargo:rustc-link-lib=static=cublasLt");
+            } else {
+                println!("cargo:rustc-link-lib=static=cublas_static");
+                println!("cargo:rustc-link-lib=static=cublasLt_static");
+                println!("cargo:rustc-link-lib=static=culibos");
+            }
         }
     }
     if cfg!(feature = "mkl") {
