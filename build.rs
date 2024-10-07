@@ -53,6 +53,7 @@ fn main() {
         println!("cargo:rustc-link-lib=static=cudart_static");
         if cfg!(feature = "cudnn") {
             cmake.define("WITH_CUDNN", "ON");
+            println!("cargo:rustc-link-lib=cudnn");
         }
         if cfg!(feature = "cuda-dynamic-loading") {
             cmake.define("CUDA_DYNAMIC_LOADING", "ON");
