@@ -242,7 +242,7 @@ impl<T: Tokenizer> Debug for Generator<T> {
 #[cfg(feature = "hub")]
 mod tests {
     use super::Generator;
-    use crate::{download_model, GenerationOptions};
+    use crate::{download_model, Config, Device, GenerationOptions};
 
     const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
 
@@ -250,7 +250,18 @@ mod tests {
     #[ignore]
     fn test_generate() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let g = Generator::new(&model_path, &Default::default()).unwrap();
+        let g = Generator::new(
+            &model_path,
+            &Config {
+                device: if cfg!(feature = "cuda") {
+                    Device::CUDA
+                } else {
+                    Device::CPU
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let prompt = "CTranslate2 is a library";
         let res = g
@@ -271,7 +282,18 @@ mod tests {
     #[ignore]
     fn test_generator_debug() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let g = Generator::new(&model_path, &Default::default()).unwrap();
+        let g = Generator::new(
+            &model_path,
+            &Config {
+                device: if cfg!(feature = "cuda") {
+                    Device::CUDA
+                } else {
+                    Device::CPU
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         assert!(format!("{:?}", g).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }

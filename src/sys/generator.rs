@@ -619,8 +619,8 @@ mod tests {
 
     #[cfg(feature = "hub")]
     mod hub {
-        use crate::download_model;
         use crate::sys::Generator;
+        use crate::{download_model, Config, Device};
 
         const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
         #[test]
@@ -628,7 +628,18 @@ mod tests {
         fn test_generator_debug() {
             let model_path = download_model(MODEL_ID).unwrap();
 
-            let generator = Generator::new(&model_path, &Default::default()).unwrap();
+            let generator = Generator::new(
+                &model_path,
+                &Config {
+                    device: if cfg!(feature = "cuda") {
+                        Device::CUDA
+                    } else {
+                        Device::CPU
+                    },
+                    ..Default::default()
+                },
+            )
+            .unwrap();
             assert!(format!("{:?}", generator)
                 .contains(model_path.file_name().unwrap().to_str().unwrap()));
         }
