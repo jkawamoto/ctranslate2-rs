@@ -5,10 +5,6 @@ on:
       - main
   pull_request:
 
-concurrency:
-  group: check-build-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   CARGO_TERM_COLOR: always
 
@@ -90,11 +86,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [ruy]
+        backend: [openblas, ruy]
         feature: ["", "flash-attention"]
     runs-on: windows-latest
-
     steps:
+      - uses: actions/cache@v4
+        with:
+          path: C:/vcpkg/installed
+          key: cache-vcpkg-packages
+      - name: Install OpenBLAS
+        if: ${{ matrix.backend == 'openblas' }}
+        run: |
+          vcpkg install openblas:x64-windows-static
+          Remove-Item -Recurse -Force "$env:VCPKG_INSTALLATION_ROOT/downloads"
+          echo "CMAKE_INCLUDE_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/include/openblas;$env:CMAKE_INCLUDE_PATH" >> $env:GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/lib;$env:CMAKE_LIBRARY_PATH" >> $env:GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -103,4 +109,4 @@ jobs:
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored --test-threads=1
