@@ -12,20 +12,31 @@ use std::path::{Path, PathBuf};
 use cmake::Config;
 use walkdir::WalkDir;
 
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/sys");
-    println!("cargo:rerun-if-changed=include");
-    println!("cargo:rerun-if-changed=CTranslate2");
-    println!("cargo:rerun-if-env-changed=LIBRARY_PATH");
-    if let Ok(library_path) = env::var("LIBRARY_PATH") {
+#[cfg(not(target_os = "windows"))]
+const PATH_SEPARATOR: char = ':';
+
+#[cfg(target_os = "windows")]
+const PATH_SEPARATOR: char = ';';
+
+fn add_search_paths(key: &str) {
+    println!("cargo:rerun-if-env-changed={}", key);
+    if let Ok(library_path) = env::var(key) {
         library_path
-            .split(':')
+            .split(PATH_SEPARATOR)
             .filter(|v| !v.is_empty())
             .for_each(|v| {
                 println!("cargo:rustc-link-search={}", v);
             });
     }
+}
+
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/sys");
+    println!("cargo:rerun-if-changed=include");
+    println!("cargo:rerun-if-changed=CTranslate2");
+    add_search_paths("LIBRARY_PATH");
+    add_search_paths("CMAKE_LIBRARY_PATH");
 
     let mut cmake = Config::new("CTranslate2");
     cmake
