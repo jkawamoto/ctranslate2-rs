@@ -295,7 +295,7 @@ impl PreprocessorConfig {
 #[cfg(test)]
 #[cfg(feature = "hub")]
 mod tests {
-    use crate::{download_model, Whisper};
+    use crate::{download_model, Config, Device, Whisper};
 
     const MODEL_ID: &str = "jkawamoto/whisper-tiny-ct2";
 
@@ -303,7 +303,18 @@ mod tests {
     #[ignore]
     fn test_whisper_debug() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let w = Whisper::new(&model_path, Default::default()).unwrap();
+        let w = Whisper::new(
+            &model_path,
+            Config {
+                device: if cfg!(feature = "cuda") {
+                    Device::CUDA
+                } else {
+                    Device::CPU
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         assert!(format!("{:?}", w).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }

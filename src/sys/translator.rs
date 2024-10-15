@@ -728,8 +728,8 @@ mod tests {
 
     #[cfg(feature = "hub")]
     mod hub {
-        use crate::download_model;
         use crate::sys::Translator;
+        use crate::{download_model, Config, Device};
 
         const MODEL_ID: &str = "jkawamoto/fugumt-en-ja-ct2";
         #[test]
@@ -737,7 +737,18 @@ mod tests {
         fn test_translator_debug() {
             let model_path = download_model(MODEL_ID).unwrap();
 
-            let translator = Translator::new(&model_path, &Default::default()).unwrap();
+            let translator = Translator::new(
+                &model_path,
+                &Config {
+                    device: if cfg!(feature = "cuda") {
+                        Device::CUDA
+                    } else {
+                        Device::CPU
+                    },
+                    ..Default::default()
+                },
+            )
+            .unwrap();
             assert!(format!("{:?}", translator)
                 .contains(model_path.file_name().unwrap().to_str().unwrap()));
         }

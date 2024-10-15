@@ -327,7 +327,7 @@ impl<T: Tokenizer> Debug for Translator<T> {
 #[cfg(test)]
 #[cfg(feature = "hub")]
 mod tests {
-    use crate::{download_model, TranslationOptions, Translator};
+    use crate::{download_model, Config, Device, TranslationOptions, Translator};
 
     const MODEL_ID: &str = "jkawamoto/fugumt-en-ja-ct2";
 
@@ -335,7 +335,18 @@ mod tests {
     #[ignore]
     fn test_translate() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let t = Translator::new(&model_path, &Default::default()).unwrap();
+        let t = Translator::new(
+            &model_path,
+            &Config {
+                device: if cfg!(feature = "cuda") {
+                    Device::CUDA
+                } else {
+                    Device::CPU
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let res = t
             .translate_batch(
@@ -355,7 +366,18 @@ mod tests {
     #[ignore]
     fn test_translator_debug() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let t = Translator::new(&model_path, &Default::default()).unwrap();
+        let t = Translator::new(
+            &model_path,
+            &Config {
+                device: if cfg!(feature = "cuda") {
+                    Device::CUDA
+                } else {
+                    Device::CPU
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         assert!(format!("{:?}", t).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }
