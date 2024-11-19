@@ -75,12 +75,13 @@ jobs:
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
-        if: ${{ matrix.backend != 'mkl' }}
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
 
   build-windows:
     strategy:
