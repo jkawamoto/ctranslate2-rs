@@ -1,6 +1,6 @@
 // lib.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -80,7 +80,10 @@ pub use generator::{GenerationOptions, Generator};
 #[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
 pub use hub::download_model;
 pub use result::GenerationStepResult;
-pub use sys::{set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel};
+pub use sys::{
+    set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel,
+    ScoringOptions, ScoringResult,
+};
 pub use tokenizer::Tokenizer;
 pub use translator::{TranslationOptions, Translator};
 #[cfg(feature = "whisper")]

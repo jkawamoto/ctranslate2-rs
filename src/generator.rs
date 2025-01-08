@@ -1,6 +1,6 @@
 // generator.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -17,7 +17,7 @@ pub use sys::GenerationOptions;
 
 use crate::tokenizer::encode_all;
 
-use super::{sys, Config, GenerationStepResult, Tokenizer};
+use super::{sys, Config, GenerationStepResult, ScoringOptions, ScoringResult, Tokenizer};
 
 /// A text generator with a tokenizer.
 ///
@@ -110,7 +110,7 @@ impl<T: Tokenizer> Generator<T> {
     /// occurs during initialization, the function will return an error wrapped in the `Result`.
     ///
     /// # Example
-    /// The following example creates a translator instance with the tokenizer provided by
+    /// The following example creates a generator instance with the tokenizer provided by
     /// [tokenizers](https://huggingface.co/docs/tokenizers).
     ///
     /// ```no_run
@@ -213,6 +213,29 @@ impl<T: Tokenizer> Generator<T> {
         Ok(res)
     }
 
+    /// Scores a batch of tokens.
+    ///
+    /// # Arguments
+    /// * `tokens` - Batch of strings to score.
+    ///   If the model expects special start or end tokens, they should also be added to this input.
+    /// * `options` - Settings applied to the scoring process.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `ScoringResult` if successful,
+    /// or an error if the generation fails.
+    ///
+    pub fn score_batch<U>(
+        &self,
+        prompts: &[U],
+        options: &ScoringOptions,
+    ) -> Result<Vec<ScoringResult>>
+    where
+        U: AsRef<str>,
+    {
+        self.generator
+            .score_batch(&encode_all(&self.tokenizer, prompts)?, options)
+    }
+
     /// Number of batches in the work queue.
     #[inline]
     pub fn num_queued_batches(&self) -> anyhow::Result<usize> {
@@ -242,16 +265,16 @@ impl<T: Tokenizer> Debug for Generator<T> {
 #[cfg(feature = "hub")]
 mod tests {
     use super::Generator;
+    use crate::tokenizers::auto::Tokenizer;
     use crate::{download_model, Config, Device, GenerationOptions};
+    use anyhow::Result;
+    use std::path::PathBuf;
 
     const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
 
-    #[test]
-    #[ignore]
-    fn test_generate() {
-        let model_path = download_model(MODEL_ID).unwrap();
-        let g = Generator::new(
-            &model_path,
+    fn new_generator(model_path: &PathBuf) -> Result<Generator<Tokenizer>> {
+        Generator::new(
+            model_path,
             &Config {
                 device: if cfg!(feature = "cuda") {
                     Device::CUDA
@@ -261,7 +284,13 @@ mod tests {
                 ..Default::default()
             },
         )
-        .unwrap();
+    }
+
+    #[test]
+    #[ignore]
+    fn test_generate() {
+        let model_path = download_model(MODEL_ID).unwrap();
+        let g = new_generator(&model_path).unwrap();
 
         let prompt = "CTranslate2 is a library";
         let res = g
@@ -280,20 +309,28 @@ mod tests {
 
     #[test]
     #[ignore]
+    fn test_scoring() {
+        let model_path = download_model(MODEL_ID).unwrap();
+        let g = new_generator(&model_path).unwrap();
+
+        let prompt = "CTranslate2 is a library";
+        let res = g.score_batch(&[prompt], &Default::default()).unwrap();
+
+        assert_eq!(
+            res[0].tokens,
+            vec!["Trans", "late", "2", "Ġis", "Ġa", "Ġlibrary"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>()
+        );
+        assert_ne!(res[0].normalized_score(), 0.0);
+    }
+
+    #[test]
+    #[ignore]
     fn test_generator_debug() {
         let model_path = download_model(MODEL_ID).unwrap();
-        let g = Generator::new(
-            &model_path,
-            &Config {
-                device: if cfg!(feature = "cuda") {
-                    Device::CUDA
-                } else {
-                    Device::CPU
-                },
-                ..Default::default()
-            },
-        )
-        .unwrap();
+        let g = new_generator(&model_path).unwrap();
 
         assert!(format!("{:?}", g).contains(model_path.file_name().unwrap().to_str().unwrap()));
     }

@@ -1,6 +1,6 @@
 // gpt-2.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -42,7 +42,7 @@ use std::time;
 use anyhow::Result;
 use clap::Parser;
 
-use ct2rs::{Config, Device, GenerationOptions, Generator};
+use ct2rs::{Config, Device, GenerationOptions, Generator, ScoringOptions};
 
 /// Generate text using GPT-2 models.
 #[derive(Parser, Debug)]
@@ -83,7 +83,7 @@ fn main() -> Result<()> {
 
     let now = time::Instant::now();
     let res = g.generate_batch(
-        &[prompts],
+        &[prompts.clone()],
         &GenerationOptions {
             max_length: 30,
             sampling_topk: 10,
@@ -97,6 +97,10 @@ fn main() -> Result<()> {
         println!("{}", r.join("\n"));
     }
     println!("Time taken: {elapsed:?}");
+
+    // Scoring the prompts.
+    let scores = g.score_batch(&[prompts], &ScoringOptions::default())?;
+    println!("{:?}", scores[0]);
 
     Ok(())
 }

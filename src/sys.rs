@@ -1,6 +1,6 @@
 // sys.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -47,6 +47,7 @@
 
 pub use config::*;
 pub use generator::*;
+pub use scoring::*;
 pub use storage_view::*;
 pub use translator::*;
 pub use types::*;
@@ -54,6 +55,7 @@ pub use whisper::*;
 
 mod config;
 mod generator;
+mod scoring;
 mod storage_view;
 mod translator;
 mod types;

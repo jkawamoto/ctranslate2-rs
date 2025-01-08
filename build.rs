@@ -1,6 +1,6 @@
 // build.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -106,6 +106,7 @@ fn main() {
     cxx_build::bridges([
         "src/sys/types.rs",
         "src/sys/config.rs",
+        "src/sys/scoring.rs",
         "src/sys/translator.rs",
         "src/sys/generator.rs",
         "src/sys/storage_view.rs",

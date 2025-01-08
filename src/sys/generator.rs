@@ -1,6 +1,6 @@
 // generator.rs
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -17,7 +17,8 @@ use anyhow::{anyhow, Error, Result};
 use cxx::UniquePtr;
 
 use super::{
-    config, vec_ffi_vecstr, BatchType, Config, GenerationStepResult, VecStr, VecString, VecUSize,
+    config, vec_ffi_vecstr, BatchType, Config, GenerationStepResult, ScoringOptions, ScoringResult,
+    VecStr, VecString, VecUSize,
 };
 
 trait GenerationCallback {
@@ -93,6 +94,7 @@ mod ffi {
     unsafe extern "C++" {
         include!("ct2rs/include/generator.h");
         include!("ct2rs/src/sys/types.rs.h");
+        include!("ct2rs/src/sys/scoring.rs.h");
 
         type VecString = super::VecString;
         type VecStr<'a> = super::VecStr<'a>;
@@ -101,6 +103,9 @@ mod ffi {
         type Config = super::config::ffi::Config;
         type BatchType = super::BatchType;
         type GenerationStepResult = super::GenerationStepResult;
+
+        type ScoringOptions = super::ScoringOptions;
+        type ScoringResult = super::ScoringResult;
 
         type Generator;
 
@@ -113,6 +118,12 @@ mod ffi {
             has_callback: bool,
             callback: &mut GenerationCallbackBox,
         ) -> Result<Vec<GenerationResult>>;
+
+        fn score_batch(
+            self: &Generator,
+            tokens: &Vec<VecStr>,
+            options: &ScoringOptions,
+        ) -> Result<Vec<ScoringResult>>;
 
         fn num_queued_batches(self: &Generator) -> Result<usize>;
 
@@ -258,6 +269,26 @@ impl Generator {
             .into_iter()
             .map(GenerationResult::from)
             .collect())
+    }
+
+    /// Scores a batch of tokens.
+    ///
+    /// # Arguments
+    /// * `tokens` - Batch of tokens to score.
+    ///   If the model expects special start or end tokens, they should also be added to this input.
+    /// * `options` - Settings applied to the scoring process.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `ScoringResult` if successful,
+    /// or an error if the generation fails.
+    pub fn score_batch<T: AsRef<str>>(
+        &self,
+        tokens: &[Vec<T>],
+        options: &ScoringOptions,
+    ) -> Result<Vec<ScoringResult>> {
+        self.ptr
+            .score_batch(&vec_ffi_vecstr(tokens), options)
+            .map_err(Error::from)
     }
 
     /// Number of batches in the work queue.
