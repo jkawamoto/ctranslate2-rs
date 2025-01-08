@@ -1,6 +1,6 @@
 // generator.cpp
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -92,6 +92,33 @@ Generator::generate_batch(
             to_rust<VecString>(r.sequences),
             to_rust<VecUSize>(r.sequences_ids),
             to_rust(r.scores),
+        });
+    }
+
+    return res;
+}
+
+Vec<ScoringResult>
+Generator::score_batch(
+    const Vec<VecStr>& tokens,
+    const ScoringOptions& options
+) const {
+    auto futures = this->impl->score_batch_async(
+        from_rust(tokens),
+        ctranslate2::ScoringOptions {
+            options.max_input_length,
+            options.offset,
+        },
+        options.max_batch_size,
+        options.batch_type
+    );
+
+    Vec<ScoringResult> res;
+    for (auto& future : futures) {
+        const auto& r = future.get();
+        res.push_back(ScoringResult {
+            to_rust(r.tokens),
+            to_rust(r.tokens_score),
         });
     }
 

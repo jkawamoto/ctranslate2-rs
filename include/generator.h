@@ -1,6 +1,6 @@
 // generator.h
 //
-// Copyright (c) 2023-2024 Junpei Kawamoto
+// Copyright (c) 2023-2025 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -21,6 +21,8 @@ struct GenerationOptions;
 struct GenerationResult;
 struct GenerationStepResult;
 struct GenerationCallbackBox;
+struct ScoringOptions;
+struct ScoringResult;
 
 class Generator {
 private:
@@ -35,6 +37,11 @@ public:
         const GenerationOptions& options,
         bool has_callback,
         GenerationCallbackBox& callback
+    ) const;
+
+    rust::Vec<ScoringResult> score_batch(
+        const rust::Vec<VecStr>& tokens,
+        const ScoringOptions& options
     ) const;
 
     inline size_t num_queued_batches() const {
