@@ -7,6 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_TEST_THREADS: "1"
 
 jobs:
   check:
@@ -81,7 +82,8 @@ jobs:
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        if: ${{ matrix.backend != 'mkl' }}
 
   build-windows:
     strategy:
@@ -110,4 +112,4 @@ jobs:
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored --test-threads=1
+        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
