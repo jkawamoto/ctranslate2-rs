@@ -271,6 +271,16 @@ impl Generator {
             .collect())
     }
 
+    /// Scores a batch of tokens.
+    ///
+    /// # Arguments
+    /// * `tokens` - Batch of tokens to score.
+    ///   If the model expects special start or end tokens, they should also be added to this input.
+    /// * `options` - Settings applied to the scoring process.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `ScoringResult` if successful,
+    /// or an error if the generation fails.
     pub fn score_batch<T: AsRef<str>>(
         &self,
         tokens: &[Vec<T>],

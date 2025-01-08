@@ -6,25 +6,53 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
+//! Structures for scoring.
+
 use super::BatchType;
 pub use ffi::{ScoringOptions, ScoringResult};
 
 #[cxx::bridge]
 pub(crate) mod ffi {
 
+    /// `ScoringOptions` specifies configuration options for the scoring process.
+    ///
+    /// # Examples
+    ///
+    /// Example of creating a default `ScoringOptions`:
+    ///
+    /// ```
+    /// use ct2rs::sys::ScoringOptions;
+    ///
+    /// let opts = ScoringOptions::default();
+    /// # assert_eq!(opts.max_input_length, 1024);
+    /// # assert_eq!(opts.offset, 0);
+    /// # assert_eq!(opts.max_batch_size, 0);
+    /// # assert_eq!(opts.batch_type, Default::default());
+    /// ```
     #[derive(Clone, Debug)]
     pub struct ScoringOptions {
         /// Truncate the inputs after this many tokens (set 0 to disable truncation).
+        /// (default: 1024)
         pub max_input_length: usize,
+        /// Offset. (default: 0)
         pub offset: i64,
-
+        /// The maximum batch size.
+        /// If the number of inputs is greater than `max_batch_size`,
+        /// the inputs are sorted by length and split by chunks of `max_batch_size` examples
+        /// so that the number of padding positions is minimized.
+        /// (default: 0)
         max_batch_size: usize,
+        /// Whether `max_batch_size` is the number of `examples` or `tokens`.
         batch_type: BatchType,
     }
 
+    /// `ScoringResult` represents the result of a scoring process,
+    /// containing tokens and their respective scores.
     #[derive(Clone, Debug)]
     pub struct ScoringResult {
+        /// The scored tokens.
         pub tokens: Vec<String>,
+        /// Log probability of each token.
         pub tokens_score: Vec<f32>,
     }
 
@@ -51,10 +79,12 @@ impl Default for ScoringOptions {
 }
 
 impl ScoringResult {
+    /// Calculates and returns the total sum of all token scores.
     pub fn cumulated_score(&self) -> f32 {
         self.tokens_score.iter().sum()
     }
 
+    /// Computes the average score per token, returning 0.0 if there are no tokens.
     pub fn normalized_score(&self) -> f32 {
         let num_tokens = self.tokens_score.len();
         if num_tokens == 0 {

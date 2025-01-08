@@ -110,7 +110,7 @@ impl<T: Tokenizer> Generator<T> {
     /// occurs during initialization, the function will return an error wrapped in the `Result`.
     ///
     /// # Example
-    /// The following example creates a translator instance with the tokenizer provided by
+    /// The following example creates a generator instance with the tokenizer provided by
     /// [tokenizers](https://huggingface.co/docs/tokenizers).
     ///
     /// ```no_run
@@ -213,6 +213,17 @@ impl<T: Tokenizer> Generator<T> {
         Ok(res)
     }
 
+    /// Scores a batch of tokens.
+    ///
+    /// # Arguments
+    /// * `tokens` - Batch of strings to score.
+    ///   If the model expects special start or end tokens, they should also be added to this input.
+    /// * `options` - Settings applied to the scoring process.
+    ///
+    /// # Returns
+    /// Returns a `Result` containing a vector of `ScoringResult` if successful,
+    /// or an error if the generation fails.
+    ///
     pub fn score_batch<U>(
         &self,
         prompts: &[U],
