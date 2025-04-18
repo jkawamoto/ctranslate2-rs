@@ -1,0 +1,9 @@
+[tool.bumpversion]
+current_version = "0.9.7"
+commit = true
+tag = false
+
+[[tool.bumpversion.files]]
+filename = "Cargo.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
