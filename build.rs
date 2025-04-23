@@ -43,7 +43,8 @@ fn main() {
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_MKL", "OFF")
-        .define("OPENMP_RUNTIME", "NONE");
+        .define("OPENMP_RUNTIME", "NONE")
+        .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
     if cfg!(target_os = "windows") {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
