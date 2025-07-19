@@ -65,7 +65,24 @@ cxx-build = "1.0"
 walkdir = "2.5.0"
 
 [features]
-default = ["ruy", "all-tokenizers"]
+default = ["all-tokenizers"]
+linux-aarch64-default = ["openmp-runtime-comp", "openblas", "ruy"]
+linux-x86_64-default = [
+    "dnnl",
+    "openmp-runtime-comp",
+    "cudnn",
+    "cuda",
+    "cuda-dynamic-loading",
+    "tensor-parallel",      #-DCMAKE_CXX_FLAGS="-msse4.1" -DCUDA_NVCC_FLAGS="-Xfatbin=-compress-all" -DCUDA_ARCH_LIST="Common"
+]
+macos-aarch64-default = ["accelerate", "ruy"]
+macos-x86_64-default = ["dnnl"]
+windows-default = [
+    "dnnl",
+    "cuda",
+    "cudnn",
+    "cuda-dynamic-loading",
+] #-DCUDA_NVCC_FLAGS="-Xfatbin=-compress-all" -DCUDA_ARCH_LIST="Common"
 whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
 flash-attention = []
 tensor-parallel = []
@@ -76,6 +93,8 @@ all-tokenizers = ["dep:sentencepiece", "dep:tokenizers"]
 # Features to select backends.
 mkl = ["dep:intel-mkl-src"]
 openblas = []
+dnnl = []
+openmp-runtime-comp = []
 ruy = []
 accelerate = []
 cuda = []

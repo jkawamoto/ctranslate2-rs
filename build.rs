@@ -80,6 +80,10 @@ fn main() {
             }
         }
     }
+    if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
+        cmake.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+    }
+
     if cfg!(feature = "mkl") {
         cmake.define("WITH_MKL", "ON");
     }
@@ -96,6 +100,12 @@ fn main() {
     }
     if cfg!(feature = "tensor-parallel") {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
+    }
+    if cfg!(feature = "dnnl") {
+        cmake.define("WITH_DNNL", "ON");
+    }
+    if cfg!(feature = "openmp-runtime") {
+        cmake.define("OPENMP_RUNTIME", "COMP");
     }
     if cfg!(feature = "flash-attention") {
         cmake.define("WITH_FLASH_ATTN", "ON");
