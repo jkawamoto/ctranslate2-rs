@@ -36,7 +36,7 @@ sentencepiece = { version = "0.11.3", optional = true }
 tokenizers = { version = "0.21", optional = true }
 
 # Dependencies for Whisper model
-mel_spec = { version = "0.", optional = true }
+mel_spec = { version = "0.3", optional = true }
 ndarray = { version = "0.16.1", optional = true }
 serde = { version = "1.0.219", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
