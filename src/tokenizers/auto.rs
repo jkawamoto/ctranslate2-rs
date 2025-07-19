@@ -40,9 +40,11 @@
 
 use std::path::Path;
 
+#[cfg(feature = "sentencepiece")]
+use super::sentencepiece;
+#[cfg(feature = "tokenizers")]
+use super::{bpe, hf};
 use anyhow::{bail, Result};
-
-use super::{bpe, hf, sentencepiece};
 
 /// A tokenizer that automatically determines the appropriate tokenizer.
 pub struct Tokenizer {
@@ -52,17 +54,29 @@ pub struct Tokenizer {
 impl Tokenizer {
     /// Create a tokenizer instance by specifying the path to a directory containing model files.
     pub fn new<T: AsRef<Path>>(path: T) -> Result<Self> {
-        Ok(Self {
-            tokenizer: if let Ok(t) = hf::Tokenizer::new(&path) {
-                Box::new(t)
-            } else if let Ok(t) = sentencepiece::Tokenizer::new(&path) {
-                Box::new(t)
-            } else if let Ok(t) = bpe::new(&path, None) {
-                Box::new(t)
-            } else {
-                bail!("failed to create a tokenizer")
-            },
-        })
+        #[cfg(feature = "tokenizers")]
+        if let Ok(t) = hf::Tokenizer::new(&path) {
+            return Ok(Self {
+                tokenizer: Box::new(t),
+            });
+        }
+
+        #[cfg(feature = "sentencepiece")]
+        if let Ok(t) = sentencepiece::Tokenizer::new(&path) {
+            return Ok(Self {
+                tokenizer: Box::new(t),
+            });
+        }
+
+        #[cfg(feature = "tokenizers")]
+        if let Ok(t) = bpe::new(&path, None) {
+            return Ok(Self {
+                tokenizer: Box::new(t),
+            });
+        }
+        _ = path;
+
+        bail!("failed to create a tokenizer")
     }
 }
 
