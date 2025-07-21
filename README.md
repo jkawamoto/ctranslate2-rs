@@ -10,6 +10,37 @@ At this time, it has only been tested and confirmed to work on macOS and Linux.
 Windows support is available experimentally,
 but it has not been thoroughly tested and may have limitations or require additional configuration.
 
+## Features
+
+- openmp-runtime-comp
+- mkl
+- openblas
+- dnnl
+- ruy
+- accelerate
+- cuda
+  - cudnn
+  - cuda-dynamic-loading
+- os-defaults
+- whisper
+- flash-attention
+- tensor-parallel
+- hub
+- all-tokenizers
+  - sentencepiece
+  - tokenizers
+
+# Features to select backends.
+
+mkl = ["dep:intel-mkl-src"]
+openblas = []
+dnnl = []
+openmp-runtime-comp = []
+ruy = []
+accelerate = []
+cuda = []
+cudnn = ["cuda"]
+
 ## Supported Models
 
 The ct2rs crate has been tested and confirmed to work with the following models:
@@ -42,11 +73,13 @@ If you plan to use GPU acceleration, CUDA and cuDNN are available.
 Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
 Several backends are available for use:
+[oneDNN](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onednn.html)
 [OpenBLAS](https://www.openblas.net/),
 [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html),
 [Ruy](https://github.com/google/ruy),
 and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 
+- **oneDNN**: To use oneDNN, enable the `dnnl` feature and add the path to the directory
 - **OpenBLAS**: To use OpenBLAS, enable the `openblas` feature and add the path to the directory
   containing `libopenblas.a` to the `LIBRARY_PATH` environment variable.
 - **Intel MKL**: To use Intel MKL, enable the `mkl` feature and set the path to the Intel libraries in the `MKLROOT`

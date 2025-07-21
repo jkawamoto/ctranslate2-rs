@@ -4,6 +4,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -51,13 +52,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [ruy, mkl, openblas]
-        feature: ["", "flash-attention"]
+        backend: [ruy, mkl, openblas, dnnl]
+        feature: ["", "flash-attention", "openmp-runtime-comp"]
     runs-on: ubuntu-latest
     env:
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
 
     steps:
+      - name: Install DNNL
+        if: ${{ matrix.backend == 'dnnl' }}
+        run: |
+          ONEDNN_VERSION=3.1.1
+          curl -L -O https://github.com/oneapi-src/oneDNN/archive/refs/tags/v${ONEDNN_VERSION}.tar.gz
+          tar xf *.tar.gz && rm *.tar.gz
+          cd oneDNN-*
+          INSTALL_DIR="$GITHUB_WORKSPACE/onednn-install"
+          mkdir -p "$INSTALL_DIR"
+          cmake  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" -DCMAKE_BUILD_TYPE=Release -DONEDNN_LIBRARY_TYPE=STATIC -DONEDNN_BUILD_EXAMPLES=OFF -DONEDNN_BUILD_TESTS=OFF -DONEDNN_ENABLE_WORKLOAD=INFERENCE -DONEDNN_ENABLE_PRIMITIVE="CONVOLUTION;REORDER" -DONEDNN_BUILD_GRAPH=OFF .
+          make -j$(nproc) install
+          cd ..
+          rm -r oneDNN-*
+          echo "CMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/onednn-install" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$GITHUB_WORKSPACE/onednn-install/lib" >> $GITHUB_ENV
+          echo "CPATH=$GITHUB_WORKSPACE/onednn-install/include" >> $GITHUB_ENV
       - name: Install MKL
         if: ${{ matrix.backend == 'mkl' }}
         run: |
@@ -89,7 +106,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [openblas, ruy]
+        backend: [openblas, ruy, dnnl]
         feature: ["", "flash-attention"]
     runs-on: windows-latest
     steps:
@@ -97,6 +114,18 @@ jobs:
         with:
           path: C:/vcpkg/installed
           key: cache-vcpkg-packages
+      - name: Install DNNL
+        if: ${{ matrix.backend == 'dnnl' }}
+        shell: bash
+        run: |
+          ONEDNN_VERSION=3.1.1
+          curl --netrc-optional -L -O https://github.com/oneapi-src/oneDNN/archive/refs/tags/v${ONEDNN_VERSION}.tar.gz
+          tar xf *.tar.gz && rm *.tar.gz
+          cd oneDNN-*
+          cmake -DCMAKE_BUILD_TYPE=Release -DONEDNN_LIBRARY_TYPE=STATIC -DONEDNN_BUILD_EXAMPLES=OFF -DONEDNN_BUILD_TESTS=OFF -DONEDNN_ENABLE_WORKLOAD=INFERENCE -DONEDNN_ENABLE_PRIMITIVE="CONVOLUTION;REORDER" -DONEDNN_BUILD_GRAPH=OFF .
+          cmake --build . --config Release --target install --parallel 6
+          cd ..
+          rm -r oneDNN-*
       - name: Install OpenBLAS
         if: ${{ matrix.backend == 'openblas' }}
         run: |

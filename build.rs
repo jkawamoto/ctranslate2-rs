@@ -39,13 +39,62 @@ fn main() {
     add_search_paths("CMAKE_LIBRARY_PATH");
 
     let mut cmake = Config::new("CTranslate2");
+    let windows = cfg!(target_os = "windows");
+    let macos = cfg!(target_os = "macos");
+    let aarch64 = cfg!(target_arch = "aarch64");
+
+    let mut cuda = cfg!(feature = "cuda");
+    let mut cudnn = cfg!(feature = "cudnn");
+    let mut cuda_dynamic_loading = cfg!(feature = "cuda-dynamic-loading");
+    let mut mkl = cfg!(feature = "mkl");
+    let mut openblas = cfg!(feature = "openblas");
+    let mut ruy = cfg!(feature = "ruy");
+    let mut accelarate = cfg!(feature = "accelerate");
+    let mut tensor_parallel = cfg!(feature = "tensor-parallel");
+    let mut dnnl = cfg!(feature = "dnnl");
+    let mut openmp_comp = cfg!(feature = "openmp-runtime-comp");
+    let flash_attention = cfg!(feature = "flash-attention");
+    if cfg!(feature = "os-defaults") {
+        match (windows, macos, aarch64) {
+            (true, false, false) => {
+                dnnl = true;
+                cuda = true;
+                cudnn = true;
+                cuda_dynamic_loading = true;
+                mkl = true;
+            }
+            (false, true, true) => {
+                accelarate = true;
+                ruy = true;
+            }
+            (false, true, false) => {
+                dnnl = true;
+                mkl = true;
+            }
+            (false, false, true) => {
+                openmp_comp = true;
+                openblas = true;
+                ruy = true;
+            }
+            (false, false, false) => {
+                dnnl = true;
+                openmp_comp = true;
+                cudnn = true;
+                cuda = true;
+                cuda_dynamic_loading = true;
+                mkl = true;
+                tensor_parallel = true;
+            }
+            _ => {}
+        }
+    }
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE")
         .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
-    if cfg!(target_os = "windows") {
+    if windows {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
             println!("cargo:warning=For Windows compilation, set `RUSTFLAGS=-C target-feature=+crt-static`.");
@@ -55,7 +104,7 @@ fn main() {
         cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
     }
 
-    if cfg!(feature = "cuda") {
+    if cuda {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
         cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
@@ -63,14 +112,14 @@ fn main() {
         println!("cargo:rustc-link-search={}", cuda.join("lib64").display());
         println!("cargo:rustc-link-search={}", cuda.join("lib/x64").display());
         println!("cargo:rustc-link-lib=static=cudart_static");
-        if cfg!(feature = "cudnn") {
+        if cudnn {
             cmake.define("WITH_CUDNN", "ON");
             println!("cargo:rustc-link-lib=cudnn");
         }
-        if cfg!(feature = "cuda-dynamic-loading") {
+        if cuda_dynamic_loading {
             cmake.define("CUDA_DYNAMIC_LOADING", "ON");
         } else {
-            if cfg!(target_os = "windows") {
+            if windows {
                 println!("cargo:rustc-link-lib=static=cublas");
                 println!("cargo:rustc-link-lib=static=cublasLt");
             } else {
@@ -80,34 +129,36 @@ fn main() {
             }
         }
     }
-    if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
+    if macos && aarch64 {
         cmake.define("CMAKE_OSX_ARCHITECTURES", "arm64");
     }
 
-    if cfg!(feature = "mkl") {
+    if mkl {
         cmake.define("WITH_MKL", "ON");
     }
-    if cfg!(feature = "openblas") {
+    if openblas {
         println!("cargo:rustc-link-lib=static=openblas");
         cmake.define("WITH_OPENBLAS", "ON");
     }
-    if cfg!(feature = "ruy") {
+    if ruy {
         cmake.define("WITH_RUY", "ON");
     }
-    if cfg!(feature = "accelerate") {
+    if accelarate {
         println!("cargo:rustc-link-lib=framework=Accelerate");
         cmake.define("WITH_ACCELERATE", "ON");
     }
-    if cfg!(feature = "tensor-parallel") {
+    if tensor_parallel {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
     }
-    if cfg!(feature = "dnnl") {
+    if dnnl {
+        println!("cargo:rustc-link-lib=static=dnnl");
         cmake.define("WITH_DNNL", "ON");
     }
-    if cfg!(feature = "openmp-runtime") {
+    if openmp_comp {
+        println!("cargo:rustc-link-lib=gomp");
         cmake.define("OPENMP_RUNTIME", "COMP");
     }
-    if cfg!(feature = "flash-attention") {
+    if flash_attention {
         cmake.define("WITH_FLASH_ATTN", "ON");
     }
 
