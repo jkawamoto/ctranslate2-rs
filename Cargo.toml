@@ -61,9 +61,12 @@ hound = { version = "3.5.1" }
 cmake = "0.1.54"
 cxx-build = "1.0"
 walkdir = "2.5.0"
+ureq = "3.0.12"
+flate2 = "1.1.2"
+tar = "0.4.44"
 
 [features]
-default = ["all-tokenizers", "os-defaults"]
+default = ["all-tokenizers", "os-defaults", "cuda-small-binary"]
 os-defaults = []
 whisper = [
     "dep:mel_spec",
@@ -85,9 +88,12 @@ mkl = ["dep:intel-mkl-src"]
 openblas = []
 dnnl = []
 openmp-runtime-comp = []
+openmp-runtime-intel = []
 ruy = []
 accelerate = []
 cuda = []
+cuda-small-binary = []
+msse4_1 = []
 cudnn = ["cuda"]
 
 [[example]]
