@@ -30,6 +30,62 @@ fn add_search_paths(key: &str) {
     }
 }
 
+fn build_dnnl() {
+    let out_dir = if let Ok(dir) = env::var("CARGO_TARGET_DIR") {
+        PathBuf::from(dir)
+    } else {
+        let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+        PathBuf::from(manifest_dir).join("target")
+    }
+    .join("dnnl");
+    let dnnl_version = "3.1.1";
+    let dnnl_archive = format!("v{}.tar.gz", dnnl_version);
+    let dnnl_url = format!(
+        "https://github.com/oneapi-src/oneDNN/archive/refs/tags/{}",
+        dnnl_archive
+    );
+
+    let source_dir = out_dir.join(format!("oneDNN-{}", dnnl_version));
+
+    if !source_dir.exists() {
+        let response = ureq::get(&dnnl_url).call().expect("Failed to send request");
+
+        assert!(
+            response.status() == 200,
+            "Download failed with status {}",
+            response.status()
+        );
+
+        let mut body = response.into_body();
+        let reader = body.as_reader();
+
+        let mut gz = flate2::read::GzDecoder::new(reader);
+
+        let mut archive = tar::Archive::new(&mut gz);
+        archive.unpack(&out_dir).expect("Failed to extract archive");
+    }
+
+    let dst = Config::new(source_dir)
+        .define("ONEDNN_LIBRARY_TYPE", "STATIC")
+        .define("ONEDNN_BUILD_EXAMPLES", "OFF")
+        .define("ONEDNN_BUILD_TESTS", "OFF")
+        .define("ONEDNN_ENABLE_WORKLOAD", "INFERENCE")
+        .define("ONEDNN_ENABLE_PRIMITIVE", "CONVOLUTION;REORDER")
+        .define("ONEDNN_BUILD_GRAPH", "OFF")
+        .build();
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=dnnl");
+    println!("cargo:include={}/include", dst.display());
+}
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+enum Os {
+    Win,
+    Mac,
+    Linux,
+    Unknown,
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/sys");
@@ -39,8 +95,16 @@ fn main() {
     add_search_paths("CMAKE_LIBRARY_PATH");
 
     let mut cmake = Config::new("CTranslate2");
-    let windows = cfg!(target_os = "windows");
-    let macos = cfg!(target_os = "macos");
+    let os = if cfg!(target_os = "windows") {
+        Os::Win
+    } else if cfg!(target_os = "macos") {
+        Os::Mac
+    } else if cfg!(target_os = "linux") {
+        Os::Linux
+    } else {
+        Os::Unknown
+    };
+
     let aarch64 = cfg!(target_arch = "aarch64");
 
     let mut cuda = cfg!(feature = "cuda");
@@ -53,37 +117,49 @@ fn main() {
     let mut tensor_parallel = cfg!(feature = "tensor-parallel");
     let mut dnnl = cfg!(feature = "dnnl");
     let mut openmp_comp = cfg!(feature = "openmp-runtime-comp");
+    let mut openmp_intel = cfg!(feature = "openmp-runtime-intel");
+    let mut msse4_1 = cfg!(feature = "msse4_1");
+    if !openmp_intel && !openmp_comp && dnnl {
+        if os == Os::Linux {
+            openmp_comp = true;
+        }
+    }
     let flash_attention = cfg!(feature = "flash-attention");
     if cfg!(feature = "os-defaults") {
-        match (windows, macos, aarch64) {
-            (true, false, false) => {
+        match (os, aarch64) {
+            (Os::Win, false) => {
+                openmp_intel = true;
+                openmp_comp = false;
                 dnnl = true;
                 cuda = true;
                 cudnn = true;
                 cuda_dynamic_loading = true;
                 mkl = true;
             }
-            (false, true, true) => {
+            (Os::Mac, true) => {
                 accelarate = true;
                 ruy = true;
             }
-            (false, true, false) => {
+            (Os::Mac, false) => {
                 dnnl = true;
                 mkl = true;
             }
-            (false, false, true) => {
+            (Os::Linux, true) => {
                 openmp_comp = true;
+                openmp_intel = false;
                 openblas = true;
                 ruy = true;
             }
-            (false, false, false) => {
+            (Os::Linux, false) => {
                 dnnl = true;
                 openmp_comp = true;
+                openmp_intel = false;
                 cudnn = true;
                 cuda = true;
                 cuda_dynamic_loading = true;
                 mkl = true;
                 tensor_parallel = true;
+                msse4_1 = true;
             }
             _ => {}
         }
@@ -94,7 +170,7 @@ fn main() {
         .define("WITH_MKL", "OFF")
         .define("OPENMP_RUNTIME", "NONE")
         .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
-    if windows {
+    if os == Os::Win {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
             println!("cargo:warning=For Windows compilation, set `RUSTFLAGS=-C target-feature=+crt-static`.");
@@ -107,7 +183,11 @@ fn main() {
     if cuda {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
-        cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
+        cmake.define("CUDA_TOOLKIT_ROOT_DIR", "Common");
+        cmake.define("CUDA_ARCH_LIST", &cuda);
+        if cfg!(feature = "cuda-small-binary") {
+            cmake.define("CUDA_NVCC_FLAGS", "-Xfatbin=-compress-all");
+        }
         println!("cargo:rustc-link-search={}", cuda.join("lib").display());
         println!("cargo:rustc-link-search={}", cuda.join("lib64").display());
         println!("cargo:rustc-link-search={}", cuda.join("lib/x64").display());
@@ -119,7 +199,7 @@ fn main() {
         if cuda_dynamic_loading {
             cmake.define("CUDA_DYNAMIC_LOADING", "ON");
         } else {
-            if windows {
+            if os == Os::Win {
                 println!("cargo:rustc-link-lib=static=cublas");
                 println!("cargo:rustc-link-lib=static=cublasLt");
             } else {
@@ -129,7 +209,7 @@ fn main() {
             }
         }
     }
-    if macos && aarch64 {
+    if os == Os::Mac && aarch64 {
         cmake.define("CMAKE_OSX_ARCHITECTURES", "arm64");
     }
 
@@ -150,13 +230,20 @@ fn main() {
     if tensor_parallel {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
     }
+    if msse4_1 {
+        cmake.define("CMAKE_CXX_FLAGS", "-msse4.1");
+    }
     if dnnl {
+        build_dnnl();
         println!("cargo:rustc-link-lib=static=dnnl");
         cmake.define("WITH_DNNL", "ON");
     }
     if openmp_comp {
         println!("cargo:rustc-link-lib=gomp");
         cmake.define("OPENMP_RUNTIME", "COMP");
+    } else if openmp_intel {
+        println!("cargo:rustc-link-lib=iomp5");
+        cmake.define("OPENMP_RUNTIME", "INTEL");
     }
     if flash_attention {
         cmake.define("WITH_FLASH_ATTN", "ON");

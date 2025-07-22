@@ -21,7 +21,9 @@ but it has not been thoroughly tested and may have limitations or require additi
 - cuda
   - cudnn
   - cuda-dynamic-loading
+  - cuda-small-binary
 - os-defaults
+- msse4_1
 - whisper
 - flash-attention
 - tensor-parallel
@@ -79,7 +81,7 @@ Several backends are available for use:
 [Ruy](https://github.com/google/ruy),
 and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 
-- **oneDNN**: To use oneDNN, enable the `dnnl` feature and add the path to the directory
+- **oneDNN**: To use oneDNN, enable the `dnnl` feature
 - **OpenBLAS**: To use OpenBLAS, enable the `openblas` feature and add the path to the directory
   containing `libopenblas.a` to the `LIBRARY_PATH` environment variable.
 - **Intel MKL**: To use Intel MKL, enable the `mkl` feature and set the path to the Intel libraries in the `MKLROOT`
