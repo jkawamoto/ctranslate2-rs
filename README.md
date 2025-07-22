@@ -32,17 +32,6 @@ but it has not been thoroughly tested and may have limitations or require additi
   - sentencepiece
   - tokenizers
 
-# Features to select backends.
-
-mkl = ["dep:intel-mkl-src"]
-openblas = []
-dnnl = []
-openmp-runtime-comp = []
-ruy = []
-accelerate = []
-cuda = []
-cudnn = ["cuda"]
-
 ## Supported Models
 
 The ct2rs crate has been tested and confirmed to work with the following models:
