@@ -31,18 +31,18 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
 anyhow = "1.0.98"
-cxx = { version = "1.0.157", features = ["c++17"] }
-sentencepiece = "0.11.3"
-tokenizers = "0.21.1"
+cxx = { version = "1.0", features = ["c++17"] }
+sentencepiece = { version = "0.11.3", optional = true }
+tokenizers = { version = "0.21", optional = true }
 
 # Dependencies for Whisper model
-mel_spec = { version = "0.3.2", optional = true }
+mel_spec = { version = "0.3", optional = true }
 ndarray = { version = "0.16.1", optional = true }
 serde = { version = "1.0.219", features = ["derive"], optional = true }
-serde_json = { version = "1.0.140", optional = true }
+serde_json = { version = "1.0", optional = true }
 
 # Dependencies for Hugging Face integration
-hf-hub = { version = "0.4.2", optional = true }
+hf-hub = { version = "0.4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-ilp64-seq"] }
@@ -51,7 +51,7 @@ intel-mkl-src = { version = "0.8.1", optional = true, features = ["mkl-static-il
 intel-mkl-src = { version = "0.8.1", optional = true }
 
 [dev-dependencies]
-clap = { version = "4.5.36", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 rand = "0.9.1"
 
 # Dependencies for Whisper example
@@ -59,23 +59,41 @@ hound = { version = "3.5.1" }
 
 [build-dependencies]
 cmake = "0.1.54"
-cxx-build = "1.0.157"
+cxx-build = "1.0"
 walkdir = "2.5.0"
+ureq = "3.0.12"
+flate2 = "1.1.2"
+tar = "0.4.44"
 
 [features]
-default = ["ruy"]
-whisper = ["dep:mel_spec", "dep:ndarray", "dep:serde", "dep:serde_json"]
+default = ["all-tokenizers", "os-defaults", "cuda-small-binary"]
+os-defaults = []
+whisper = [
+    "dep:mel_spec",
+    "dep:ndarray",
+    "dep:serde",
+    "dep:serde_json",
+    "all-tokenizers",
+]
 flash-attention = []
 tensor-parallel = []
 cuda-dynamic-loading = ["cuda"]
 hub = ["dep:hf-hub"]
+all-tokenizers = ["sentencepiece", "tokenizers"]
+sentencepiece = ["dep:sentencepiece"]
+tokenizers = ["dep:tokenizers"]
 
 # Features to select backends.
 mkl = ["dep:intel-mkl-src"]
 openblas = []
+dnnl = []
+openmp-runtime-comp = []
+openmp-runtime-intel = []
 ruy = []
 accelerate = []
 cuda = []
+cuda-small-binary = []
+msse4_1 = []
 cudnn = ["cuda"]
 
 [[example]]

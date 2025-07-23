@@ -92,6 +92,9 @@
 //! ```
 
 pub mod auto;
+#[cfg(feature = "tokenizers")]
 pub mod bpe;
+#[cfg(feature = "tokenizers")]
 pub mod hf;
+#[cfg(feature = "sentencepiece")]
 pub mod sentencepiece;
