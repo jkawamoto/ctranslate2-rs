@@ -1,0 +1,201 @@
+name: Vendor ctranslate2
+on:
+  push:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: Linux
+            runs-on: ubuntu-latest
+          - name: linux-arm64
+            runs-on: ubuntu-24.04-arm
+          - name: macos-arm64
+            os: macOS
+            runs-on: macos-latest
+          - name: macos-x86_64
+            os: macOS
+            runs-on: macos-13
+          - name: windows-x86_64
+            os: Windows
+            runs-on: windows-2022
+
+    name: Build on ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies (Linux x86_64)
+        if: matrix.name == 'linux-x86_64'
+        run: |
+          # cuda,cudnn
+          sudo apt install build-essential gcc dirmngr ca-certificates software-properties-common apt-transport-https dkms curl -y
+          curl -fSsL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/3bf863cc.pub | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+          echo 'deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /' | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+          sudo dpkg -i cuda-keyring_1.0-1_all.deb
+          sudo apt update
+          sudo apt install cuda cudnn
+          sudo apt install libopenmpi-dev openmpi-bin
+          sudo apt install -y libnccl2 libnccl-dev
+          echo "CUDA_PATH=/usr/local/cuda" >> $GITHUB_ENV
+          echo "CUDA_ROOT=/usr/local/cuda" >> $GITHUB_ENV
+          echo "CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda" >> $GITHUB_ENV
+          echo "CUDNN_LIB=/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
+          echo "PATH=/usr/local/cuda/bin:$PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          # mkl
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+          sudo sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
+          sudo apt-get update
+          sudo apt-get install -y intel-mkl-64bit-2020.4-912
+          echo "LD_LIBRARY_PATH=/opt/intel/lib/intel64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          # hack
+          file=CTranslate2/include/ctranslate2/devices.h
+          if ! grep -q '#include <stdint.h>' "$file"; then
+            sed -i '0,/^#pragma once/ s|^#pragma once|#pragma once\n#include <stdint.h>|' "$file"
+          fi
+      - name: Install dependencies (Linux arm64)
+        if: matrix.name == 'linux-arm64'
+        run: |
+          OPENBLAS_VERSION=0.3.21
+          curl -L -O https://github.com/xianyi/OpenBLAS/releases/download/v${OPENBLAS_VERSION}/OpenBLAS-${OPENBLAS_VERSION}.tar.gz
+          tar xf *.tar.gz && rm *.tar.gz
+          cd OpenBLAS-*
+          make TARGET=ARMV8 NO_SHARED=1 BUILD_SINGLE=1 NO_LAPACK=1 ONLY_CBLAS=1 USE_OPENMP=1 NUM_THREADS=32 NUM_PARALLEL=8
+          sudo make install NO_SHARED=1
+          cd ..
+          echo "LIBRARY_PATH=/opt/OpenBLAS/lib" >> $GITHUB_ENV
+          echo "OPENBLAS_DIR=/opt/OpenBLAS" >> $GITHUB_ENV
+          echo "OPENBLAS_STATIC=1" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=/opt/OpenBLAS" >> $GITHUB_ENV
+      # - name: Install dependencies (MacOS ARM64)
+      #   if: matrix.name == 'macos-arm64'
+      #   run: |
+      - name: Install dependencies (MacOS x86_64)
+        if: matrix.name == 'macos-x86_64'
+        run: |
+          brew install libomp
+          ONEAPI_INSTALLER_URL=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg
+          wget -q $ONEAPI_INSTALLER_URL
+          hdiutil attach -noverify -noautofsck $(basename $ONEAPI_INSTALLER_URL)
+          sudo /Volumes/$(basename $ONEAPI_INSTALLER_URL .dmg)/bootstrapper.app/Contents/MacOS/bootstrapper --silent --eula accept --components intel.oneapi.mac.mkl.devel
+
+      - name: Install Intel MKL and OpenMP packages
+        if: matrix.name == 'windows-x86_64'
+        run: |
+          curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+          .\nuget.exe install intelmkl.devel.win-x64
+          .\nuget.exe install intelopenmp.redist.win
+          $globBase = Join-Path $Env:GITHUB_WORKSPACE "intelmkl.devel.win-x64.*"
+          $mklDir = Get-ChildItem -Path $globBase -Directory | Select-Object -First 1
+
+          $cleanPath = Join-Path $Env:GITHUB_WORKSPACE "intelmkl.devel.win-x64"
+
+          Rename-Item -Path $mklDir.FullName -NewName $cleanPath
+
+          $libPath = Join-Path $cleanPath "build\native"
+
+          Rename-Item -Path (Join-Path $libPath "win-x64") -NewName "lib"
+
+          $libDir = Join-Path $libPath "lib"
+          Get-ChildItem $libDir -Filter "*_dll.lib" | ForEach-Object {
+              $newName = $_.Name -replace "_dll", ""
+              Copy-Item $_.FullName -Destination (Join-Path $libDir $newName)
+          }
+          $base2 = Join-Path $Env:GITHUB_WORKSPACE "intelopenmp.redist.win.*"
+          $openmp = Get-ChildItem -Path $base2 -Directory | Select-Object -First 1
+          $source = "$($openmp.FullName)\runtimes\win-x64\native"
+          Copy-Item -Path "$source\*" -Destination $libPath\lib -Recurse -Force
+          echo "MKLROOT=$libPath" >> $Env:GITHUB_ENV
+
+      - name: Install dependencies (Windows)
+        shell: bash
+        if: matrix.name == 'windows-x86_64'
+        run: |
+          CUDA_ROOT="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9"
+          curl --netrc-optional -L -nv -o cuda.exe https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_576.57_windows.exe
+          ./cuda.exe -s nvcc_12.9 cudart_12.9 cublas_dev_12.9 curand_dev_12.9
+          rm cuda.exe
+
+          CUDNN_ROOT="C:/Program Files/NVIDIA/CUDNN/v9.11"
+          curl --netrc-optional -L -nv -o cudnn.exe https://developer.download.nvidia.com/compute/cudnn/9.11.0/local_installers/cudnn_9.11.0_windows.exe
+          ./cudnn.exe -s
+          sleep 10
+          # Remove 11.8 folders
+          rm -rf "$CUDNN_ROOT/bin/11.8"
+          rm -rf "$CUDNN_ROOT/lib/11.8"
+          rm -rf "$CUDNN_ROOT/include/11.8"
+
+          # Move contents of 12.9 to parent directories
+          mv "$CUDNN_ROOT/bin/12.9/"* "$CUDNN_ROOT/bin/"
+          mv "$CUDNN_ROOT/lib/12.9/"* "$CUDNN_ROOT/lib/"
+          mv "$CUDNN_ROOT/include/12.9/"* "$CUDNN_ROOT/include/"
+
+          # Remove empty 12.9 folders
+          rmdir "$CUDNN_ROOT/bin/12.9"
+          rmdir "$CUDNN_ROOT/lib/12.9"
+          rmdir "$CUDNN_ROOT/include/12.9"
+          cp -r "$CUDNN_ROOT"/* "$CUDA_ROOT"
+          rm cudnn.exe
+          echo "CUDA_TOOLKIT_ROOT_DIR=$CUDA_ROOT" >> $GITHUB_ENV
+
+      - name: List
+        if: matrix.name == 'windows-x86_64'
+        run: |
+          Get-ChildItem -Path "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/" -Recurse |
+            ForEach-Object { $_.FullName }
+
+      - name: Build
+        if: matrix.name == 'linux-arm64' || matrix.name == 'macos-arm64'
+        run: cargo build --release --no-default-features -F "os-defaults,cuda-small-binary,_vendor"
+
+      - name: Build
+        if: matrix.name != 'linux-arm64' && matrix.name != 'macos-arm64'
+        run: cargo build --release --no-default-features -F "os-defaults,cuda-small-binary,_vendor,mkl"
+
+      - name: Upload vendored artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-${{ matrix.name }}
+          path: target/release/vendored.tar.gz
+
+      - name: Upload bundle(MacOS)
+        if: matrix.name == 'macos-x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dyn-${{ matrix.name }}
+          path: |
+            /usr/local/opt/libomp/lib/libiomp5.dylib
+
+      - name: Upload bundle(Linux)
+        if: matrix.name == 'linux-x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dyn-${{ matrix.name }}
+          path: |
+            /usr/lib/x86_64-linux-gnu/libcudnn.so
+
+      - name: Upload bundle(Windows)
+        if: matrix.name == 'windows-x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dyn-${{ matrix.name }}
+          path: |
+            C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/bin/cudnn64_9.dll
+            intelmkl.devel.win-x64/build/native/lib/libiomp5md.dll
