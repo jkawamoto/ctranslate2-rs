@@ -33,6 +33,24 @@ fn add_search_paths(key: &str) {
     }
 }
 
+fn download(url: &str, out: &Path) -> u16 {
+    let response = ureq::get(url).call().expect("Failed to send request");
+    let status = response.status().as_u16();
+
+    if response.status() != 200 {
+        return status;
+    }
+
+    let mut body = response.into_body();
+    let reader = body.as_reader();
+
+    let mut gz = flate2::read::GzDecoder::new(reader);
+
+    let mut archive = tar::Archive::new(&mut gz);
+    archive.unpack(&out).expect("Failed to extract archive");
+    status
+}
+
 fn build_dnnl() {
     let out_dir = if let Ok(dir) = env::var("CARGO_TARGET_DIR") {
         PathBuf::from(dir)
@@ -51,21 +69,9 @@ fn build_dnnl() {
     let source_dir = out_dir.join(format!("oneDNN-{}", dnnl_version));
 
     if !source_dir.exists() {
-        let response = ureq::get(&dnnl_url).call().expect("Failed to send request");
-
-        assert!(
-            response.status() == 200,
-            "Download failed with status {}",
-            response.status()
-        );
-
-        let mut body = response.into_body();
-        let reader = body.as_reader();
-
-        let mut gz = flate2::read::GzDecoder::new(reader);
-
-        let mut archive = tar::Archive::new(&mut gz);
-        archive.unpack(&out_dir).expect("Failed to extract archive");
+        if download(&dnnl_url, &out_dir) != 200 {
+            panic!("Failed to download oneDNN");
+        }
     }
 
     let dst = Config::new(source_dir)
@@ -89,12 +95,67 @@ enum Os {
     Unknown,
 }
 
+fn load_vendor(os: Os, aarch64: bool) -> Option<PathBuf> {
+    let url = format!(
+        "https://github.com/frederik-uni/ctranslate2-rs/releases/download/ctranslate2-05.08.2025/{}-{}.tar.gz",
+        match os {
+            Os::Win => "windows",
+            Os::Mac => "macos",
+            Os::Linux => "linux",
+            Os::Unknown => return None,
+        },
+        match aarch64 {
+            true => "arm64",
+            false => "x86_64",
+        }
+    );
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_dir = out_dir
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ctranslate2-vendor");
+    let dyn_dir = out_dir.join("dyn");
+
+    println!("cargo:rustc-link-search=native={}", dyn_dir.display());
+    if download(&url, &out_dir) != 200 {
+        return None;
+    }
+    match (os, aarch64) {
+        (Os::Win, false) => {
+            println!("cargo:rustc-link-lib=iomp5md");
+            Some(out_dir.to_path_buf())
+        }
+        (Os::Mac, true) => {
+            println!("cargo:rustc-link-lib=framework=Accelerate");
+            Some(out_dir.to_path_buf())
+        }
+        (Os::Linux, true) => {
+            println!("cargo:rustc-link-lib=gomp");
+            Some(out_dir.to_path_buf())
+        }
+        (Os::Mac, false) => {
+            println!("cargo:rustc-link-lib=iomp5");
+            Some(out_dir.to_path_buf())
+        }
+        (Os::Linux, false) => {
+            println!("cargo:rustc-link-lib=cudnn");
+            println!("cargo:rustc-link-lib=gomp");
+            Some(out_dir.to_path_buf())
+        }
+        _ => None,
+    }
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/sys");
     println!("cargo:rerun-if-changed=include");
     println!("cargo:rerun-if-changed=CTranslate2");
-    let mut found = false;
+    let mut found = None;
     let aarch64 = cfg!(target_arch = "aarch64");
     let os = if cfg!(target_os = "windows") {
         Os::Win
@@ -106,34 +167,9 @@ fn main() {
         Os::Unknown
     };
     if cfg!(feature = "vendored") {
-        //TODO: download
-        match (os, aarch64) {
-            (Os::Win, false) => {
-                println!("cargo:rustc-link-lib=cudnn");
-                println!("cargo:rustc-link-lib=iomp5md");
-                found = true;
-            }
-            (Os::Mac, true) => {
-                println!("cargo:rustc-link-lib=framework=Accelerate");
-                found = true;
-            }
-            (Os::Linux, true) => {
-                println!("cargo:rustc-link-lib=gomp");
-                found = true;
-            }
-            (Os::Mac, false) => {
-                println!("cargo:rustc-link-lib=iomp5");
-                found = true;
-            }
-            (Os::Linux, false) => {
-                println!("cargo:rustc-link-lib=cudnn");
-                println!("cargo:rustc-link-lib=gomp");
-                found = true;
-            }
-            _ => {}
-        }
+        found = load_vendor(os, aarch64);
     }
-    let lib_path = if !found {
+    let lib_path = if found.is_none() {
         add_search_paths("LIBRARY_PATH");
         add_search_paths("CMAKE_LIBRARY_PATH");
 
@@ -316,7 +352,7 @@ fn main() {
         let ctranslate2 = cmake.build();
         ctranslate2.join("build")
     } else {
-        todo!("path to download")
+        found.unwrap()
     };
 
     let modules = link_libraries(&lib_path);
