@@ -13,7 +13,7 @@ jobs:
         include:
           - name: linux-x86_64
             os: Linux
-            runs-on: ubuntu-latest
+            runs-on: ubuntu-22.04
           - name: linux-arm64
             runs-on: ubuntu-24.04-arm
           - name: macos-arm64
@@ -44,12 +44,12 @@ jobs:
         run: |
           # cuda,cudnn
           sudo apt install build-essential gcc dirmngr ca-certificates software-properties-common apt-transport-https dkms curl -y
-          curl -fSsL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/3bf863cc.pub | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+          curl -fSsL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
           echo 'deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/ /' | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
           wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
           sudo dpkg -i cuda-keyring_1.0-1_all.deb
           sudo apt update
-          sudo apt install cuda cudnn
+          sudo apt install cuda-12-9 cudnn9
           sudo apt install libopenmpi-dev openmpi-bin
           sudo apt install -y libnccl2 libnccl-dev
           echo "CUDA_PATH=/usr/local/cuda" >> $GITHUB_ENV
@@ -174,14 +174,13 @@ jobs:
         with:
           name: static-${{ matrix.name }}
           path: target/release/vendored.tar.gz
-
       - name: Upload bundle(MacOS)
         if: matrix.name == 'macos-x86_64'
         uses: actions/upload-artifact@v4
         with:
           name: dyn-${{ matrix.name }}
           path: |
-            /usr/local/opt/libomp/lib/libiomp5.dylib
+           /opt/intel/oneapi/compiler/2023.2.0/mac/compiler/lib/libiomp5.dylib
 
       - name: Upload bundle(Linux)
         if: matrix.name == 'linux-x86_64'
@@ -197,5 +196,11 @@ jobs:
         with:
           name: dyn-${{ matrix.name }}
           path: |
-            C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/bin/cudnn64_9.dll
             intelmkl.devel.win-x64/build/native/lib/libiomp5md.dll
+      - name: Upload bundle(Windows)
+        if: matrix.name == 'windows-x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dyn2-${{ matrix.name }}
+          path: |
+            C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/bin/cudnn64_9.dll
