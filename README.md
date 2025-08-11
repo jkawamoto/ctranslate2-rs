@@ -80,8 +80,8 @@ and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 
 The installation of CMake is required to compile the library.
 
-Additional notes for Windows:
-it is necessary to add `RUSTFLAGS=-C target-feature=+crt-static` to the environment variables for compilation.
+**Additional notes for Windows**:
+Setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might be required.
 
 ## Model Conversion for CTranslate2
 

@@ -173,7 +173,7 @@ fn main() {
     if os == Os::Win {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
-            println!("cargo:warning=For Windows compilation, set `RUSTFLAGS=-C target-feature=+crt-static`.");
+            println!("cargo:warning=For Windows compilation, setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might be required.");
         }
 
         println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
@@ -266,7 +266,6 @@ fn main() {
     .file("src/sys/whisper.cpp")
     .include("CTranslate2/include")
     .std("c++17")
-    .static_crt(cfg!(target_os = "windows"))
     .flag_if_supported("/EHsc")
     .compile("ct2rs");
 }
