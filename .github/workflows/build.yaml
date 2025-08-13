@@ -43,6 +43,9 @@ jobs:
         with:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          cache-on-failure: true
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
@@ -80,6 +83,9 @@ jobs:
         with:
           toolchain: nightly
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          cache-on-failure: true
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
@@ -109,6 +115,9 @@ jobs:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          cache-on-failure: true
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
