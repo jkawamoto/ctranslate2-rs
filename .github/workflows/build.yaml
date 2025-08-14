@@ -46,6 +46,10 @@ jobs:
         with:
           key: ${{ matrix.backend }}-${{ matrix.feature }}
           cache-on-failure: true
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: macos-test-data
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
@@ -86,6 +90,10 @@ jobs:
         with:
           key: ${{ matrix.backend }}-${{ matrix.feature }}
           cache-on-failure: true
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: linux-test-data
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
@@ -118,6 +126,10 @@ jobs:
         with:
           key: ${{ matrix.backend }}-${{ matrix.feature }}
           cache-on-failure: true
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: windows-test-data
       - name: Build
         run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
       - name: Run tests
