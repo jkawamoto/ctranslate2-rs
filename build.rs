@@ -127,6 +127,9 @@ fn load_vendor(os: Os, aarch64: bool) -> Option<PathBuf> {
     match (os, aarch64) {
         (Os::Win, false) => {
             println!("cargo:rustc-link-lib=iomp5md");
+            println!("cargo:rustc-link-lib=static=cudart_static");
+            println!("cargo:rustc-link-lib=cudnn");
+            build_dnnl();
             Some(out_dir.to_path_buf())
         }
         (Os::Mac, true) => {
@@ -139,11 +142,14 @@ fn load_vendor(os: Os, aarch64: bool) -> Option<PathBuf> {
         }
         (Os::Mac, false) => {
             println!("cargo:rustc-link-lib=iomp5");
+            build_dnnl();
             Some(out_dir.to_path_buf())
         }
         (Os::Linux, false) => {
             println!("cargo:rustc-link-lib=cudnn");
             println!("cargo:rustc-link-lib=gomp");
+            println!("cargo:rustc-link-lib=static=cudart_static");
+            build_dnnl();
             Some(out_dir.to_path_buf())
         }
         _ => None,
@@ -274,6 +280,8 @@ fn main() {
 
             println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
             cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
+        } else if os == Os::Linux {
+            cmake.define("CMAKE_POSITION_INDEPENDENT_CODE", "ON");
         }
 
         if cuda {
@@ -281,9 +289,19 @@ fn main() {
             cmake.define("WITH_CUDA", "ON");
             cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
             cmake.define("CUDA_ARCH_LIST", "Common");
-            if cfg!(feature = "cuda-small-binary") {
-                cmake.define("CUDA_NVCC_FLAGS", "-Xfatbin=-compress-all");
-            }
+            cmake.define(
+                "CUDA_NVCC_FLAGS",
+                format!(
+                    "{}{}",
+                    if cfg!(feature = "cuda-small-binary") {
+                        "-Xfatbin=-compress-all "
+                    } else {
+                        ""
+                    },
+                    "-Xcompiler=-fPIC"
+                ),
+
+            );
 
             println!("cargo:rustc-link-search={}", cuda.join("lib").display());
             println!("cargo:rustc-link-search={}", cuda.join("lib64").display());
@@ -412,7 +430,7 @@ fn library_name(name: &str) -> &str {
 
 #[cfg(target_os = "windows")]
 fn is_library(name: &&str) -> bool {
-    name.ends_with(".lib")
+    name.ends_with(".lib") && !name.starts_with(".")
 }
 
 #[cfg(target_os = "windows")]

@@ -180,7 +180,8 @@ jobs:
         with:
           name: dyn-${{ matrix.name }}
           path: |
-           /opt/intel/oneapi/compiler/2023.2.0/mac/compiler/lib/libiomp5.dylib
+            /opt/intel/oneapi/mkl/2023.2.0/lib
+            /opt/intel/oneapi/compiler/2023.2.0/mac/compiler/lib/libiomp5.dylib
 
       - name: Upload bundle(Linux)
         if: matrix.name == 'linux-x86_64'
@@ -189,6 +190,8 @@ jobs:
           name: dyn-${{ matrix.name }}
           path: |
             /usr/lib/x86_64-linux-gnu/libcudnn.so
+            /usr/local/cuda/lib64/libcudart_static.a
+            /opt/intel/mkl/lib/intel64
 
       - name: Upload bundle(Windows)
         if: matrix.name == 'windows-x86_64'
@@ -196,11 +199,13 @@ jobs:
         with:
           name: dyn-${{ matrix.name }}
           path: |
-            intelmkl.devel.win-x64/build/native/lib/libiomp5md.dll
+            intelmkl.devel.win-x64/build/native/lib
       - name: Upload bundle(Windows)
         if: matrix.name == 'windows-x86_64'
         uses: actions/upload-artifact@v4
         with:
           name: dyn2-${{ matrix.name }}
           path: |
+            C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/lib/x64/cudart_static.lib
+            C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/lib/x64/cudnn.lib
             C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.9/bin/cudnn64_9.dll
