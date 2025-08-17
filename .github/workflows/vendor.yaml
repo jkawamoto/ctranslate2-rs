@@ -96,6 +96,14 @@ jobs:
           hdiutil attach -noverify -noautofsck $(basename $ONEAPI_INSTALLER_URL)
           sudo /Volumes/$(basename $ONEAPI_INSTALLER_URL .dmg)/bootstrapper.app/Contents/MacOS/bootstrapper --silent --eula accept --components intel.oneapi.mac.mkl.devel
 
+      - name: Patch CMakeLists.txt runtime flags
+        if: matrix.name == 'windows-x86_64'
+        shell: pwsh
+        run: |
+          (Get-Content CTranslate2/CMakeLists.txt) `
+            -replace 'MultiThreaded', 'MultiThreadedDLL' `
+            -replace '/MT', '/MD' |
+          Set-Content CTranslate2/CMakeLists.txt
       - name: Install Intel MKL and OpenMP packages
         if: matrix.name == 'windows-x86_64'
         run: |
@@ -104,7 +112,6 @@ jobs:
           .\nuget.exe install intelopenmp.redist.win
           $globBase = Join-Path $Env:GITHUB_WORKSPACE "intelmkl.devel.win-x64.*"
           $mklDir = Get-ChildItem -Path $globBase -Directory | Select-Object -First 1
-
           $cleanPath = Join-Path $Env:GITHUB_WORKSPACE "intelmkl.devel.win-x64"
 
           Rename-Item -Path $mklDir.FullName -NewName $cleanPath
