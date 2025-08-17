@@ -13,6 +13,7 @@ use std::path::{Path, PathBuf};
 use cmake::Config;
 use flate2::Compression;
 use tar::Builder;
+use ureq::http::StatusCode;
 use walkdir::WalkDir;
 
 #[cfg(not(target_os = "windows"))]
@@ -33,11 +34,11 @@ fn add_search_paths(key: &str) {
     }
 }
 
-fn download(url: &str, out: &Path) -> u16 {
+fn download(url: &str, out: &Path) -> StatusCode {
     let response = ureq::get(url).call().expect("Failed to send request");
-    let status = response.status().as_u16();
+    let status = response.status();
 
-    if response.status() != 200 {
+    if response.status().as_u16() != 200 {
         return status;
     }
 
@@ -118,15 +119,23 @@ fn load_vendor(os: Os, aarch64: bool) -> Option<PathBuf> {
         .parent()
         .unwrap()
         .join("ctranslate2-vendor");
+    
     let dyn_dir = out_dir.join("dyn");
 
-    println!("cargo:rustc-link-search=native={}", dyn_dir.display());
-    if download(&url, &out_dir) != 200 {
+    let mut status = StatusCode::from_u16(500).unwrap();
+    for _ in 0..3 {
+        status = download(&url, &out_dir);
+        if status.is_success() || status.as_u16() == 404 {
+            break;
+        }
+    }
+    if !status.is_success() {
         return None;
     }
+    println!("cargo:rustc-link-search=native={}", dyn_dir.display());
+
     match (os, aarch64) {
         (Os::Win, false) => {
-            println!("cargo:rustc-link-lib=iomp5md");
             println!("cargo:rustc-link-lib=static=cudart_static");
             println!("cargo:rustc-link-lib=cudnn");
             build_dnnl();
@@ -276,11 +285,13 @@ fn main() {
             let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
             if !rustflags.contains("target-feature=+crt-static") {
                 println!("cargo:warning=For Windows compilation, setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might be required.");
+            }else {
+                cmake.static_crt(true);
             }
 
             println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
-            cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
-        } else if os == Os::Linux {
+            cmake.profile("Release").cxxflag("/EHsc");
+        }else if os == Os::Linux {
             cmake.define("CMAKE_POSITION_INDEPENDENT_CODE", "ON");
         }
 
