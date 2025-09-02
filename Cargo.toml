@@ -125,6 +125,7 @@ name = "gpt-neox"
 
 [[example]]
 name = "opt"
+required-features = ["tokenizers"]
 
 [[example]]
 name = "t5"
@@ -134,6 +135,7 @@ name = "stream"
 
 [[example]]
 name = "whisper"
+required-features = ["whisper"]
 
 [package.metadata.docs.rs]
 features = ["whisper", "hub"]
