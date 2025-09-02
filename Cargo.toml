@@ -95,6 +95,8 @@ cuda = []
 cuda-small-binary = []
 msse4_1 = []
 cudnn = ["cuda"]
+vendored = []
+_vendor = []
 
 [[example]]
 name = "bart"
