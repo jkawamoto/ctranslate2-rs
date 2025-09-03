@@ -73,8 +73,7 @@ and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
 - **oneDNN**: To use oneDNN, enable the `dnnl` feature
 - **OpenBLAS**: To use OpenBLAS, enable the `openblas` feature and add the path to the directory
   containing `libopenblas.a` to the `LIBRARY_PATH` environment variable.
-- **Intel MKL**: To use Intel MKL, enable the `mkl` feature and set the path to the Intel libraries in the `MKLROOT`
-  environment variable (default is `/opt/intel`).
+- **Intel MKL**: To use Intel MKL, enable the `mkl` feature.
 - **Ruy**: To use Ruy, enable the `ruy` feature.
 - **Apple Accelerate**: Available only on macOS, enable the `accelerate` feature to use Apple Accelerate.
 

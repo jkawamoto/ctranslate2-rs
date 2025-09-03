@@ -215,6 +215,7 @@ fn main() {
 
     if mkl {
         cmake.define("WITH_MKL", "ON");
+        cmake.env("MKLROOT", env::var("DEP_MKL_ROOT").unwrap());
     }
     if openblas {
         println!("cargo:rustc-link-lib=static=openblas");

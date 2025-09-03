@@ -73,7 +73,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "mkl")]
-extern crate intel_mkl_src;
+extern crate intel_onemkl_prebuild;
 
 pub use generator::{GenerationOptions, Generator};
 #[cfg(feature = "hub")]
