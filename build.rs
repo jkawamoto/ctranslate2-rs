@@ -12,20 +12,13 @@ use std::path::{Path, PathBuf};
 use cmake::Config;
 use walkdir::WalkDir;
 
-#[cfg(not(target_os = "windows"))]
-const PATH_SEPARATOR: char = ':';
-
-#[cfg(target_os = "windows")]
-const PATH_SEPARATOR: char = ';';
-
 fn add_search_paths(key: &str) {
     println!("cargo:rerun-if-env-changed={}", key);
     if let Ok(library_path) = env::var(key) {
-        library_path
-            .split(PATH_SEPARATOR)
-            .filter(|v| !v.is_empty())
+        env::split_paths(&library_path)
+            .filter(|v| v.exists())
             .for_each(|v| {
-                println!("cargo:rustc-link-search={}", v);
+                println!("cargo:rustc-link-search={}", v.display());
             });
     }
 }
