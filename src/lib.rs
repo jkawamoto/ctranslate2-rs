@@ -75,6 +75,9 @@
 #[cfg(feature = "mkl")]
 extern crate intel_onemkl_prebuild;
 
+#[cfg(feature = "dnnl")]
+extern crate onednn_src;
+
 pub use generator::{GenerationOptions, Generator};
 #[cfg(feature = "hub")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
