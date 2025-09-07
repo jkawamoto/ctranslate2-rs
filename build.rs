@@ -23,54 +23,6 @@ fn add_search_paths(key: &str) {
     }
 }
 
-fn build_dnnl() {
-    let out_dir = if let Ok(dir) = env::var("CARGO_TARGET_DIR") {
-        PathBuf::from(dir)
-    } else {
-        let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-        PathBuf::from(manifest_dir).join("target")
-    }
-    .join("dnnl");
-    let dnnl_version = "3.1.1";
-    let dnnl_archive = format!("v{}.tar.gz", dnnl_version);
-    let dnnl_url = format!(
-        "https://github.com/oneapi-src/oneDNN/archive/refs/tags/{}",
-        dnnl_archive
-    );
-
-    let source_dir = out_dir.join(format!("oneDNN-{}", dnnl_version));
-
-    if !source_dir.exists() {
-        let response = ureq::get(&dnnl_url).call().expect("Failed to send request");
-
-        assert!(
-            response.status() == 200,
-            "Download failed with status {}",
-            response.status()
-        );
-
-        let mut body = response.into_body();
-        let reader = body.as_reader();
-
-        let mut gz = flate2::read::GzDecoder::new(reader);
-
-        let mut archive = tar::Archive::new(&mut gz);
-        archive.unpack(&out_dir).expect("Failed to extract archive");
-    }
-
-    let dst = Config::new(source_dir)
-        .define("ONEDNN_LIBRARY_TYPE", "STATIC")
-        .define("ONEDNN_BUILD_EXAMPLES", "OFF")
-        .define("ONEDNN_BUILD_TESTS", "OFF")
-        .define("ONEDNN_ENABLE_WORKLOAD", "INFERENCE")
-        .define("ONEDNN_ENABLE_PRIMITIVE", "CONVOLUTION;REORDER")
-        .define("ONEDNN_BUILD_GRAPH", "OFF")
-        .build();
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=static=dnnl");
-    println!("cargo:include={}/include", dst.display());
-}
-
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 enum Os {
     Win,
@@ -85,6 +37,7 @@ fn main() {
     println!("cargo:rerun-if-changed=include");
     println!("cargo:rerun-if-changed=CTranslate2");
     add_search_paths("LIBRARY_PATH");
+    println!("cargo:rerun-if-env-changed=CMAKE_INCLUDE_PATH");
     add_search_paths("CMAKE_LIBRARY_PATH");
 
     let mut cmake = Config::new("CTranslate2");
@@ -172,6 +125,14 @@ fn main() {
         println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
         cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
     }
+    let mut include_paths: Vec<PathBuf> = env::var("CMAKE_INCLUDE_PATH")
+        .as_ref()
+        .map(|v| env::split_paths(v).collect())
+        .unwrap_or_default();
+    let mut library_paths: Vec<PathBuf> = env::var("CMAKE_LIBRARY_PATH")
+        .as_ref()
+        .map(|v| env::split_paths(v).collect())
+        .unwrap_or_default();
 
     if cuda {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
@@ -228,9 +189,9 @@ fn main() {
         cmake.define("CMAKE_CXX_FLAGS", "-msse4.1");
     }
     if dnnl {
-        build_dnnl();
-        println!("cargo:rustc-link-lib=static=dnnl");
         cmake.define("WITH_DNNL", "ON");
+        include_paths.push(PathBuf::from(env::var("DEP_DNNL_INCLUDE_PATH").unwrap()));
+        library_paths.push(PathBuf::from(env::var("DEP_DNNL_LIBRARY_PATH").unwrap()));
     }
     if openmp_comp {
         println!("cargo:rustc-link-lib=gomp");
@@ -241,6 +202,19 @@ fn main() {
     }
     if flash_attention {
         cmake.define("WITH_FLASH_ATTN", "ON");
+    }
+
+    if !include_paths.is_empty() {
+        cmake.env(
+            "CMAKE_INCLUDE_PATH",
+            env::join_paths(include_paths).unwrap(),
+        );
+    }
+    if !library_paths.is_empty() {
+        cmake.env(
+            "CMAKE_LIBRARY_PATH",
+            env::join_paths(library_paths).unwrap(),
+        );
     }
 
     let ctranslate2 = cmake.build();

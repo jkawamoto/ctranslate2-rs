@@ -33,6 +33,7 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 anyhow = "1.0.98"
 cxx = { version = "1.0", features = ["c++17"] }
 intel-onemkl-prebuild = { version = "0.1", optional = true }
+onednn-src = { version = "0.1", optional = true }
 sentencepiece = { version = "0.11.3", optional = true }
 tokenizers = { version = "0.21", optional = true }
 
@@ -56,9 +57,6 @@ hound = { version = "3.5.1" }
 cmake = "0.1.54"
 cxx-build = "1.0"
 walkdir = "2.5.0"
-ureq = "3.0.12"
-flate2 = "1.1.2"
-tar = "0.4.44"
 
 [features]
 default = ["all-tokenizers", "os-defaults", "cuda-small-binary"]
@@ -81,7 +79,7 @@ tokenizers = ["dep:tokenizers"]
 # Features to select backends.
 mkl = ["dep:intel-onemkl-prebuild"]
 openblas = []
-dnnl = []
+dnnl = ["dep:onednn-src"]
 openmp-runtime-comp = []
 openmp-runtime-intel = []
 ruy = []
