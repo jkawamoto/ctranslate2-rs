@@ -1,10 +1,10 @@
 [package]
 name = "ct2rs"
-version = "0.9.7"
-authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
+version.workspace = true
+authors.workspace = true
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs"
-edition = "2021"
+edition.workspace = true
 include = [
     "/include",
     "/src",
@@ -25,8 +25,9 @@ include = [
     "!/CTranslate2/**/media",
 ]
 keywords = ["ctranslate2", "bindings", "llm", "whisper"]
-license = "MIT"
-repository = "https://github.com/jkawamoto/ctranslate2-rs"
+license.workspace = true
+readme = "../README.md"
+repository.workspace = true
 description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]

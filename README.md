@@ -49,13 +49,13 @@ The ct2rs crate has been tested and confirmed to work with the following models:
 - Whisper
 
 Please see the respective
-[examples](https://github.com/jkawamoto/ctranslate2-rs/tree/main/examples)
+[examples](ct2rs/examples)
 for each model.
 
 ## Stream API
 
 This crate also offers a streaming API that utilizes callback closures.
-Please refer to the [example code](https://github.com/jkawamoto/ctranslate2-rs/blob/main/examples/stream.rs)
+Please refer to the [example code](ct2rs/examples/stream.rs)
 for more information.
 
 ## Compilation
