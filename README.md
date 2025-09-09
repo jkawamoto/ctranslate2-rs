@@ -46,7 +46,8 @@ Setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might
 The above features require setting the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
 
 - `mkl`: Enables [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html) support
-- `openblas`: Enables [OpenBLAS](https://www.openblas.net/) support
+- `openblas`: Enables [OpenBLAS](https://www.openblas.net/) support (OpenBLAS needs to be installed manually
+  via [vcpkg](https://vcpkg.io) on Windows)
 - `dnnl`: Enables [oneDNN](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onednn.html) support
 - `ruy`: Enables [Ruy](https://github.com/google/ruy) support
 - `accelerate`: Enables [Apple Accelerate](https://developer.apple.com/documentation/accelerate) support (macOS only)

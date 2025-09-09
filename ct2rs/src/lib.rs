@@ -75,6 +75,9 @@
 #[cfg(feature = "mkl")]
 extern crate intel_onemkl_prebuild;
 
+#[cfg(feature = "openblas")]
+extern crate openblas_src;
+
 #[cfg(feature = "dnnl")]
 extern crate onednn_src;
 
