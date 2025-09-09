@@ -53,63 +53,24 @@ fn main() {
 
     let aarch64 = cfg!(target_arch = "aarch64");
 
-    let mut cuda = cfg!(feature = "cuda");
-    let mut cudnn = cfg!(feature = "cudnn");
-    let mut cuda_dynamic_loading = cfg!(feature = "cuda-dynamic-loading");
-    let mut mkl = cfg!(feature = "mkl");
-    let mut openblas = cfg!(feature = "openblas");
-    let mut ruy = cfg!(feature = "ruy");
-    let mut accelarate = cfg!(feature = "accelerate");
-    let mut tensor_parallel = cfg!(feature = "tensor-parallel");
-    let mut dnnl = cfg!(feature = "dnnl");
-    let mut openmp_comp = cfg!(feature = "openmp-runtime-comp");
-    let mut openmp_intel = cfg!(feature = "openmp-runtime-intel");
-    let mut msse4_1 = cfg!(feature = "msse4_1");
+    let cuda = cfg!(feature = "cuda");
+    let cudnn = cfg!(feature = "cudnn");
+    let cuda_dynamic_loading = cfg!(feature = "cuda-dynamic-loading");
+    let mkl = cfg!(feature = "mkl");
+    let openblas = cfg!(feature = "openblas");
+    let ruy = cfg!(feature = "ruy");
+    let accelarate = cfg!(feature = "accelerate");
+    let tensor_parallel = cfg!(feature = "tensor-parallel");
+    let dnnl = cfg!(feature = "dnnl");
+    let mut openmp_comp: bool = cfg!(feature = "openmp-runtime-comp");
+    let openmp_intel = cfg!(feature = "openmp-runtime-intel");
+    let msse4_1 = cfg!(feature = "msse4_1");
     if !openmp_intel && !openmp_comp && dnnl {
         if os == Os::Linux {
             openmp_comp = true;
         }
     }
     let flash_attention = cfg!(feature = "flash-attention");
-    if cfg!(feature = "os-defaults") {
-        match (os, aarch64) {
-            (Os::Win, false) => {
-                openmp_intel = true;
-                openmp_comp = false;
-                dnnl = true;
-                cuda = true;
-                cudnn = true;
-                cuda_dynamic_loading = true;
-                mkl = true;
-            }
-            (Os::Mac, true) => {
-                accelarate = true;
-                ruy = true;
-            }
-            (Os::Mac, false) => {
-                dnnl = true;
-                mkl = true;
-            }
-            (Os::Linux, true) => {
-                openmp_comp = true;
-                openmp_intel = false;
-                openblas = true;
-                ruy = true;
-            }
-            (Os::Linux, false) => {
-                dnnl = true;
-                openmp_comp = true;
-                openmp_intel = false;
-                cudnn = true;
-                cuda = true;
-                cuda_dynamic_loading = true;
-                mkl = true;
-                tensor_parallel = true;
-                msse4_1 = true;
-            }
-            _ => {}
-        }
-    }
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")

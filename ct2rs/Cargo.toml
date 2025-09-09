@@ -60,8 +60,7 @@ cxx-build = "1.0"
 walkdir = "2.5.0"
 
 [features]
-default = ["all-tokenizers", "os-defaults", "cuda-small-binary"]
-os-defaults = []
+default = ["all-tokenizers", "ruy", "cuda-small-binary"]
 whisper = [
     "dep:mel_spec",
     "dep:ndarray",
@@ -69,26 +68,30 @@ whisper = [
     "dep:serde_json",
     "all-tokenizers",
 ]
-flash-attention = []
-tensor-parallel = []
-cuda-dynamic-loading = ["cuda"]
 hub = ["dep:hf-hub"]
-all-tokenizers = ["sentencepiece", "tokenizers"]
-sentencepiece = ["dep:sentencepiece"]
-tokenizers = ["dep:tokenizers"]
 
 # Features to select backends.
+cuda = []
+cudnn = ["cuda"]
 mkl = ["dep:intel-onemkl-prebuild"]
 openblas = []
 dnnl = ["dep:onednn-src"]
-openmp-runtime-comp = []
-openmp-runtime-intel = []
 ruy = []
 accelerate = []
-cuda = []
-cuda-small-binary = []
+openmp-runtime-comp = []
+openmp-runtime-intel = []
 msse4_1 = []
-cudnn = ["cuda"]
+
+# Features to enable GPU functionality.
+flash-attention = []
+tensor-parallel = []
+cuda-dynamic-loading = ["cuda"]
+cuda-small-binary = []
+
+# Futures to select tokenizers.
+all-tokenizers = ["sentencepiece", "tokenizers"]
+sentencepiece = ["dep:sentencepiece"]
+tokenizers = ["dep:tokenizers"]
 
 [[example]]
 name = "bart"
