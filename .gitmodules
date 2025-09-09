@@ -1,3 +1,3 @@
 [submodule "CTranslate2"]
-	path = CTranslate2
+	path = ct2rs/CTranslate2
 	url = https://github.com/OpenNMT/CTranslate2.git

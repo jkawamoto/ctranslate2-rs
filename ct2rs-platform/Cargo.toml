@@ -1,0 +1,69 @@
+[package]
+name = "ct2rs-platform"
+version.workspace = true
+authors.workspace = true
+categories = ["api-bindings"]
+documentation = "https://docs.rs/ct2rs"
+edition.workspace = true
+keywords = ["ctranslate2", "bindings", "llm", "whisper"]
+license.workspace = true
+repository.workspace = true
+description = "Platform-specific default feature sets for ct2rs"
+
+[target.'cfg(target_os = "windows")'.dependencies.ct2rs]
+version = "=0.9.7"
+path = "../ct2rs"
+default-features = false
+features = ["openmp-runtime-intel", "dnnl", "cuda", "cudnn", "cuda-dynamic-loading", "mkl"]
+
+[target.'cfg(all(target_os = "macos", not(target_arch = "aarch64")))'.dependencies.ct2rs]
+version = "=0.9.7"
+path = "../ct2rs"
+default-features = false
+features = ["dnnl", "mkl"]
+
+[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies.ct2rs]
+version = "=0.9.7"
+path = "../ct2rs"
+default-features = false
+features = ["accelerate", "ruy"]
+
+[target.'cfg(all(target_os = "linux", not(target_arch = "aarch64")))'.dependencies.ct2rs]
+version = "=0.9.7"
+path = "../ct2rs"
+default-features = false
+features = ["dnnl", "openmp-runtime-comp", "cuda", "cudnn", "cuda-dynamic-loading", "mkl", "tensor-parallel", "msse4_1"]
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies.ct2rs]
+version = "=0.9.7"
+path = "../ct2rs"
+default-features = false
+features = ["openmp-runtime-comp", "openblas", "ruy"]
+
+[features]
+default = ["all-tokenizers", "cuda-small-binary"]
+whisper = ["ct2rs/whisper"]
+hub = ["ct2rs/hub"]
+
+# Features to select backends.
+mkl = ["ct2rs/mkl"]
+openblas = ["ct2rs/openblas"]
+dnnl = ["ct2rs/dnnl"]
+openmp-runtime-comp = ["ct2rs/openmp-runtime-comp"]
+openmp-runtime-intel = ["ct2rs/openmp-runtime-intel"]
+ruy = ["ct2rs/ruy"]
+accelerate = ["ct2rs/accelerate"]
+cuda = ["ct2rs/cuda"]
+msse4_1 = ["ct2rs/msse4_1"]
+cudnn = ["ct2rs/cudnn"]
+
+# Features to enable GPU functionality.
+flash-attention = ["ct2rs/flash-attention"]
+tensor-parallel = ["ct2rs/tensor-parallel"]
+cuda-dynamic-loading = ["ct2rs/cuda-dynamic-loading"]
+cuda-small-binary = ["ct2rs/cuda-small-binary"]
+
+# Futures to select tokenizers.
+all-tokenizers = ["sentencepiece", "tokenizers"]
+sentencepiece = ["ct2rs/sentencepiece"]
+tokenizers = ["ct2rs/tokenizers"]
