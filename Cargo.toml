@@ -1,0 +1,10 @@
+[workspace]
+members = ["ct2rs", "ct2rs-platform"]
+resolver = "2"
+
+[workspace.package]
+version = "0.9.7"
+authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
