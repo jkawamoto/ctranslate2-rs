@@ -6,31 +6,91 @@
 [![Build](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml)
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
-At this time, it has only been tested and confirmed to work on macOS and Linux.
-Windows support is available experimentally,
-but it has not been thoroughly tested and may have limitations or require additional configuration.
+
+## Usage
+
+Add this crate to your `Cargo.toml` with selecting the backends you want to use as the features:
+
+```toml
+[dependencies]
+ct2rs = { version = "0.9.7", features = ["cuda", "dnnl", "mkl"] }
+```
+
+Or you can use platform-specific default features by using the `ct2rs-platform` crate:
+
+```toml
+[dependencies]
+ct2rs = { version = "0.9.7", package = "ct2rs-platform" }
+```
+
+If you want [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support,
+you need to enable the `whisper` feature.
+
+See below for more details about the available features.
+
+### Prerequisites
+
+The installation of [CMake](https://cmake.org/) is required to compile the library.
+
+### Additional notes for Windows
+
+Setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might be required.
 
 ## Features
 
-- openmp-runtime-comp
-- mkl
-- openblas
-- dnnl
-- ruy
-- accelerate
-- cuda
-  - cudnn
-  - cuda-dynamic-loading
-  - cuda-small-binary
-- os-defaults
-- msse4_1
-- whisper
-- flash-attention
-- tensor-parallel
-- hub
-- all-tokenizers
-  - sentencepiece
-  - tokenizers
+### Backend Futures
+
+- `cuda`: Enables CUDA support
+- `cudnn`: Enables cuDNN support
+
+The above features require setting the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
+
+- `mkl`: Enables [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html) support
+- `openblas`: Enables [OpenBLAS](https://www.openblas.net/) support
+- `dnnl`: Enables [oneDNN](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onednn.html) support
+- `ruy`: Enables [Ruy](https://github.com/google/ruy) support
+- `accelerate`: Enables [Apple Accelerate](https://developer.apple.com/documentation/accelerate) support (macOS only)
+- `openmp-runtime-comp`: Enables OpenMP runtime support
+- `openmp-runtime-intel`: Enables OpenMP runtime support for Intel compilers
+- `msse4_1`: Enables MSSE4.1 support
+
+Multiple features can be enabled at the same time.
+
+By default, the `ruy` feature is enabled.
+
+If you want to use platform-specific default features, use the `ct2rs-platform` crate.
+
+### GPU-Specific Features
+
+- `flash-attention`:
+  Enables [Flash Attention](https://huggingface.co/docs/text-generation-inference/conceptual/flash_attention)
+- `tensor-parallel`:
+  Enables [Tensor Parallelism](https://huggingface.co/docs/text-generation-inference/conceptual/tensor_parallelism)
+- `cuda-dynamic-loading`: Enables dynamic loading of CUDA libraries at runtime instead of static linking (requires
+  CUDA >= 11)
+- `cuda-small-binary`: Reduces binary size by compressing device code
+
+### Tokenizer Features
+
+- `sentencepiece`: Enables [SentencePiece](https://github.com/google/sentencepiece) tokenizer support
+- `tokenizers`: Enables HuggingFace's [Tokenizers](https://github.com/huggingface/tokenizers) library support
+- `all-tokenizers`: Enables both `sentencepiece` and `tokenizers` support
+
+### Additional Features
+
+- `whisper`: Enables [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support
+- `hub`: Enables [HuggingFace Hub](https://huggingface.co/docs/hub) integration
+
+### Platform Specific Features
+
+When `ct2rs-platform` is used, the following features are automatically selected based on the platform:
+
+- Windows: `openmp-runtime-intel`, `dnnl`, `cuda`, `cudnn`, `cuda-dynamic-loading`, `mkl`
+- Intel MacOS: `dnnl`, `mkl`
+- Apple Silicon MacOS: `accelerate`, `ruy`
+- Linux (non-ARM): `dnnl`, `openmp-runtime-comp`, `cuda`, `cudnn`, `cuda-dynamic-loading`, `mkl`, `tensor-parallel`,
+  `msse4_1`
+- Linux (ARM): `openmp-runtime-comp`, `openblas`, `ruy`
 
 ## Supported Models
 
@@ -57,30 +117,6 @@ for each model.
 This crate also offers a streaming API that utilizes callback closures.
 Please refer to the [example code](ct2rs/examples/stream.rs)
 for more information.
-
-## Compilation
-
-If you plan to use GPU acceleration, CUDA and cuDNN are available.
-Please enable the `cuda` or `cudnn` feature and set the `CUDA_TOOLKIT_ROOT_DIR` environment variable appropriately.
-
-Several backends are available for use:
-[oneDNN](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onednn.html)
-[OpenBLAS](https://www.openblas.net/),
-[Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html),
-[Ruy](https://github.com/google/ruy),
-and [Apple Accelerate](https://developer.apple.com/documentation/accelerate).
-
-- **oneDNN**: To use oneDNN, enable the `dnnl` feature
-- **OpenBLAS**: To use OpenBLAS, enable the `openblas` feature and add the path to the directory
-  containing `libopenblas.a` to the `LIBRARY_PATH` environment variable.
-- **Intel MKL**: To use Intel MKL, enable the `mkl` feature.
-- **Ruy**: To use Ruy, enable the `ruy` feature.
-- **Apple Accelerate**: Available only on macOS, enable the `accelerate` feature to use Apple Accelerate.
-
-The installation of CMake is required to compile the library.
-
-**Additional notes for Windows**:
-Setting the environment variable `RUSTFLAGS=-C target-feature=+crt-static` might be required.
 
 ## Model Conversion for CTranslate2
 
