@@ -27,7 +27,6 @@ jobs:
       matrix:
         os: [macos-13, macos-14]
         backend: [ruy, accelerate]
-        feature: ["", "flash-attention"]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -44,23 +43,22 @@ jobs:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          key: ${{ matrix.backend }}
           cache-on-failure: true
       - uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: macos-test-data
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
 
   build-linux:
     strategy:
       fail-fast: false
       matrix:
         backend: [ruy, mkl, openblas, dnnl]
-        feature: ["", "flash-attention"]
     runs-on: ubuntu-latest
     env:
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
@@ -79,16 +77,16 @@ jobs:
           toolchain: nightly
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          key: ${{ matrix.backend }}
           cache-on-failure: true
       - uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: linux-test-data
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
 
   build-windows:
@@ -96,7 +94,6 @@ jobs:
       fail-fast: false
       matrix:
         backend: [openblas, ruy, dnnl, mkl]
-        feature: ["", "flash-attention"]
     runs-on: windows-latest
     steps:
       - uses: actions/cache@v4
@@ -115,14 +112,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.backend }}-${{ matrix.feature }}
+          key: ${{ matrix.backend }}
           cache-on-failure: true
       - uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: windows-test-data
       - name: Build
-        run: cargo build -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv --no-default-features -F "whisper,hub,${{ matrix.backend }},${{ matrix.feature }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
