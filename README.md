@@ -150,6 +150,8 @@ ensure that you include the required attributions and license texts for any comp
 that were used by your build configuration and target platform.
 The exact set of components used can depend on enabled features, target architecture, and toolchain.
 
+The published crate also includes the following libraries:
+
 BSD-2-Clause:
 
 - [cpuinfo](https://github.com/pytorch/cpuinfo)
