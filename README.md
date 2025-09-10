@@ -13,14 +13,14 @@ Add this crate to your `Cargo.toml` with selecting the backends you want to use 
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.7", features = ["cuda", "dnnl", "mkl"] }
+ct2rs = { version = "0.9.8", features = ["cuda", "dnnl", "mkl"] }
 ```
 
 Or you can use platform-specific default features by using the `ct2rs-platform` crate:
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.7", package = "ct2rs-platform" }
+ct2rs = { version = "0.9.8", package = "ct2rs-platform" }
 ```
 
 If you want [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support,

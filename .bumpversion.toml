@@ -1,9 +1,24 @@
 [tool.bumpversion]
-current_version = "0.9.7"
+current_version = "0.9.8"
 commit = true
 tag = false
 
 [[tool.bumpversion.files]]
 filename = "Cargo.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "ct2rs-platform/Cargo.toml"
+search = 'version = "={current_version}"'
+replace = 'version = "={new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "ct2rs-platform/README.md"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
