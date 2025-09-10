@@ -30,14 +30,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Install OpenBLAS
-        if: ${{ matrix.backend == 'openblas' }}
-        run: |
-          brew install openblas
-          PREFIX=$(brew --prefix openblas)
-          echo "LIBRARY_PATH=$PREFIX/lib:$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$PREFIX/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CMAKE_PREFIX_PATH=$PREFIX:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -64,11 +56,6 @@ jobs:
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
 
     steps:
-      - name: Install OpenBLAS
-        if: ${{ matrix.backend == 'openblas' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libclang-dev libopenblas-dev
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -104,6 +91,7 @@ jobs:
         if: ${{ matrix.backend == 'openblas' }}
         run: |
           vcpkg install openblas:x64-windows-static
+          vcpkg integrate install
           echo "CMAKE_INCLUDE_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/include/openblas;$env:CMAKE_INCLUDE_PATH" >> $env:GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/lib;$env:CMAKE_LIBRARY_PATH" >> $env:GITHUB_ENV
       - uses: actions/checkout@v4
