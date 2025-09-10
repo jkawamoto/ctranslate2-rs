@@ -75,6 +75,7 @@ whisper = [
     "all-tokenizers",
 ]
 hub = ["dep:hf-hub"]
+system = []
 
 # Features to select backends.
 cuda = []
