@@ -133,8 +133,11 @@ fn main() {
         cmake.env("MKLROOT", env::var("DEP_MKL_ROOT").unwrap());
     }
     if openblas {
-        println!("cargo:rustc-link-lib=static=openblas");
         cmake.define("WITH_OPENBLAS", "ON");
+        if os != Os::Win {
+            include_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_INCLUDE").unwrap()));
+            library_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_LIBRARY").unwrap()));
+        }
     }
     if ruy {
         cmake.define("WITH_RUY", "ON");
