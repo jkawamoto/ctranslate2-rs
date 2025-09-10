@@ -13,14 +13,14 @@ Add this crate to your `Cargo.toml` with selecting the backends you want to use 
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.7", features = ["cuda", "dnnl", "mkl"] }
+ct2rs = { version = "0.9.8", features = ["cuda", "dnnl", "mkl"] }
 ```
 
 Or you can use platform-specific default features by using the `ct2rs-platform` crate:
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.7", package = "ct2rs-platform" }
+ct2rs = { version = "0.9.8", package = "ct2rs-platform" }
 ```
 
 If you want [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support,
@@ -136,3 +136,37 @@ the [CTranslate2's docs](https://opennmt.net/CTranslate2/guides/transformers.htm
 ## License
 
 This application is released under the MIT License. For details, see the [LICENSE](LICENSE) file.
+
+[CTranslate2](https://github.com/OpenNMT/CTranslate2) (which this crate builds and links to)
+is licensed under MIT License.
+If you redistribute binaries or source that include CTranslate2,
+you must comply with the MIT terms, including preserving license and notice files.
+For details, see CTranslate2’s upstream LICENSE/NOTICE.
+
+The published crate may build and/or redistribute artifacts originating from the following third-party projects.
+Each component remains under its own license, which applies in addition to this crate’s MIT license.
+When redistributing your software,
+ensure that you include the required attributions and license texts for any components
+that were used by your build configuration and target platform.
+The exact set of components used can depend on enabled features, target architecture, and toolchain.
+
+BSD-2-Clause:
+
+- [cpuinfo](https://github.com/pytorch/cpuinfo)
+
+BSD-3-Clause:
+
+- [CUTLASS](https://github.com/NVIDIA/cutlass)
+- [GoogleTest](https://github.com/google/googletest)
+- [cub](https://github.com/NVIDIA/cub)
+
+Apache License 2.0:
+
+- [cpu_features](https://github.com/google/cpu_features)
+- [The ruy matrix multiplication library](https://github.com/google/ruy)
+- [Thrust: Code at the speed of light](https://github.com/NVIDIA/thrust)
+
+MIT License:
+
+- [cxxopts](https://github.com/jarro2783/cxxopts)
+- [spdlog](https://github.com/gabime/spdlog)

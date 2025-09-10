@@ -31,17 +31,17 @@ repository.workspace = true
 description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
-anyhow = "1.0.98"
+anyhow = "1.0"
 cxx = { version = "1.0", features = ["c++17"] }
 intel-onemkl-prebuild = { version = "0.1", optional = true }
 onednn-src = { version = "0.1", optional = true }
-sentencepiece = { version = "0.11.3", optional = true }
-tokenizers = { version = "0.21", optional = true }
+sentencepiece = { version = "0.12", optional = true }
+tokenizers = { version = "0.22", optional = true }
 
 # Dependencies for Whisper model
 mel_spec = { version = "0.3", optional = true }
-ndarray = { version = "0.16.1", optional = true }
-serde = { version = "1.0.219", features = ["derive"], optional = true }
+ndarray = { version = "0.16", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
 
 # Dependencies for Hugging Face integration
@@ -55,15 +55,15 @@ openblas-src = { version = "0.10.13", features = ["static", "system"], optional 
 
 [dev-dependencies]
 clap = { version = "4.5", features = ["derive"] }
-rand = "0.9.1"
+rand = "0.9"
 
 # Dependencies for Whisper example
 hound = { version = "3.5.1" }
 
 [build-dependencies]
-cmake = "0.1.54"
+cmake = "0.1"
 cxx-build = "1.0"
-walkdir = "2.5.0"
+walkdir = "2.5"
 
 [features]
 default = ["all-tokenizers", "ruy", "cuda-small-binary"]
