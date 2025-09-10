@@ -87,7 +87,8 @@ inline Vec<TranslationResult> convert_results(const std::vector<ctranslate2::Tra
     Vec<TranslationResult> res;
     for (const auto& item : results) {
         res.push_back(TranslationResult {
-            to_rust<VecString>(item.hypotheses), to_rust(item.scores),
+            to_rust<VecString>(item.hypotheses),
+            to_rust(item.scores),
             // to_rust(item.attention),
         });
     }
