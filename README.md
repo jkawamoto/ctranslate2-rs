@@ -83,6 +83,8 @@ If you want to use platform-specific default features, use the `ct2rs-platform` 
 
 - `whisper`: Enables [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support
 - `hub`: Enables [HuggingFace Hub](https://huggingface.co/docs/hub) integration
+- `system`: Skip compiling CTranslate2 and use the system's pre-installed shared library instead (requires setting the
+  appropriate environment variables to locate the CTranslate2 shared library)
 
 ### Platform Specific Features
 

@@ -44,6 +44,7 @@ features = ["openmp-runtime-comp", "openblas", "ruy"]
 default = ["all-tokenizers", "cuda-small-binary"]
 whisper = ["ct2rs/whisper"]
 hub = ["ct2rs/hub"]
+system = ["ct2rs/system"]
 
 # Features to select backends.
 mkl = ["ct2rs/mkl"]
