@@ -22,6 +22,8 @@ struct VecStr;
 struct VecDetectionResult;
 struct WhisperOptions;
 struct WhisperGenerationResult;
+struct WhisperTokenAlignment;
+struct WhisperAlignmentResult;
 
 class Whisper {
 private:
@@ -31,11 +33,23 @@ public:
     Whisper(std::unique_ptr<ctranslate2::models::Whisper> impl)
         : impl(std::move(impl)) { }
 
+    std::unique_ptr<StorageView>
+    encode(const StorageView& features, const bool to_cpu) const;
+
     rust::Vec<WhisperGenerationResult>
     generate(const StorageView& features, const rust::Slice<const VecStr> prompts, const WhisperOptions& options) const;
 
     rust::Vec<VecDetectionResult>
     detect_language(const StorageView& features) const;
+
+    rust::Vec<WhisperAlignmentResult>
+    align(
+        const StorageView& features, 
+        const rust::Slice<const size_t> start_sequence,
+        const rust::Slice<const rust::Vec<size_t>> text_tokens,
+        const rust::Slice<const size_t> num_frames,
+        int64_t median_filter_width
+    ) const;
 
     inline bool is_multilingual() const {
         return impl->is_multilingual();
