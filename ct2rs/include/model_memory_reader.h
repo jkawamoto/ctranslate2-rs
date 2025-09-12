@@ -39,7 +39,7 @@ public:
         return rust::String(model_id_cxx);
     }
 
-    void register_file(rust::Str filename, rust::Slice<const u_char> content) {
+    void register_file(rust::Str filename, rust::Slice<const uint8_t> content) {
         std::string filename_cxx(filename.begin(), filename.end());
         std::string content_cxx(content.begin(), content.end());
         impl->register_file(filename_cxx, content_cxx);
