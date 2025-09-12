@@ -391,7 +391,6 @@ impl Whisper {
             .map_err(|e| anyhow!("failed to detect language: {e}"))
     }
 
-
     /// Align tokens from generation result with audio using dynamic time warping
     /// alignment of the decoder attention dimensions that highly correlate with
     /// token time.

@@ -98,12 +98,12 @@ Vec<WhisperAlignmentResult> Whisper::align(
     int64_t median_filter_width
 ) const {
     std::vector<size_t> start_sequence_cxx(start_sequence.begin(), start_sequence.end());
-    
+
     std::vector<std::vector<size_t>> text_tokens_cxx;
     for (auto& seq_text_tokens : text_tokens) {
         text_tokens_cxx.emplace_back(seq_text_tokens.begin(), seq_text_tokens.end());
     }
-    
+
     std::vector<size_t> num_frames_cxx(num_frames.begin(), num_frames.end());
 
     auto futures = impl->align(
