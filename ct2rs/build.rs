@@ -42,7 +42,9 @@ fn main() {
 
     let mut cmake = Config::new("CTranslate2");
     match env::var("CMAKE_PARALLEL") {
-        Ok(job_n) => { cmake.build_arg("-j").build_arg(job_n); },
+        Ok(job_n) => {
+            cmake.build_arg("-j").build_arg(job_n);
+        }
         Err(env::VarError::NotPresent) => (),
         Err(err) => panic!("CMAKE_PARALLEL format error: {:?}", err),
     }
