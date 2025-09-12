@@ -80,16 +80,15 @@ inline std::unique_ptr<Whisper> whisper(
 }
 
 inline std::unique_ptr<Whisper> whisper_from_memory(
-    ModelMemoryReader &model_reader,
+    ModelMemoryReader& model_reader,
     std::unique_ptr<Config> config
 ) {
-    ctranslate2::models::ModelLoader model_loader = 
-    ctranslate2::models::ModelLoader(model_reader.get_impl());
+    ctranslate2::models::ModelLoader model_loader = ctranslate2::models::ModelLoader(model_reader.get_impl());
     model_loader.device = config->device;
     model_loader.compute_type = config->compute_type;
     model_loader.device_indices = std::vector<int>(config->device_indices.begin(), config->device_indices.end());
     model_loader.tensor_parallel = config->tensor_parallel;
-    
+
     return std::make_unique<Whisper>(
         std::make_unique<ctranslate2::models::Whisper>(
             model_loader,

@@ -22,16 +22,11 @@ pub(crate) mod ffi {
 
         type ModelMemoryReader;
 
-        fn model_memory_reader(
-            model_name: &str,
-        ) -> Result<UniquePtr<ModelMemoryReader>>;
+        fn model_memory_reader(model_name: &str) -> Result<UniquePtr<ModelMemoryReader>>;
 
         fn get_model_id(self: &ModelMemoryReader) -> String;
 
-        fn register_file(self: Pin<&mut ModelMemoryReader>, 
-            filename: &str, 
-            content: &[u8]
-        );
+        fn register_file(self: Pin<&mut ModelMemoryReader>, filename: &str, content: &[u8]);
     }
 }
 
@@ -69,11 +64,7 @@ impl ModelMemoryReader {
 
 impl Debug for ModelMemoryReader {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "ModelMemoryReader {{{} }}",
-            self.model_name,
-        )
+        write!(f, "ModelMemoryReader {{{} }}", self.model_name)
     }
 }
 
@@ -94,8 +85,7 @@ mod tests {
 
     #[test]
     fn test_model_memory_reader() {
-        let mut reader = ModelMemoryReader::new("whisper")
-            .expect("Constructor failed.");
+        let mut reader = ModelMemoryReader::new("whisper").expect("Constructor failed.");
         let bytes = vec![65_u8; 32];
         reader.register_file("model.bytes", &bytes);
     }

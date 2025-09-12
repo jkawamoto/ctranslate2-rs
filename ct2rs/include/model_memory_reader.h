@@ -21,8 +21,8 @@ private:
     std::shared_ptr<ctranslate2::models::ModelMemoryReader> impl;
 
 public:
-    ModelMemoryReader(std::shared_ptr<ctranslate2::models::ModelMemoryReader> ct2_reader) 
-        : impl(std::move(ct2_reader)) {}
+    ModelMemoryReader(std::shared_ptr<ctranslate2::models::ModelMemoryReader> ct2_reader)
+        : impl(std::move(ct2_reader)) { }
 
     ModelMemoryReader(rust::Str model_name) {
         impl = std::make_shared<ctranslate2::models::ModelMemoryReader>(
