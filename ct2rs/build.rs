@@ -41,6 +41,11 @@ fn main() {
     add_search_paths("CMAKE_LIBRARY_PATH");
 
     let mut cmake = Config::new("CTranslate2");
+    match env::var("CMAKE_PARALLEL") {
+        Ok(job_n) => { cmake.build_arg("-j").build_arg(job_n); },
+        Err(env::VarError::NotPresent) => (),
+        Err(err) => panic!("CMAKE_PARALLEL format error: {:?}", err),
+    }
     let os = if cfg!(target_os = "windows") {
         Os::Win
     } else if cfg!(target_os = "macos") {
@@ -98,8 +103,8 @@ fn main() {
     if cuda {
         let cuda = cuda_root().expect("CUDA_TOOLKIT_ROOT_DIR is not specified");
         cmake.define("WITH_CUDA", "ON");
-        cmake.define("CUDA_TOOLKIT_ROOT_DIR", "Common");
-        cmake.define("CUDA_ARCH_LIST", &cuda);
+        cmake.define("CUDA_TOOLKIT_ROOT_DIR", &cuda);
+        cmake.define("CUDA_ARCH_LIST", "Common");
         if cfg!(feature = "cuda-small-binary") {
             cmake.define("CUDA_NVCC_FLAGS", "-Xfatbin=-compress-all");
         }
