@@ -44,7 +44,7 @@ public:
 
     rust::Vec<WhisperAlignmentResult>
     align(
-        const StorageView& features, 
+        const StorageView& features,
         const rust::Slice<const size_t> start_sequence,
         const rust::Slice<const rust::Vec<size_t>> text_tokens,
         const rust::Slice<const size_t> num_frames,

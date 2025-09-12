@@ -91,7 +91,7 @@ Vec<VecDetectionResult> Whisper::detect_language(const StorageView& features) co
 }
 
 Vec<WhisperAlignmentResult> Whisper::align(
-    const StorageView& features, 
+    const StorageView& features,
     const Slice<const size_t> start_sequence,
     const Slice<const Vec<size_t>> text_tokens,
     const Slice<const size_t> num_frames,
@@ -100,7 +100,7 @@ Vec<WhisperAlignmentResult> Whisper::align(
     std::vector<size_t> start_sequence_cxx(start_sequence.begin(), start_sequence.end());
     
     std::vector<std::vector<size_t>> text_tokens_cxx;
-    for (auto& seq_text_tokens: text_tokens) {
+    for (auto& seq_text_tokens : text_tokens) {
         text_tokens_cxx.emplace_back(seq_text_tokens.begin(), seq_text_tokens.end());
     }
     
@@ -111,11 +111,11 @@ Vec<WhisperAlignmentResult> Whisper::align(
     );
 
     Vec<WhisperAlignmentResult> res;
-    for (auto& future: futures) {
+    for (auto& future : futures) {
         const auto& result_cxx = future.get();
 
         WhisperAlignmentResult result;
-        for (auto& token_alignment_cxx: result_cxx.alignments) {
+        for (auto& token_alignment_cxx : result_cxx.alignments) {
             result.alignments.push_back(
                 WhisperTokenAlignment { token_alignment_cxx.first, token_alignment_cxx.second }
             );

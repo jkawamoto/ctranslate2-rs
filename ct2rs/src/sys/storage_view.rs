@@ -64,16 +64,18 @@ impl<'a> StorageView<'a> {
     }
 
     /// Create a StorageView from an ffi::StorageView, returned
-    /// as output from CTranslate2, where the underlying data is 
-    /// owned by the ffi::StorageView and will thus live for the lifetime 
+    /// as output from CTranslate2, where the underlying data is
+    /// owned by the ffi::StorageView and will thus live for the lifetime
     /// of the ffi::StorageView. Panics if this is not the case.
     /// The rust StorageView's lifetime is therefore 'static.
     pub(crate) fn from_cxx(ptr: UniquePtr<ffi::StorageView>) -> StorageView<'static> {
-        assert!(ptr.owns_data(), 
-            "StorageView::from_cxx called with ffi::StorageView that does not own its data.");
+        assert!(
+            ptr.owns_data(),
+            "StorageView::from_cxx called with ffi::StorageView that does not own its data."
+        );
         StorageView {
-            ptr, 
-            phantom: PhantomData
+            ptr,
+            phantom: PhantomData,
         }
     }
 

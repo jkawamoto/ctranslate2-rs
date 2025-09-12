@@ -21,7 +21,9 @@ use super::{
 };
 
 use self::ffi::VecDetectionResult;
-pub use self::ffi::{DetectionResult, WhisperOptions, WhisperAlignmentResult, WhisperTokenAlignment};
+pub use self::ffi::{
+    DetectionResult, WhisperAlignmentResult, WhisperOptions, WhisperTokenAlignment,
+};
 
 #[cxx::bridge]
 mod ffi {
@@ -131,8 +133,8 @@ mod ffi {
 
         fn encode(
             self: &Whisper,
-            features: &StorageView, 
-            to_cpu: bool
+            features: &StorageView,
+            to_cpu: bool,
         ) -> Result<UniquePtr<StorageView>>;
 
         fn generate(
@@ -336,27 +338,23 @@ impl Whisper {
     }
 
     /// Pass features through the encoder network, returning the encoder output.
-    /// 
+    ///
     /// # Arguments
     /// * `features` – A [`StorageView`] consisting of Mel spectrogram of the audio,
-    ///   as a float array with shape `[batch_size, n_mels, chunk_length]` 
+    ///   as a float array with shape `[batch_size, n_mels, chunk_length]`
     /// * `to_cpu` – Copy output to CPU memory.
     /// # Returns
-    /// Returns a `Result` containing a [`StorageView`] of the encoder output, 
+    /// Returns a `Result` containing a [`StorageView`] of the encoder output,
     /// or an error if the encoder forward pass fails.
-    pub fn encode(
-        &self, 
-        features: &StorageView, 
-        to_cpu: bool
-    ) -> Result<StorageView<'static>> {
-        Ok( StorageView::from_cxx(self.ptr.encode(features, to_cpu)?) )
+    pub fn encode(&self, features: &StorageView, to_cpu: bool) -> Result<StorageView<'static>> {
+        Ok(StorageView::from_cxx(self.ptr.encode(features, to_cpu)?))
     }
 
     /// Encodes the input features and generates from the given prompt.
     ///
     /// # Arguments
     /// * `features` – A [`StorageView`] consisting of Mel spectrogram of the audio,
-    ///   as a float array with shape `[batch_size, n_mels, chunk_length]` 
+    ///   as a float array with shape `[batch_size, n_mels, chunk_length]`
     ///   OR the encoder output of those features returned by encode().
     ///   [`n_mels`][Whisper::n_mels] method gives the expected `n_mels` in the shape.
     /// * `prompts` – Batch of initial string tokens.
@@ -395,9 +393,9 @@ impl Whisper {
 
 
     /// Align tokens from generation result with audio using dynamic time warping
-    /// alignment of the decoder attention dimensions that highly correlate with 
+    /// alignment of the decoder attention dimensions that highly correlate with
     /// token time.
-    /// 
+    ///
     /// # Arguments
     /// - `encoder_output` - [`StorageView`] consisting of encoder output created
     ///   by encode() and provided to generate().
@@ -406,7 +404,7 @@ impl Whisper {
     /// * `num_frames` - Number of encoder frames in each sequence of the batch.
     /// * `median_filter_width` - Width of the median filter used by the DTW
     ///   algorithm.
-    /// 
+    ///
     /// # Returns
     /// Returns a vector of [`ffi::WhisperGenerationResult`], one for each sequence
     /// of the batch, or an error if the alignment fails.
@@ -418,7 +416,13 @@ impl Whisper {
         num_frames: &[usize],
         median_filter_width: i64,
     ) -> Result<Vec<ffi::WhisperAlignmentResult>> {
-        Ok( self.ptr.align(encoder_output, start_sequence, text_tokens, num_frames, median_filter_width)? )
+        Ok(self.ptr.align(
+            encoder_output,
+            start_sequence,
+            text_tokens,
+            num_frames,
+            median_filter_width,
+        )?)
     }
 
     /// Returns `true` if this model is multilingual.
