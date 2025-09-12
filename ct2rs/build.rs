@@ -187,6 +187,7 @@ fn main() {
     cxx_build::bridges([
         "src/sys/types.rs",
         "src/sys/config.rs",
+        "src/sys/model_memory_reader.rs",
         "src/sys/scoring.rs",
         "src/sys/translator.rs",
         "src/sys/generator.rs",
