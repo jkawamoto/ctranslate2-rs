@@ -328,7 +328,7 @@ impl Whisper {
     /// occurs during initialization, the function will return an error wrapped in the `Result`.
     pub fn new_from_memory(
         model_memory_reader: &mut ModelMemoryReader,
-        config: Config
+        config: Config,
     ) -> Result<Self> {
         Ok(Self {
             model: OsString::from(model_memory_reader.get_model_id()),
