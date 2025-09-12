@@ -47,6 +47,7 @@
 
 pub use config::*;
 pub use generator::*;
+pub use model_memory_reader::*;
 pub use scoring::*;
 pub use storage_view::*;
 pub use translator::*;
@@ -55,6 +56,7 @@ pub use whisper::*;
 
 mod config;
 mod generator;
+mod model_memory_reader;
 mod scoring;
 mod storage_view;
 mod translator;
