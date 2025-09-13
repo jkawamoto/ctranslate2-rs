@@ -31,15 +31,7 @@ enum Os {
     Unknown,
 }
 
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/sys");
-    println!("cargo:rerun-if-changed=include");
-    println!("cargo:rerun-if-changed=CTranslate2");
-    add_search_paths("LIBRARY_PATH");
-    println!("cargo:rerun-if-env-changed=CMAKE_INCLUDE_PATH");
-    add_search_paths("CMAKE_LIBRARY_PATH");
-
+fn build_ctranslate2() {
     let mut cmake = Config::new("CTranslate2");
     match env::var("CMAKE_PARALLEL") {
         Ok(job_n) => {
@@ -190,6 +182,22 @@ fn main() {
 
     let ctranslate2 = cmake.build();
     link_libraries(ctranslate2.join("build"));
+}
+
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/sys");
+    println!("cargo:rerun-if-changed=include");
+    println!("cargo:rerun-if-changed=CTranslate2");
+    add_search_paths("LIBRARY_PATH");
+    println!("cargo:rerun-if-env-changed=CMAKE_INCLUDE_PATH");
+    add_search_paths("CMAKE_LIBRARY_PATH");
+
+    if cfg!(feature = "system") {
+        println!("cargo:rustc-link-lib=ctranslate2");
+    } else {
+        build_ctranslate2()
+    }
 
     cxx_build::bridges([
         "src/sys/types.rs",
