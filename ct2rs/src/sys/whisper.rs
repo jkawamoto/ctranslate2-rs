@@ -25,6 +25,8 @@ pub use self::ffi::{
     DetectionResult, WhisperAlignmentResult, WhisperOptions, WhisperTokenAlignment,
 };
 
+use crate::sys::{model_memory_reader, ModelMemoryReader};
+
 #[cxx::bridge]
 mod ffi {
     /// Options for whisper generation.
@@ -125,6 +127,8 @@ mod ffi {
 
         type Config = super::config::ffi::Config;
 
+        type ModelMemoryReader = super::model_memory_reader::ffi::ModelMemoryReader;
+
         type StorageView = super::storage_view::ffi::StorageView;
 
         type Whisper;
@@ -136,6 +140,11 @@ mod ffi {
             features: &StorageView,
             to_cpu: bool,
         ) -> Result<UniquePtr<StorageView>>;
+
+       fn whisper_from_memory(
+            model_memory_reader: Pin<&mut ModelMemoryReader>,
+            config: UniquePtr<Config>,
+        ) -> Result<UniquePtr<Whisper>>;
 
         fn generate(
             self: &Whisper,
@@ -348,6 +357,29 @@ impl Whisper {
     /// or an error if the encoder forward pass fails.
     pub fn encode(&self, features: &StorageView, to_cpu: bool) -> Result<StorageView<'static>> {
         Ok(StorageView::from_cxx(self.ptr.encode(features, to_cpu)?))
+    }
+
+    /// Creates and initializes an instance of `Whisper`.
+    ///
+    /// Same as new(), but uses file data stored in a `ModelMemoryReader`
+    /// instead of reading files from disk.
+    ///
+    /// # Arguments
+    /// * `model_memory_reader`: A `ModelMemoryReader` with all files already registered.
+    /// * `config` - A reference to a [`Config`] structure that specifies various settings
+    ///   and configurations for the `Whisper`.
+    ///
+    /// # Returns
+    /// Returns a `Result` that, if successful, contains the initialized `Whisper`. If an error
+    /// occurs during initialization, the function will return an error wrapped in the `Result`.
+    pub fn new_from_memory(
+        model_memory_reader: &mut ModelMemoryReader,
+        config: Config,
+    ) -> Result<Self> {
+        Ok(Self {
+            model: OsString::from(model_memory_reader.get_model_id()),
+            ptr: ffi::whisper_from_memory(model_memory_reader.pin_mut_impl(), config.to_ffi())?,
+        })
     }
 
     /// Encodes the input features and generates from the given prompt.

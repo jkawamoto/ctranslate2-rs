@@ -15,6 +15,7 @@
 #include "rust/cxx.h"
 
 #include "config.h"
+#include "model_memory_reader.h"
 
 using ctranslate2::StorageView;
 
@@ -87,6 +88,24 @@ inline std::unique_ptr<Whisper> whisper(
             config->compute_type,
             std::vector<int>(config->device_indices.begin(), config->device_indices.end()),
             config->tensor_parallel,
+            *config->replica_pool_config
+        )
+    );
+}
+
+inline std::unique_ptr<Whisper> whisper_from_memory(
+    ModelMemoryReader& model_reader,
+    std::unique_ptr<Config> config
+) {
+    ctranslate2::models::ModelLoader model_loader = ctranslate2::models::ModelLoader(model_reader.get_impl());
+    model_loader.device = config->device;
+    model_loader.compute_type = config->compute_type;
+    model_loader.device_indices = std::vector<int>(config->device_indices.begin(), config->device_indices.end());
+    model_loader.tensor_parallel = config->tensor_parallel;
+
+    return std::make_unique<Whisper>(
+        std::make_unique<ctranslate2::models::Whisper>(
+            model_loader,
             *config->replica_pool_config
         )
     );
