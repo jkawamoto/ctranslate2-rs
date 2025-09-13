@@ -141,7 +141,7 @@ mod ffi {
             to_cpu: bool,
         ) -> Result<UniquePtr<StorageView>>;
 
-       fn whisper_from_memory(
+        fn whisper_from_memory(
             model_memory_reader: Pin<&mut ModelMemoryReader>,
             config: UniquePtr<Config>,
         ) -> Result<UniquePtr<Whisper>>;
