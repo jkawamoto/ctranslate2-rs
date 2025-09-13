@@ -39,6 +39,8 @@ pub(crate) mod ffi {
 
         fn rank(self: &StorageView) -> i64;
 
+        fn owns_data(self: &StorageView) -> bool;
+
         fn to_string(storage: &StorageView) -> String;
     }
 }
@@ -59,6 +61,22 @@ impl<'a> StorageView<'a> {
             ptr: ffi::storage_view(shape, init, device)?,
             phantom: PhantomData,
         })
+    }
+
+    /// Create a StorageView from an ffi::StorageView, returned
+    /// as output from CTranslate2, where the underlying data is
+    /// owned by the ffi::StorageView and will thus live for the lifetime
+    /// of the ffi::StorageView. Panics if this is not the case.
+    /// The rust StorageView's lifetime is therefore 'static.
+    pub(crate) fn from_cxx(ptr: UniquePtr<ffi::StorageView>) -> StorageView<'static> {
+        assert!(
+            ptr.owns_data(),
+            "StorageView::from_cxx called with ffi::StorageView that does not own its data."
+        );
+        StorageView {
+            ptr,
+            phantom: PhantomData,
+        }
     }
 
     /// Device where the storage is allocated.
