@@ -111,3 +111,15 @@ jobs:
       - name: Run tests
         run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
+
+  docs:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: |
+          cargo +nightly rustdoc -F whisper,hub -vv -p ct2rs -- --cfg docsrs
+          cargo +nightly rustdoc -F whisper,hub -vv -p ct2rs-platform -- --cfg docsrs

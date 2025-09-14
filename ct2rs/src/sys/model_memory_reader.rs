@@ -31,9 +31,6 @@ pub(crate) mod ffi {
 }
 
 /// An allocated buffer with shape information.
-///
-/// This struct is a Rust binding to the
-/// [`ctranslate2::StorageView`](https://opennmt.net/CTranslate2/python/ctranslate2.StorageView.html).
 pub struct ModelMemoryReader {
     ptr: UniquePtr<ffi::ModelMemoryReader>,
     model_name: String,

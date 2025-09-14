@@ -3,7 +3,7 @@ members = ["ct2rs", "ct2rs-platform"]
 resolver = "2"
 
 [workspace.package]
-version = "0.9.8"
+version = "0.9.9"
 authors = ["Junpei Kawamoto <kawamoto.junpei@gmail.com>"]
 edition = "2021"
 license = "MIT"
