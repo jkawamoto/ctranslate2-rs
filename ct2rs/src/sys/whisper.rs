@@ -428,9 +428,9 @@ impl Whisper {
     /// token time.
     ///
     /// # Arguments
-    /// - `encoder_output` - [`StorageView`] consisting of encoder output created
+    /// * `encoder_output` - [`StorageView`] consisting of encoder output created
     ///   by encode() and provided to generate().
-    /// * `start_sequence` - TODO
+    /// * `start_sequence` - The start sequence tokens.
     /// * `text_tokens` - Vec of tokens for each sequence in the batch.
     /// * `num_frames` - Number of encoder frames in each sequence of the batch.
     /// * `median_filter_width` - Width of the median filter used by the DTW
