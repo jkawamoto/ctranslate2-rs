@@ -42,9 +42,9 @@ jobs:
           path: ~/.cache/huggingface
           key: macos-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
 
   build-linux:
     strategy:
@@ -71,9 +71,9 @@ jobs:
           path: ~/.cache/huggingface
           key: linux-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
 
   build-windows:
@@ -107,7 +107,7 @@ jobs:
           path: ~/.cache/huggingface
           key: windows-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}"
+        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
