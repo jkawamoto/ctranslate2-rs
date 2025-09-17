@@ -33,7 +33,7 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 [dependencies]
 anyhow = "1.0"
 cxx = { version = "1.0", features = ["c++17"] }
-intel-onemkl-prebuild = { version = "0.1", optional = true }
+intel-onemkl-prebuild = { version = "0.2", optional = true }
 onednn-src = { version = "0.1", optional = true }
 sentencepiece = { version = "0.12", optional = true }
 tokenizers = { version = "0.22", optional = true }
@@ -80,6 +80,7 @@ hub = ["dep:hf-hub"]
 cuda = []
 cudnn = ["cuda"]
 mkl = ["dep:intel-onemkl-prebuild"]
+system-mkl = ["mkl", "intel-onemkl-prebuild/system"]
 openblas = ["dep:openblas-src"]
 dnnl = ["dep:onednn-src"]
 ruy = []

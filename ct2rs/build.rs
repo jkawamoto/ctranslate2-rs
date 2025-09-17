@@ -137,7 +137,15 @@ fn main() {
 
     if mkl {
         cmake.define("WITH_MKL", "ON");
-        cmake.env("MKLROOT", env::var("DEP_MKL_ROOT").unwrap());
+        if let Ok(mklroot) = env::var("DEP_MKL_ROOT") {
+            cmake.env("MKLROOT", mklroot);
+        }
+        if let Ok(include_path) = env::var("DEP_MKL_INCLUDE_PATH") {
+            include_paths.push(PathBuf::from(include_path));
+        }
+        if let Ok(library_path) = env::var("DEP_MKL_LIBRARY_PATH") {
+            library_paths.push(PathBuf::from(library_path));
+        }
     }
     if openblas {
         cmake.define("WITH_OPENBLAS", "ON");
