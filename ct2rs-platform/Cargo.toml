@@ -47,6 +47,7 @@ hub = ["ct2rs/hub"]
 
 # Features to select backends.
 mkl = ["ct2rs/mkl"]
+system-mkl = ["ct2rs/system-mkl"]
 openblas = ["ct2rs/openblas"]
 dnnl = ["ct2rs/dnnl"]
 openmp-runtime-comp = ["ct2rs/openmp-runtime-comp"]
