@@ -64,7 +64,7 @@ hound = { version = "3.5.1" }
 cmake = "0.1"
 cxx-build = "1.0"
 walkdir = "2.5"
-ctranslate2-src-build-support = "0.2.1"
+ctranslate2-src-build-support = "0.2.2"
 
 [features]
 default = ["all-tokenizers", "ruy", "cuda-small-binary"]
