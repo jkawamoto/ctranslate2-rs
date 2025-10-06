@@ -51,7 +51,10 @@ hf-hub = { version = "0.4", optional = true }
 openblas-src = { version = "0.10.13", features = ["static"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-openblas-src = { version = "0.10.13", features = ["static", "system"], optional = true }
+openblas-src = { version = "0.10.13", features = [
+    "static",
+    "system",
+], optional = true }
 
 [dev-dependencies]
 clap = { version = "4.5", features = ["derive"] }
@@ -64,6 +67,7 @@ hound = { version = "3.5.1" }
 cmake = "0.1"
 cxx-build = "1.0"
 walkdir = "2.5"
+ctranslate2-src-build-support = "0.2.1"
 
 [features]
 default = ["all-tokenizers", "ruy", "cuda-small-binary"]
@@ -83,6 +87,7 @@ mkl = ["dep:intel-onemkl-prebuild"]
 system-mkl = ["mkl", "intel-onemkl-prebuild/system"]
 openblas = ["dep:openblas-src"]
 dnnl = ["dep:onednn-src"]
+vendor = []
 ruy = []
 accelerate = []
 openmp-runtime-comp = []
