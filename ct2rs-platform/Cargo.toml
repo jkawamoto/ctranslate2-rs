@@ -32,7 +32,7 @@ features = ["accelerate", "ruy"]
 version = "=0.9.10"
 path = "../ct2rs"
 default-features = false
-features = ["dnnl", "openmp-runtime-comp", "cuda", "cudnn", "cuda-dynamic-loading", "mkl", "tensor-parallel", "msse4_1"]
+features = ["dnnl", "openmp-runtime-comp", "cuda", "cudnn", "cuda-dynamic-loading", "mkl", "tensor-parallel"]
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies.ct2rs]
 version = "=0.9.10"
@@ -56,7 +56,6 @@ openmp-runtime-intel = ["ct2rs/openmp-runtime-intel"]
 ruy = ["ct2rs/ruy"]
 accelerate = ["ct2rs/accelerate"]
 cuda = ["ct2rs/cuda"]
-msse4_1 = ["ct2rs/msse4_1"]
 cudnn = ["ct2rs/cudnn"]
 
 # Features to enable GPU functionality.

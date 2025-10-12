@@ -63,7 +63,7 @@ fn build_ctranslate2() {
     let dnnl = cfg!(feature = "dnnl");
     let mut openmp_comp: bool = cfg!(feature = "openmp-runtime-comp");
     let openmp_intel = cfg!(feature = "openmp-runtime-intel");
-    let msse4_1 = cfg!(feature = "msse4_1");
+    let sse4_1 = cfg!(target_feature = "sse4.1");
     if !openmp_intel && !openmp_comp && dnnl {
         if os == Os::Linux {
             openmp_comp = true;
@@ -156,7 +156,7 @@ fn build_ctranslate2() {
     if tensor_parallel {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
     }
-    if msse4_1 {
+    if sse4_1 {
         cmake.define("CMAKE_CXX_FLAGS", "-msse4.1");
     }
     if dnnl {

@@ -88,7 +88,6 @@ ruy = []
 accelerate = []
 openmp-runtime-comp = []
 openmp-runtime-intel = []
-msse4_1 = []
 
 # Features to enable GPU functionality.
 flash-attention = []
