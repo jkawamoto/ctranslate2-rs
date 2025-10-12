@@ -31,15 +31,7 @@ enum Os {
     Unknown,
 }
 
-fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/sys");
-    println!("cargo:rerun-if-changed=include");
-    println!("cargo:rerun-if-changed=CTranslate2");
-    add_search_paths("LIBRARY_PATH");
-    println!("cargo:rerun-if-env-changed=CMAKE_INCLUDE_PATH");
-    add_search_paths("CMAKE_LIBRARY_PATH");
-
+fn build_ctranslate2() {
     let mut cmake = Config::new("CTranslate2");
     match env::var("CMAKE_PARALLEL") {
         Ok(job_n) => {
@@ -198,6 +190,101 @@ fn main() {
 
     let ctranslate2 = cmake.build();
     link_libraries(ctranslate2.join("build"));
+}
+
+fn link_system_libraries() {
+    println!("cargo:rustc-link-lib=ctranslate2");
+    if cfg!(target_arch = "x86_64") {
+        println!("cargo:rustc-link-lib=cpu_features");
+    }
+    if cfg!(feature = "cuda") {
+        println!("cargo:rustc-link-lib=static=cudart_static");
+    }
+    if cfg!(feature = "cudnn") {
+        println!("cargo:rustc-link-lib=cudnn");
+    }
+    if cfg!(all(
+        not(feature = "cuda-dynamic-loading"),
+        not(target_os = "macos")
+    )) {
+        if cfg!(target_os = "windows") {
+            println!("cargo:rustc-link-lib=static=cublas");
+            println!("cargo:rustc-link-lib=static=cublasLt");
+        } else {
+            println!("cargo:rustc-link-lib=static=cublas_static");
+            println!("cargo:rustc-link-lib=static=cublasLt_static");
+            println!("cargo:rustc-link-lib=static=culibos");
+        }
+    }
+    if cfg!(feature = "accelerate") {
+        println!("cargo:rustc-link-lib=framework=Accelerate");
+    }
+    if cfg!(feature = "ruy") {
+        println!("cargo:rustc-link-lib=cpuinfo");
+        println!("cargo:rustc-link-lib=clog");
+        println!("cargo:rustc-link-lib=ruy_allocator");
+        println!("cargo:rustc-link-lib=ruy_apply_multiplier");
+        println!("cargo:rustc-link-lib=ruy_block_map");
+        println!("cargo:rustc-link-lib=ruy_blocking_counter");
+        println!("cargo:rustc-link-lib=ruy_context");
+        println!("cargo:rustc-link-lib=ruy_context_get_ctx");
+        println!("cargo:rustc-link-lib=ruy_cpuinfo");
+        println!("cargo:rustc-link-lib=ruy_ctx");
+        println!("cargo:rustc-link-lib=ruy_denormal");
+        println!("cargo:rustc-link-lib=ruy_frontend");
+        println!("cargo:rustc-link-lib=ruy_prepacked_cache");
+        println!("cargo:rustc-link-lib=ruy_prepare_packed_matrices");
+        println!("cargo:rustc-link-lib=ruy_profiler_instrumentation");
+        println!("cargo:rustc-link-lib=ruy_system_aligned_alloc");
+        println!("cargo:rustc-link-lib=ruy_thread_pool");
+        println!("cargo:rustc-link-lib=ruy_trmul");
+        println!("cargo:rustc-link-lib=ruy_tune");
+        println!("cargo:rustc-link-lib=ruy_wait");
+        if cfg!(any(target_arch = "arm", target_arch = "aarch64")) {
+            println!("cargo:rustc-link-lib=ruy_kernel_arm");
+            println!("cargo:rustc-link-lib=ruy_pack_arm");
+        }
+        if cfg!(target_feature = "avx") {
+            println!("cargo:rustc-link-lib=ruy_have_built_path_for_avx");
+            println!("cargo:rustc-link-lib=ruy_kernel_avx");
+            println!("cargo:rustc-link-lib=ruy_pack_avx");
+        }
+        if cfg!(target_feature = "avx2") {
+            println!("cargo:rustc-link-lib=ruy_have_built_path_for_avx2_fma");
+            println!("cargo:rustc-link-lib=ruy_kernel_avx2_fma");
+            println!("cargo:rustc-link-lib=ruy_pack_avx2_fma");
+        }
+        if cfg!(target_feature = "avx512f") {
+            println!("cargo:rustc-link-lib=ruy_have_built_path_for_avx512");
+            println!("cargo:rustc-link-lib=ruy_kernel_avx512");
+            println!("cargo:rustc-link-lib=ruy_pack_avx512");
+        }
+    }
+    if cfg!(feature = "dnnl") {
+        println!("cargo:rustc-link-lib=dnnl");
+    }
+    if cfg!(feature = "openmp-runtime-comp") {
+        println!("cargo:rustc-link-lib=gomp");
+    }
+    if cfg!(feature = "openmp-runtime-intel") {
+        println!("cargo:rustc-link-lib=iomp5");
+    }
+}
+
+fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/sys");
+    println!("cargo:rerun-if-changed=include");
+    println!("cargo:rerun-if-changed=CTranslate2");
+    add_search_paths("LIBRARY_PATH");
+    println!("cargo:rerun-if-env-changed=CMAKE_INCLUDE_PATH");
+    add_search_paths("CMAKE_LIBRARY_PATH");
+
+    if cfg!(feature = "system") {
+        link_system_libraries();
+    } else {
+        build_ctranslate2()
+    }
 
     cxx_build::bridges([
         "src/sys/types.rs",

@@ -75,6 +75,7 @@ whisper = [
     "all-tokenizers",
 ]
 hub = ["dep:hf-hub"]
+system = ["intel-onemkl-prebuild?/system", "openblas-src?/system"]
 
 # Features to select backends.
 cuda = []
