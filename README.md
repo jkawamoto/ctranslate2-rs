@@ -55,9 +55,11 @@ The above features require setting the `CUDA_TOOLKIT_ROOT_DIR` environment varia
 - `accelerate`: Enables [Apple Accelerate](https://developer.apple.com/documentation/accelerate) support (macOS only)
 - `openmp-runtime-comp`: Enables OpenMP runtime support
 - `openmp-runtime-intel`: Enables OpenMP runtime support for Intel compilers
-- `msse4_1`: Enables MSSE4.1 support
 
 Multiple features can be enabled at the same time.
+
+To enable Streaming SIMD Extensions 4.1 (SSE4.1), add the `-C target-feature=+sse4.1` flag to `RUSTFLAGS` environment
+variable.
 
 By default, the `ruy` feature is enabled.
 
@@ -93,8 +95,7 @@ When `ct2rs-platform` is used, the following features are automatically selected
 - Windows: `openmp-runtime-intel`, `dnnl`, `cuda`, `cudnn`, `cuda-dynamic-loading`, `mkl`
 - Intel MacOS: `dnnl`, `mkl`
 - Apple Silicon MacOS: `accelerate`, `ruy`
-- Linux (non-ARM): `dnnl`, `openmp-runtime-comp`, `cuda`, `cudnn`, `cuda-dynamic-loading`, `mkl`, `tensor-parallel`,
-  `msse4_1`
+- Linux (non-ARM): `dnnl`, `openmp-runtime-comp`, `cuda`, `cudnn`, `cuda-dynamic-loading`, `mkl`, `tensor-parallel`
 - Linux (ARM): `openmp-runtime-comp`, `openblas`, `ruy`
 
 ## Supported Models
