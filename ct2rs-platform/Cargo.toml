@@ -11,31 +11,31 @@ repository.workspace = true
 description = "Platform-specific default feature sets for ct2rs"
 
 [target.'cfg(target_os = "windows")'.dependencies.ct2rs]
-version = "=0.9.12"
+version = "=0.9.13"
 path = "../ct2rs"
 default-features = false
 features = ["openmp-runtime-intel", "dnnl", "cuda", "cudnn", "cuda-dynamic-loading", "mkl"]
 
 [target.'cfg(all(target_os = "macos", not(target_arch = "aarch64")))'.dependencies.ct2rs]
-version = "=0.9.12"
+version = "=0.9.13"
 path = "../ct2rs"
 default-features = false
 features = ["dnnl", "mkl"]
 
 [target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies.ct2rs]
-version = "=0.9.12"
+version = "=0.9.13"
 path = "../ct2rs"
 default-features = false
 features = ["accelerate", "ruy"]
 
 [target.'cfg(all(target_os = "linux", not(target_arch = "aarch64")))'.dependencies.ct2rs]
-version = "=0.9.12"
+version = "=0.9.13"
 path = "../ct2rs"
 default-features = false
 features = ["dnnl", "openmp-runtime-comp", "cuda", "cudnn", "cuda-dynamic-loading", "mkl", "tensor-parallel"]
 
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies.ct2rs]
-version = "=0.9.12"
+version = "=0.9.13"
 path = "../ct2rs"
 default-features = false
 features = ["openmp-runtime-comp", "openblas", "ruy"]
