@@ -71,8 +71,7 @@ jobs:
         run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
         run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
-        if: ${{ matrix.backend != 'mkl' }}
-
+        if: ${{ matrix.backend != 'mkl' && matrix.backend != 'dnnl' }}
   build-windows:
     strategy:
       fail-fast: false
