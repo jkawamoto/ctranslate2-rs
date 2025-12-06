@@ -1,9 +1,9 @@
 # ctranslate2-rs
 
 [![Latest version](https://img.shields.io/crates/v/ct2rs.svg)](https://crates.io/crates/ct2rs)
+[![Build](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml)
 [![docs.rs](https://img.shields.io/docsrs/ct2rs)](https://docs.rs/ct2rs)
 [![GitHub License](https://img.shields.io/github/license/jkawamoto/ctranslate2-rs)](https://github.com/jkawamoto/ctranslate2-rs/blob/main/LICENSE)
-[![Build](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml/badge.svg)](https://github.com/jkawamoto/ctranslate2-rs/actions/workflows/build.yaml)
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
@@ -13,14 +13,14 @@ Add this crate to your `Cargo.toml` with selecting the backends you want to use 
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.13", features = ["cuda", "dnnl", "mkl"] }
+ct2rs = { version = "0.9.14", features = ["cuda", "dnnl", "mkl"] }
 ```
 
 Or you can use platform-specific default features by using the `ct2rs-platform` crate:
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.9.13", package = "ct2rs-platform" }
+ct2rs = { version = "0.9.14", package = "ct2rs-platform" }
 ```
 
 If you want [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper) model support,
