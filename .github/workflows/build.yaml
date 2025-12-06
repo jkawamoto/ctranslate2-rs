@@ -14,9 +14,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - uses: actions/checkout@v4
       - uses: dprint/check@v2.2
       - uses: pre-commit/action@v3.0.1
@@ -42,9 +39,9 @@ jobs:
           path: ~/.cache/huggingface
           key: macos-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
 
   build-linux:
     strategy:
@@ -71,9 +68,9 @@ jobs:
           path: ~/.cache/huggingface
           key: linux-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
 
   build-windows:
@@ -107,9 +104,9 @@ jobs:
           path: ~/.cache/huggingface
           key: windows-test-data
       - name: Build
-        run: cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
 
   docs:
@@ -121,5 +118,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: |
-          cargo +nightly rustdoc -F whisper,hub -vv -p ct2rs -- --cfg docsrs
-          cargo +nightly rustdoc -F whisper,hub -vv -p ct2rs-platform -- --cfg docsrs
+          cargo +nightly rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs
+          cargo +nightly rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs
