@@ -14,7 +14,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dprint/check@v2.2
       - uses: pre-commit/action@v3.0.1
 
@@ -27,14 +27,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.backend }}
           cache-on-failure: true
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/huggingface
           key: macos-test-data
@@ -53,7 +53,7 @@ jobs:
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
@@ -63,7 +63,7 @@ jobs:
         with:
           key: ${{ matrix.backend }}
           cache-on-failure: true
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/huggingface
           key: linux-test-data
@@ -79,7 +79,7 @@ jobs:
         backend: [openblas, ruy, dnnl, mkl]
     runs-on: windows-latest
     steps:
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: C:/vcpkg/installed
           key: cache-vcpkg-packages
@@ -90,7 +90,7 @@ jobs:
           vcpkg integrate install
           echo "CMAKE_INCLUDE_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/include/openblas;$env:CMAKE_INCLUDE_PATH" >> $env:GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows-static/lib;$env:CMAKE_LIBRARY_PATH" >> $env:GITHUB_ENV
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
@@ -98,7 +98,7 @@ jobs:
         with:
           key: ${{ matrix.backend }}
           cache-on-failure: true
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/huggingface
           key: windows-test-data
@@ -111,7 +111,7 @@ jobs:
   docs:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
