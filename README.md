@@ -55,6 +55,8 @@ The above features require setting the `CUDA_TOOLKIT_ROOT_DIR` environment varia
 - `accelerate`: Enables [Apple Accelerate](https://developer.apple.com/documentation/accelerate) support (macOS only)
 - `openmp-runtime-comp`: Enables OpenMP runtime support
 - `openmp-runtime-intel`: Enables OpenMP runtime support for Intel compilers
+- `disable-cpu-dispatch`: Disables CPU kernel dispatching at runtime (should be set when explicitly targeting an
+  architecture)
 
 Multiple features can be enabled at the same time.
 

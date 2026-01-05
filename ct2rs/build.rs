@@ -180,6 +180,9 @@ fn build_ctranslate2() {
     if flash_attention {
         cmake.define("WITH_FLASH_ATTN", "ON");
     }
+    if cfg!(feature = "disable-cpu-dispatch") {
+        cmake.define("ENABLE_CPU_DISPATCH", "OFF");
+    }
 
     if !include_paths.is_empty() {
         cmake.env(
