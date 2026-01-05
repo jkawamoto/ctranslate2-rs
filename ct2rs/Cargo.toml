@@ -88,6 +88,7 @@ ruy = []
 accelerate = []
 openmp-runtime-comp = []
 openmp-runtime-intel = []
+disable-cpu-dispatch = []
 
 # Features to enable GPU functionality.
 flash-attention = []

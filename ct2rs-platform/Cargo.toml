@@ -57,6 +57,7 @@ ruy = ["ct2rs/ruy"]
 accelerate = ["ct2rs/accelerate"]
 cuda = ["ct2rs/cuda"]
 cudnn = ["ct2rs/cudnn"]
+disable-cpu-dispatch = ["ct2rs/disable-cpu-dispatch"]
 
 # Features to enable GPU functionality.
 flash-attention = ["ct2rs/flash-attention"]
