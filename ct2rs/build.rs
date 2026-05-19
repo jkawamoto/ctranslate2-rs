@@ -158,16 +158,39 @@ fn build_ctranslate2() {
         // CTranslate2's HIP CMake path hard-codes `add_library(... SHARED ...)`,
         // so we end up with a libctranslate2.so regardless of
         // BUILD_SHARED_LIBS. Don't bother overriding the flag — just link
-        // against the resulting .so. The HIP CMake arm needs CXX as the
-        // linker language; hipcc handles the rest.
+        // against the resulting .so.
+        //
+        // Pin both C and CXX to hipcc when available. CTranslate2's HIP
+        // CMake propagates `--offload-arch=gfxNNNN` through
+        // INTERFACE_COMPILE_OPTIONS on the `hip::` / `roc::` imported
+        // targets — that flag lands on *every* C++ source in the library
+        // target, including plain .cc files. With CXX=g++ those compiles
+        // die with "unrecognized command line option '--offload-arch='"
+        // (and `-x hip` falls through similarly on files cmake tags
+        // LANGUAGE HIP). hipcc is the documented upstream compiler for
+        // the HIP build arm; using it everywhere makes both behaviours
+        // valid, without forcing the consumer to export CC/CXX manually.
+        let hipcc = rocm.join("bin").join("hipcc");
+        if hipcc.exists() {
+            cmake.define("CMAKE_C_COMPILER", hipcc.display().to_string());
+            cmake.define("CMAKE_CXX_COMPILER", hipcc.display().to_string());
+        }
 
         // HIP GPU architectures, e.g. gfx1100;gfx942. Honour
         // CMAKE_HIP_ARCHITECTURES if the caller set it; fall back to
         // HIP_ARCH_LIST as a friendlier alias.
+        //
+        // GPU_TARGETS / AMDGPU_TARGETS are the rocm-cmake-config knobs
+        // many ROCm find_package() configs read directly. Setting all
+        // three forces CMake to honour the explicit list instead of
+        // re-detecting via amdgpu-arch and merging the host's iGPU
+        // (e.g. gfx1036) into the build target set.
         if let Ok(archs) =
             env::var("CMAKE_HIP_ARCHITECTURES").or_else(|_| env::var("HIP_ARCH_LIST"))
         {
-            cmake.define("CMAKE_HIP_ARCHITECTURES", archs);
+            cmake.define("CMAKE_HIP_ARCHITECTURES", &archs);
+            cmake.define("GPU_TARGETS", &archs);
+            cmake.define("AMDGPU_TARGETS", &archs);
         }
 
         // Force CMake's HIP language to use the ROCm clang++ directly and
