@@ -137,21 +137,25 @@ fn build_ctranslate2() {
         // ROCm SDK location. CTranslate2's CMake defaults to /opt/rocm
         // when ROCM_PATH is unset, but we surface it explicitly so the
         // linker search path matches at the cargo level too.
+        //
+        // Validate via `bin/hipcc` rather than `include/hip`: on
+        // split-package distros (and apt-installed ROCm 7.x without
+        // `hip-dev`) the include/hip directory may not exist until
+        // hip-dev is pulled in, but bin/hipcc is the actual compiler
+        // we need to drive the build. CMake's own find_package picks
+        // headers up through hipcc's hipconfig output.
+        let rocm_is_valid = |p: &PathBuf| p.join("bin").join("hipcc").exists();
         let rocm = env::var("ROCM_PATH")
             .ok()
             .map(PathBuf::from)
-            .filter(|p| p.join("include").join("hip").exists())
+            .filter(rocm_is_valid)
             .or_else(|| {
                 let default = PathBuf::from("/opt/rocm");
-                default
-                    .join("include")
-                    .join("hip")
-                    .exists()
-                    .then_some(default)
+                rocm_is_valid(&default).then_some(default)
             })
             .expect(
                 "ROCM_PATH does not point at a valid ROCm install \
-                 (default /opt/rocm not present); set ROCM_PATH to your ROCm root",
+                 (bin/hipcc missing at default /opt/rocm); set ROCM_PATH to your ROCm root",
             );
         cmake.define("WITH_HIP", "ON");
         cmake.env("ROCM_PATH", &rocm);
