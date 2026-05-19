@@ -95,6 +95,13 @@ flash-attention = []
 tensor-parallel = []
 cuda-dynamic-loading = ["cuda"]
 cuda-small-binary = []
+# AMD ROCm/HIP GPU backend. Mutually exclusive with `cuda` and
+# `tensor-parallel`; `flash-attention` is also not supported by the
+# upstream HIP build. Requires the ROCm SDK at build time (defaults to
+# /opt/rocm; override with ROCM_PATH). At runtime, libamdhip64 /
+# libhipblas / librocblas must be present — there is no dynamic-loading
+# equivalent to `cuda-dynamic-loading` upstream.
+hip = []
 
 # Futures to select tokenizers.
 all-tokenizers = ["sentencepiece", "tokenizers"]

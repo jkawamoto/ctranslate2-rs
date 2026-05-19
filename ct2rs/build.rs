@@ -55,6 +55,10 @@ fn build_ctranslate2() {
     let cuda = cfg!(feature = "cuda");
     let cudnn = cfg!(feature = "cudnn");
     let cuda_dynamic_loading = cfg!(feature = "cuda-dynamic-loading");
+    let hip = cfg!(feature = "hip");
+    if cuda && hip {
+        panic!("ct2rs: features `cuda` and `hip` are mutually exclusive");
+    }
     let mkl = cfg!(feature = "mkl");
     let openblas = cfg!(feature = "openblas");
     let ruy = cfg!(feature = "ruy");
@@ -129,6 +133,128 @@ fn build_ctranslate2() {
             }
         }
     }
+    if hip {
+        // ROCm SDK location. CTranslate2's CMake defaults to /opt/rocm
+        // when ROCM_PATH is unset, but we surface it explicitly so the
+        // linker search path matches at the cargo level too.
+        //
+        // Validate via `bin/hipcc` rather than `include/hip`: on
+        // split-package distros (and apt-installed ROCm 7.x without
+        // `hip-dev`) the include/hip directory may not exist until
+        // hip-dev is pulled in, but bin/hipcc is the actual compiler
+        // we need to drive the build. CMake's own find_package picks
+        // headers up through hipcc's hipconfig output.
+        let rocm_is_valid = |p: &PathBuf| p.join("bin").join("hipcc").exists();
+        let rocm = env::var("ROCM_PATH")
+            .ok()
+            .map(PathBuf::from)
+            .filter(rocm_is_valid)
+            .or_else(|| {
+                let default = PathBuf::from("/opt/rocm");
+                rocm_is_valid(&default).then_some(default)
+            })
+            .expect(
+                "ROCM_PATH does not point at a valid ROCm install \
+                 (bin/hipcc missing at default /opt/rocm); set ROCM_PATH to your ROCm root",
+            );
+        cmake.define("WITH_HIP", "ON");
+        cmake.env("ROCM_PATH", &rocm);
+        // Defensive: CTranslate2's CMakeLists.txt only appends ROCM_PATH
+        // to CMAKE_PREFIX_PATH *inside* the WITH_HIP arm — which runs
+        // AFTER enable_language(HIP). That means find_package(hipblas)
+        // and friends may not pick up ROCm's cmake configs unless we
+        // prime CMAKE_PREFIX_PATH from the outer initial cache.
+        cmake.define("CMAKE_PREFIX_PATH", rocm.display().to_string());
+        // CTranslate2's HIP CMake path hard-codes `add_library(... SHARED ...)`,
+        // so we end up with a libctranslate2.so regardless of
+        // BUILD_SHARED_LIBS. Don't bother overriding the flag — just link
+        // against the resulting .so.
+        //
+        // Pin both C and CXX to hipcc when available. CTranslate2's HIP
+        // CMake propagates `--offload-arch=gfxNNNN` through
+        // INTERFACE_COMPILE_OPTIONS on the `hip::` / `roc::` imported
+        // targets — that flag lands on *every* C++ source in the library
+        // target, including plain .cc files. With CXX=g++ those compiles
+        // die with "unrecognized command line option '--offload-arch='"
+        // (and `-x hip` falls through similarly on files cmake tags
+        // LANGUAGE HIP). hipcc is the documented upstream compiler for
+        // the HIP build arm; using it everywhere makes both behaviours
+        // valid, without forcing the consumer to export CC/CXX manually.
+        let hipcc = rocm.join("bin").join("hipcc");
+        if hipcc.exists() {
+            cmake.define("CMAKE_C_COMPILER", hipcc.display().to_string());
+            cmake.define("CMAKE_CXX_COMPILER", hipcc.display().to_string());
+        }
+
+        // HIP GPU architectures, e.g. gfx1100;gfx942. Honour
+        // CMAKE_HIP_ARCHITECTURES if the caller set it; fall back to
+        // HIP_ARCH_LIST as a friendlier alias.
+        //
+        // GPU_TARGETS / AMDGPU_TARGETS are the rocm-cmake-config knobs
+        // many ROCm find_package() configs read directly. Setting all
+        // three forces CMake to honour the explicit list instead of
+        // re-detecting via amdgpu-arch and merging the host's iGPU
+        // (e.g. gfx1036) into the build target set.
+        if let Ok(archs) =
+            env::var("CMAKE_HIP_ARCHITECTURES").or_else(|_| env::var("HIP_ARCH_LIST"))
+        {
+            cmake.define("CMAKE_HIP_ARCHITECTURES", &archs);
+            cmake.define("GPU_TARGETS", &archs);
+            cmake.define("AMDGPU_TARGETS", &archs);
+        }
+
+        // Force CMake's HIP language to use the ROCm clang++ directly and
+        // skip the test-compile that calls `amdgpu-arch`. On headless CI
+        // hosts with no AMD GPU, the autodetect path runs `amdgpu-arch`
+        // against /dev/kfd and fails ("Failed to get device count"); CMake
+        // then unwinds badly and `enable_language(HIP)` falls back to
+        // c++/g++, which doesn't understand `LANGUAGE HIP` and dies with
+        // "language hip not recognized" once the build phase starts.
+        //
+        // Pinning the compiler path + setting CMAKE_HIP_COMPILER_FORCED
+        // short-circuits both the detection and the test compile, so the
+        // build runs identically whether or not a GPU is present.
+        let hip_compiler = rocm.join("lib").join("llvm").join("bin").join("clang++");
+        if hip_compiler.exists() {
+            cmake.define("CMAKE_HIP_COMPILER", hip_compiler.display().to_string());
+            cmake.define("CMAKE_HIP_COMPILER_FORCED", "TRUE");
+        }
+        cmake.define("CMAKE_HIP_PLATFORM", "amd");
+        cmake.env("HIP_PLATFORM", "amd");
+        cmake.env("HIP_PATH", &rocm);
+
+        // Make hipcc visible to CMake's HIP language detection.
+        let rocm_bin = rocm.join("bin");
+        if rocm_bin.exists() {
+            let path = env::var("PATH").unwrap_or_default();
+            cmake.env(
+                "PATH",
+                env::join_paths(std::iter::once(rocm_bin.clone()).chain(env::split_paths(&path)))
+                    .expect("compose PATH"),
+            );
+        }
+
+        println!(
+            "cargo:rustc-link-search=native={}",
+            rocm.join("lib").display()
+        );
+        // libamdhip64 and libhipblas are the load-time deps. hiprand /
+        // hipcub / rocprim / rocthrust come in via CTranslate2's
+        // target_link_libraries — they're either header-only or pulled
+        // in transitively by libhipblas / libamdhip64 at runtime.
+        println!("cargo:rustc-link-lib=amdhip64");
+        println!("cargo:rustc-link-lib=hipblas");
+        // Embed an rpath pointing at the build's lib dir so binaries
+        // produced under `cargo build` find libctranslate2.so without
+        // requiring LD_LIBRARY_PATH gymnastics. Distribution packaging
+        // (e.g. whisper_ct2's NIF tarball) is expected to rewrite this
+        // rpath at packaging time.
+        println!(
+            "cargo:rustc-link-arg=-Wl,-rpath,{}",
+            rocm.join("lib").display()
+        );
+    }
+
     if os == Os::Mac && aarch64 {
         cmake.define("CMAKE_OSX_ARCHITECTURES", "arm64");
     }
@@ -198,7 +324,47 @@ fn build_ctranslate2() {
     }
 
     let ctranslate2 = cmake.build();
-    link_libraries(ctranslate2.join("build"));
+    if hip {
+        // The HIP CMake arm builds a shared libctranslate2.so unconditionally
+        // (CTranslate2's HIP branch hard-codes `add_library(... SHARED ...)`).
+        // Prefer the install lib dir over the build dir — `make install`
+        // is what materialises the SONAME symlink chain
+        // (libctranslate2.so → .so.<major> → .so.<full>). The NIF's
+        // DT_NEEDED records the SONAME (`.<major>`), so consumers need
+        // the symlink chain, not just the real file. cmake-rs installs
+        // to `<out>/lib` (or `lib64`); fall back to the build dir for
+        // cmake setups that don't run install.
+        let install_lib = ctranslate2.join("lib");
+        let install_lib64 = ctranslate2.join("lib64");
+        let build_dir = ctranslate2.join("build");
+        let link_dir = [&install_lib, &install_lib64, &build_dir]
+            .into_iter()
+            .find(|p| p.join("libctranslate2.so").exists() || has_so_in_dir(p))
+            .cloned()
+            .unwrap_or_else(|| build_dir.clone());
+        println!("cargo:rustc-link-search=native={}", link_dir.display());
+        println!("cargo:rustc-link-lib=dylib=ctranslate2");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", link_dir.display());
+    } else {
+        link_libraries(ctranslate2.join("build"));
+    }
+}
+
+/// Returns true if `dir` contains any file matching `libctranslate2.so*`.
+/// Used to pick the right link directory (install lib vs build) for HIP
+/// builds where the SONAME symlinks may live in either place depending
+/// on whether `make install` ran.
+fn has_so_in_dir(dir: &Path) -> bool {
+    std::fs::read_dir(dir)
+        .ok()
+        .map(|rd| {
+            rd.flatten().any(|e| {
+                e.file_name()
+                    .to_str()
+                    .is_some_and(|n| n.starts_with("libctranslate2.so"))
+            })
+        })
+        .unwrap_or(false)
 }
 
 struct CudaArchConfig {
@@ -295,6 +461,13 @@ fn link_system_libraries() {
     println!("cargo:rustc-link-lib=ctranslate2");
     if cfg!(target_arch = "x86_64") {
         println!("cargo:rustc-link-lib=cpu_features");
+    }
+    if cfg!(feature = "hip") {
+        // System ROCm install. Honour ROCM_PATH; default to /opt/rocm.
+        let rocm = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_string());
+        println!("cargo:rustc-link-search=native={}/lib", rocm);
+        println!("cargo:rustc-link-lib=amdhip64");
+        println!("cargo:rustc-link-lib=hipblas");
     }
     if cfg!(feature = "cuda") {
         println!("cargo:rustc-link-lib=static=cudart_static");
