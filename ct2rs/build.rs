@@ -169,6 +169,27 @@ fn build_ctranslate2() {
         {
             cmake.define("CMAKE_HIP_ARCHITECTURES", archs);
         }
+
+        // Force CMake's HIP language to use the ROCm clang++ directly and
+        // skip the test-compile that calls `amdgpu-arch`. On headless CI
+        // hosts with no AMD GPU, the autodetect path runs `amdgpu-arch`
+        // against /dev/kfd and fails ("Failed to get device count"); CMake
+        // then unwinds badly and `enable_language(HIP)` falls back to
+        // c++/g++, which doesn't understand `LANGUAGE HIP` and dies with
+        // "language hip not recognized" once the build phase starts.
+        //
+        // Pinning the compiler path + setting CMAKE_HIP_COMPILER_FORCED
+        // short-circuits both the detection and the test compile, so the
+        // build runs identically whether or not a GPU is present.
+        let hip_compiler = rocm.join("lib").join("llvm").join("bin").join("clang++");
+        if hip_compiler.exists() {
+            cmake.define("CMAKE_HIP_COMPILER", hip_compiler.display().to_string());
+            cmake.define("CMAKE_HIP_COMPILER_FORCED", "TRUE");
+        }
+        cmake.define("CMAKE_HIP_PLATFORM", "amd");
+        cmake.env("HIP_PLATFORM", "amd");
+        cmake.env("HIP_PATH", &rocm);
+
         // Make hipcc visible to CMake's HIP language detection.
         let rocm_bin = rocm.join("bin");
         if rocm_bin.exists() {
