@@ -159,6 +159,12 @@ fn build_ctranslate2() {
             );
         cmake.define("WITH_HIP", "ON");
         cmake.env("ROCM_PATH", &rocm);
+        // Defensive: CTranslate2's CMakeLists.txt only appends ROCM_PATH
+        // to CMAKE_PREFIX_PATH *inside* the WITH_HIP arm — which runs
+        // AFTER enable_language(HIP). That means find_package(hipblas)
+        // and friends may not pick up ROCm's cmake configs unless we
+        // prime CMAKE_PREFIX_PATH from the outer initial cache.
+        cmake.define("CMAKE_PREFIX_PATH", rocm.display().to_string());
         // CTranslate2's HIP CMake path hard-codes `add_library(... SHARED ...)`,
         // so we end up with a libctranslate2.so regardless of
         // BUILD_SHARED_LIBS. Don't bother overriding the flag — just link
@@ -321,15 +327,44 @@ fn build_ctranslate2() {
     if hip {
         // The HIP CMake arm builds a shared libctranslate2.so unconditionally
         // (CTranslate2's HIP branch hard-codes `add_library(... SHARED ...)`).
-        // Link against that instead of trying to collect non-existent .a
-        // files via the WalkDir static-link path.
+        // Prefer the install lib dir over the build dir — `make install`
+        // is what materialises the SONAME symlink chain
+        // (libctranslate2.so → .so.<major> → .so.<full>). The NIF's
+        // DT_NEEDED records the SONAME (`.<major>`), so consumers need
+        // the symlink chain, not just the real file. cmake-rs installs
+        // to `<out>/lib` (or `lib64`); fall back to the build dir for
+        // cmake setups that don't run install.
+        let install_lib = ctranslate2.join("lib");
+        let install_lib64 = ctranslate2.join("lib64");
         let build_dir = ctranslate2.join("build");
-        println!("cargo:rustc-link-search=native={}", build_dir.display());
+        let link_dir = [&install_lib, &install_lib64, &build_dir]
+            .into_iter()
+            .find(|p| p.join("libctranslate2.so").exists() || has_so_in_dir(p))
+            .cloned()
+            .unwrap_or_else(|| build_dir.clone());
+        println!("cargo:rustc-link-search=native={}", link_dir.display());
         println!("cargo:rustc-link-lib=dylib=ctranslate2");
-        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", build_dir.display());
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", link_dir.display());
     } else {
         link_libraries(ctranslate2.join("build"));
     }
+}
+
+/// Returns true if `dir` contains any file matching `libctranslate2.so*`.
+/// Used to pick the right link directory (install lib vs build) for HIP
+/// builds where the SONAME symlinks may live in either place depending
+/// on whether `make install` ran.
+fn has_so_in_dir(dir: &Path) -> bool {
+    std::fs::read_dir(dir)
+        .ok()
+        .map(|rd| {
+            rd.flatten().any(|e| {
+                e.file_name()
+                    .to_str()
+                    .is_some_and(|n| n.starts_with("libctranslate2.so"))
+            })
+        })
+        .unwrap_or(false)
 }
 
 struct CudaArchConfig {
