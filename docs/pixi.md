@@ -7,9 +7,9 @@
 
 A development environment with `pixi` and `direnv` is very useful because it provides a self-contained, reproducible native build toolchain without requiring root privileges or polluting host system directories:
 
-- **Isolated native & CUDA toolchain:** It pins and installs native dependencies (CMake, Ninja, compilers, CUDA nvcc, and cuDNN) alongside Rust in a local `.pixi/` directory; the optional `platform` environment adds NCCL and OpenMPI.
-- **Seamless shell & editor integration:** With `direnv`, all environment variables (`$PATH`, `$CONDA_PREFIX`, `$CUDA_TOOLKIT_ROOT_DIR`, and compiler flags) are automatically activated whenever you enter the project directory. This ensures IDEs and language servers (like `rust-analyzer` in Zed or VS Code) immediately find the correct compilers and headers without extra wrapper scripts.
-- **Deterministic builds:** The `pixi.lock` file guarantees that every contributor and CI pipeline builds against identical versions of native C++ and CUDA libraries, eliminating "works on my machine" inconsistencies.
+- **Isolated native & CUDA toolchain:** Pixi installs Rust, CMake, Ninja, the C/C++ compilers, CUDA (`nvcc`, cuBLAS) and cuDNN into the project's `.pixi/` directory, without root privileges or changes to system directories.
+- **Environments per feature set:** `default` covers building `ct2rs`; `hub` adds OpenSSL for the `hub` feature; `platform` adds NCCL and OpenMPI for `tensor-parallel` (still incomplete).
+- **Shell & editor integration:** `direnv` activates the environment (`$PATH`, `$CONDA_PREFIX`, `$CUDA_TOOLKIT_ROOT_DIR`, compiler flags) whenever you enter the project directory. Zed picks it up natively; VS Code needs the direnv extension (`mkhl.direnv`). For rust-analyzer, see [Rust-analyzer LSP](#rust-analyzer-lsp).
 
 > [!tip]
 > [direnv](https://direnv.net/)
@@ -18,20 +18,22 @@ A development environment with `pixi` and `direnv` is very useful because it pro
 > pixi global install direnv
 > ```
 >
+> Put this in `~/.profile`, not `~/.bashrc`: `.profile` is read at login, so desktop-launched apps like Zed or VS Code also get `~/.pixi/bin` on their `PATH` and can find `direnv` and the other tools installed with `pixi global`.
+>
 > ```bash
 > if [ -d "$HOME/.pixi/bin" ] ; then
 >     export PATH="$HOME/.pixi/bin:$PATH"
 > fi
 > ```
 
-# Setting up the environment
+## Setting up the environment
 
 After cloning the repository:
 
 ```bash
 cd ctranslate2-rs
 
-pixi install
+pixi install -a
 
 direnv allow
 ```
@@ -43,6 +45,56 @@ direnv allow
 > # must be the same as `pixi run shell-hook`
 > env
 > ```
+
+## Rust-analyzer LSP
+
+By default, rust-analyzer runs `cargo check --workspace`, which ignores `default-members` and builds `ct2rs-platform`, so CMake fails on the missing MPI/NCCL dependencies of `tensor-parallel`.
+
+To keep the editor working in the `default` Pixi environment, limit rust-analyzer's build scripts and checks to `ct2rs`:
+
+- `.zed/settings.json`:
+  ```json
+  {
+      "lsp": {
+          "rust-analyzer": {
+              "initialization_options": {
+                  "cargo": {
+                      "buildScripts": {
+                          "overrideCommand": [
+                              "cargo", "check", "--quiet",
+                              "--package", "ct2rs",
+                              "--message-format=json",
+                              "--all-targets", "--keep-going"
+                          ]
+                      }
+                  },
+                  "check": {
+                      "workspace": false,
+                      "extraArgs": ["--package", "ct2rs"]
+                  }
+              }
+          }
+      }
+  }
+  ```
+
+- `.vscode/settings.json`:
+  ```json
+  {
+      "rust-analyzer.cargo.buildScripts.overrideCommand": [
+          "cargo",
+          "check",
+          "--quiet",
+          "--package",
+          "ct2rs",
+          "--message-format=json",
+          "--all-targets",
+          "--keep-going"
+      ],
+      "rust-analyzer.check.workspace": false,
+      "rust-analyzer.check.extraArgs": ["--package", "ct2rs"]
+  }
+  ```
 
 # Pixi Issues
 
