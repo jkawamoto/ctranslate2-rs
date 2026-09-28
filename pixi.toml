@@ -1,51 +1,79 @@
 [workspace]
+channels = ["conda-forge"] # https://prefix.dev/conda-forge
 name = "ctranslate2-rs-workspace"
-version = "0.1.0"
-channels = ["conda-forge"]
-# CUDA requirement now lives on the platform entry itself, not [system-requirements]
-platforms = [{ platform = "linux-64", cuda = "12" }]
+platforms = [
+    { platform = "linux-64", cuda = "12.9" },
+]
+version = "0.2.0"
+preview = ["pixi-build"]
+
+[package]
+name = "ctranslate2-rs"
+version = "0.10.1"
+homepage = "https://github.com/jkawamoto/ctranslate2-rs"
+repository = "https://github.com/jkawamoto/ctranslate2-rs"
+
+[package.build]
+backend = { name = "pixi-build-rust", version = "*" }
+
+[package.build.config]
+compilers = ["rust", "c", "cxx"]
+
+[tasks]
+clean = "cargo clean"
+check = "cargo check -p ct2rs"
+build = "cargo build --release"
+test = "cargo test --workspace"
+
+[tasks.doc]
+cmd = "cargo rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs"
+default-environment = "hub"
+env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
+
+[tasks.doc-platform]
+cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
+default-environment = "platform"
+env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
 [dependencies]
-# 1. Pin the CUDA version constraint in conda-forge — this is what actually
-#    drives which build variant of everything below gets resolved
+rust = "*"
+rust-src = ">=1.98.1,<2"
+
 cuda-version = "12.9.*"
-
-# 2. CUDA 12 Compiler and Core Libraries needed for CTranslate2
-#    No manual version pins here — cuda-version above already constrains
-#    these to CUDA-12.8-compatible builds. Pinning them to "12.0" style
-#    versions fails because these libs use their own SONAME versioning
-#    (e.g. cuRAND is on the 10.4.x line), not the toolkit release number.
+cudnn = "8.*"
 cuda-nvcc = "*"
-cuda-cudart-dev = "*"
 libcublas-dev = "*"
-libcurand-dev = "*"
-cudnn = "*"
 
-# 3. Tensor-parallel deps: MPI + NCCL
+compilers = ">=1.8.0"
+cmake = ">=4.2.3,<5"
+ninja = ">=1.13.2,<2"
+
+sccache = ">=0.17.0,<0.18" # TODO we must configurate sccache ASAP!
+
+[activation.env]
+CFLAGS = "$CFLAGS -pthread"
+CXXFLAGS = "$CXXFLAGS -pthread"
+CUDA_ARCH_LIST = "Auto"
+CUDA_TOOLKIT_ROOT_DIR = "$CONDA_PREFIX/targets/x86_64-linux"
+CUDA_PATH = "$CONDA_PREFIX/targets/x86_64-linux"
+
+[environments]
+default = []
+# TODO this must be completed with all dependencies required by `ct2rs-platform`
+platform = ["platform-cuda", "tensor-parallel", "hub"]
+hub = ["hub"]
+
+[feature.tensor-parallel.dependencies]
 openmpi = "*"
 nccl = "*"
 
-# 4. C++ Build Tools (Required by ctranslate2-sys and CMake)
-compilers = ">=1.8.0"
-cmake = ">=3.28"
-ninja = ">=1.11"
-pkg-config = ">=0.29"
+[feature.platform-cuda.dependencies]
+cuda-cudart-dev = "*"
+libcurand-dev = "*"
 
-[activation.env]
-# CRITICAL FOR CTRANSLATE2-RS:
-# Point ctranslate2-rs build script directly to Pixi's CUDA 12 installation
-CUDA_TOOLKIT_ROOT_DIR = "$CONDA_PREFIX"
-CUDA_HOME = "$CONDA_PREFIX"
-CUDA_PATH = "$CONDA_PREFIX"
-CUDAToolkit_ROOT = "$CONDA_PREFIX"
-MPI_HOME = "$CONDA_PREFIX"
-NCCL_ROOT = "$CONDA_PREFIX"
-CMAKE_PREFIX_PATH = "$CONDA_PREFIX"
-CMAKE_GENERATOR = "Ninja" # actually use the ninja you installed
-CUDA_ARCH_LIST = "Auto" # Explicitly target modern architectures (Volta, Turing, Ampere, Ada Lovelace, Hopper)
+[feature.platform-cuda.activation.env]
+PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
 
-[tasks]
-check = "nvcc --version"
-clean = "cargo clean"
-build = "cargo build --release --features cuda,cudnn"
-test = "cargo test --all --all-features"
+[feature.hub.dependencies]
+openssl = ">=3.6.4,<4"
+pkg-config = ">=0.29.2,<0.30"

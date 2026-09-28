@@ -62,7 +62,7 @@ pub(crate) mod ffi {
 }
 
 #[inline]
-pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<VecStr> {
+pub(crate) fn vec_ffi_vecstr<T: AsRef<str>>(src: &[Vec<T>]) -> Vec<VecStr<'_>> {
     src.iter()
         .map(|v| VecStr {
             v: v.iter().map(AsRef::as_ref).collect(),

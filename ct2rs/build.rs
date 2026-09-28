@@ -70,12 +70,12 @@ fn build_ctranslate2() {
         }
     }
     let flash_attention = cfg!(feature = "flash-attention");
+
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
-        .define("WITH_MKL", "OFF")
-        .define("OPENMP_RUNTIME", "NONE")
         .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+
     if os == Os::Win {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
         if !rustflags.contains("target-feature=+crt-static") {
@@ -144,7 +144,10 @@ fn build_ctranslate2() {
         if let Ok(library_path) = env::var("DEP_MKL_LIBRARY_PATH") {
             library_paths.push(PathBuf::from(library_path));
         }
+    } else {
+        cmake.define("WITH_MKL", "OFF");
     }
+
     if openblas {
         cmake.define("WITH_OPENBLAS", "ON");
         if os != Os::Win {
@@ -152,24 +155,30 @@ fn build_ctranslate2() {
             library_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_LIBRARY").unwrap()));
         }
     }
+
     if ruy {
         cmake.define("WITH_RUY", "ON");
     }
+
     if accelarate {
         println!("cargo:rustc-link-lib=framework=Accelerate");
         cmake.define("WITH_ACCELERATE", "ON");
     }
+
     if tensor_parallel {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
     }
+
     if sse4_1 {
         cmake.define("CMAKE_CXX_FLAGS", "-msse4.1");
     }
+
     if dnnl {
         cmake.define("WITH_DNNL", "ON");
         include_paths.push(PathBuf::from(env::var("DEP_DNNL_INCLUDE_PATH").unwrap()));
         library_paths.push(PathBuf::from(env::var("DEP_DNNL_LIBRARY_PATH").unwrap()));
     }
+
     if openmp_comp {
         // `gomp` is GNU's OpenMP runtime and does not exist on the MSVC toolchain,
         // where linking it fails with `LNK1181: cannot open input file 'gomp.lib'`.
@@ -183,10 +192,14 @@ fn build_ctranslate2() {
     } else if openmp_intel {
         println!("cargo:rustc-link-lib=iomp5");
         cmake.define("OPENMP_RUNTIME", "INTEL");
+    } else {
+        cmake.define("OPENMP_RUNTIME", "NONE");
     }
+
     if flash_attention {
         cmake.define("WITH_FLASH_ATTN", "ON");
     }
+
     if cfg!(feature = "disable-cpu-dispatch") {
         cmake.define("ENABLE_CPU_DISPATCH", "OFF");
     }
@@ -197,6 +210,7 @@ fn build_ctranslate2() {
             env::join_paths(include_paths).unwrap(),
         );
     }
+
     if !library_paths.is_empty() {
         cmake.env(
             "CMAKE_LIBRARY_PATH",
@@ -422,7 +436,9 @@ fn is_library(name: &&str) -> bool {
 
 #[cfg(not(target_os = "windows"))]
 fn library_name(name: &str) -> &str {
-    &name[3..name.len() - 2]
+    name.strip_prefix("lib")
+        .and_then(|s| s.strip_suffix(".a"))
+        .unwrap_or(name)
 }
 
 #[cfg(target_os = "windows")]
@@ -432,7 +448,7 @@ fn is_library(name: &&str) -> bool {
 
 #[cfg(target_os = "windows")]
 fn library_name(name: &str) -> &str {
-    &name[0..name.len() - 4]
+    name.strip_suffix(".lib").unwrap_or(name)
 }
 
 fn link_libraries<T: AsRef<Path>>(root: T) {
