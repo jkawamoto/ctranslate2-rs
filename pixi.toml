@@ -35,6 +35,12 @@ cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
 default-environment = "platform"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
+[tasks.build-vv]
+cmd = 'cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda"
+env = { CMAKE_VERBOSE_MAKEFILE = "1", RUST_BACKTRACE = "full" }
+# clean-env = true # ref: https://pixi.prefix.dev/latest/workspace/advanced_tasks/#clean-environment
+
 [dependencies]
 rust = "*"
 rust-src = ">=1.98.1,<2"
@@ -56,11 +62,14 @@ CXXFLAGS = "$CXXFLAGS -pthread"
 CUDA_ARCH_LIST = "Auto"
 CUDA_TOOLKIT_ROOT_DIR = "$CONDA_PREFIX/targets/x86_64-linux"
 CUDA_PATH = "$CONDA_PREFIX/targets/x86_64-linux"
+CMAKE_GENERATOR = "Ninja"
 
 [environments]
 default = []
 # TODO this must be completed with all dependencies required by `ct2rs-platform`
 platform = ["platform-cuda", "tensor-parallel", "hub"]
+platform-flash-att = ["platform-cuda", "hub", "flash-attn"]
+platform-cuda = ["platform-cuda", "hub"]
 hub = ["hub"]
 
 [feature.tensor-parallel.dependencies]
@@ -77,3 +86,6 @@ PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
 [feature.hub.dependencies]
 openssl = ">=3.6.4,<4"
 pkg-config = ">=0.29.2,<0.30"
+
+[feature.flash-attn.dependencies]
+flash-attn = "*"
