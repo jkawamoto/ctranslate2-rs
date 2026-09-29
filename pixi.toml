@@ -23,7 +23,7 @@ compilers = ["rust", "c", "cxx"]
 clean = "cargo clean"
 check = "cargo check -p ct2rs"
 build = "cargo build --release"
-test = "cargo test --workspace"
+test = "cargo test -p ct2rs"
 
 [tasks.doc]
 cmd = "cargo rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs"
