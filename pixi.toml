@@ -82,6 +82,8 @@ nccl = "*"
 [feature.platform-cuda.dependencies]
 cuda-cudart-dev = "*"
 libcurand-dev = "*"
+# cuda-version = "12.9.*"
+# cuda-nvcc = "*"
 # libcublas-static = "*"
 # cudnn = "8.*"
 # libcublas-dev = "*"
