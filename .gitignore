@@ -38,3 +38,5 @@ Cargo.lock
 ## Ignore model downloads
 .models/
 .tmp/
+.agents/
+skills-lock.json

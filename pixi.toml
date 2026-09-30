@@ -4,7 +4,7 @@ name = "ctranslate2-rs-workspace"
 platforms = [
     { platform = "linux-64", cuda = "12.9" },
 ]
-version = "0.2.0"
+version = "0.3.0"
 preview = ["pixi-build"]
 
 [package]
@@ -20,9 +20,10 @@ backend = { name = "pixi-build-rust", version = "*" }
 compilers = ["rust", "c", "cxx"]
 
 [tasks]
-clean = "cargo clean"
+clean = "cargo clean -p ct2rs"
 check = "cargo check -p ct2rs"
-build = "cargo build --release"
+build = "cargo build -p ct2rs"
+build-release = "cargo build --release"
 test = "cargo test -p ct2rs"
 
 [tasks.doc]
@@ -35,6 +36,11 @@ cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
 default-environment = "platform"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
+[tasks.flash-attn]
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda"
+env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/flash-attn" }
+
 [tasks.build-vv]
 cmd = 'cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,ruy"'
 default-environment = "platform-cuda"
@@ -46,9 +52,7 @@ rust = "*"
 rust-src = ">=1.98.1,<2"
 
 cuda-version = "12.9.*"
-cudnn = "8.*"
 cuda-nvcc = "*"
-libcublas-dev = "*"
 
 compilers = ">=1.8.0"
 cmake = ">=4.2.3,<5"
@@ -68,7 +72,6 @@ CMAKE_GENERATOR = "Ninja"
 default = []
 # TODO this must be completed with all dependencies required by `ct2rs-platform`
 platform = ["platform-cuda", "tensor-parallel", "hub"]
-platform-flash-att = ["platform-cuda", "hub", "flash-attn"]
 platform-cuda = ["platform-cuda", "hub"]
 hub = ["hub"]
 
@@ -79,6 +82,9 @@ nccl = "*"
 [feature.platform-cuda.dependencies]
 cuda-cudart-dev = "*"
 libcurand-dev = "*"
+# libcublas-static = "*"
+# cudnn = "8.*"
+# libcublas-dev = "*"
 
 [feature.platform-cuda.activation.env]
 PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
@@ -86,6 +92,3 @@ PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
 [feature.hub.dependencies]
 openssl = ">=3.6.4,<4"
 pkg-config = ">=0.29.2,<0.30"
-
-[feature.flash-attn.dependencies]
-flash-attn = "*"
