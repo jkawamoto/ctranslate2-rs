@@ -37,6 +37,11 @@ cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,all-tokenizers,hub,ru
 default-environment = "platform-cuda-full"
 env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-full" }
 
+[tasks.whisper-dyn]
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda-dyn"
+env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
+
 [tasks.flash-attn]
 cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,whisper,hub,ruy"'
 default-environment = "platform-cuda-dyn"
@@ -53,8 +58,8 @@ default-environment = "platform"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
 [tasks.build-vv]
-cmd = 'cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,ruy"'
-default-environment = "platform-cuda-dyn"
+cmd = 'cargo build -vv -p ct2rs --no-default-features -F "cuda,all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda-full"
 env = { CMAKE_VERBOSE_MAKEFILE = "1", RUST_BACKTRACE = "full" }
 # clean-env = true # ref: https://pixi.prefix.dev/latest/workspace/advanced_tasks/#clean-environment
 
