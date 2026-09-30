@@ -105,7 +105,7 @@ CUDA_PATH = "$CONDA_PREFIX/targets/x86_64-linux"
 PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
 
 [feature.platform-cuda-full.dependencies]
-# cudnn = "8.*"
+cudnn = "8.*"
 libcublas-static = "*"
 
 [feature.tensor-parallel.dependencies]
