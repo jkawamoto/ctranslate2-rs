@@ -74,7 +74,7 @@ fn build_ctranslate2() {
     cmake
         .define("BUILD_CLI", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
-        .define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+        .define("CMAKE_POLICY_VERSION_MINIMUM", "3.11");
 
     if os == Os::Win {
         let rustflags = env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
