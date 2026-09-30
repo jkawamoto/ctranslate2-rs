@@ -21,10 +21,26 @@ compilers = ["rust", "c", "cxx"]
 
 [tasks]
 clean = "cargo clean -p ct2rs"
+full-clean = "cargo clean"
 check = "cargo check -p ct2rs"
 build = "cargo build -p ct2rs"
 build-release = "cargo build --release"
 test = "cargo test -p ct2rs"
+
+[tasks.cuda-dyn]
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,all-tokenizers,hub,ruy"'
+default-environment = "platform-cuda-dyn"
+env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
+
+[tasks.cuda-full]
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,all-tokenizers,hub,ruy"'
+default-environment = "platform-cuda-full"
+env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-full" }
+
+[tasks.flash-attn]
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda-dyn"
+env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/flash-attn" }
 
 [tasks.doc]
 cmd = "cargo rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs"
@@ -36,23 +52,15 @@ cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
 default-environment = "platform"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
-[tasks.flash-attn]
-cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,whisper,hub,ruy"'
-default-environment = "platform-cuda"
-env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/flash-attn" }
-
 [tasks.build-vv]
 cmd = 'cargo build -vv -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,ruy"'
-default-environment = "platform-cuda"
+default-environment = "platform-cuda-dyn"
 env = { CMAKE_VERBOSE_MAKEFILE = "1", RUST_BACKTRACE = "full" }
 # clean-env = true # ref: https://pixi.prefix.dev/latest/workspace/advanced_tasks/#clean-environment
 
 [dependencies]
 rust = "*"
 rust-src = ">=1.98.1,<2"
-
-# cuda-version = "12.9.*"
-# cuda-nvcc = "*"
 
 compilers = ">=1.8.0"
 cmake = ">=4.2.3,<5"
@@ -63,33 +71,36 @@ sccache = ">=0.17.0,<0.18" # TODO we must configurate sccache ASAP!
 [activation.env]
 CFLAGS = "$CFLAGS -pthread"
 CXXFLAGS = "$CXXFLAGS -pthread"
-CUDA_ARCH_LIST = "Auto"
-CUDA_TOOLKIT_ROOT_DIR = "$CONDA_PREFIX/targets/x86_64-linux"
-CUDA_PATH = "$CONDA_PREFIX/targets/x86_64-linux"
 CMAKE_GENERATOR = "Ninja"
 
 [environments]
 default = []
 # TODO this must be completed with all dependencies required by `ct2rs-platform`
-platform = ["platform-cuda", "tensor-parallel", "hub"]
-platform-cuda = ["platform-cuda", "hub"]
+platform = ["platform-cuda-dyn", "tensor-parallel", "hub"]
+platform-cuda-dyn = ["platform-cuda-dyn", "hub"]
+platform-cuda-full = ["platform-cuda-dyn", "platform-cuda-full", "hub"]
 hub = ["hub"]
+
+[feature.platform-cuda-dyn.dependencies]
+cuda-version = "12.9.*"
+cuda-nvcc = "*"
+cuda-cudart-dev = "*"
+libcurand-dev = "*"
+libcublas-dev = "*"
+
+[feature.platform-cuda-dyn.activation.env]
+CUDA_ARCH_LIST = "Auto"
+CUDA_TOOLKIT_ROOT_DIR = "$CONDA_PREFIX/targets/x86_64-linux"
+CUDA_PATH = "$CONDA_PREFIX/targets/x86_64-linux"
+PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
+
+[feature.platform-cuda-full.dependencies]
+# cudnn = "8.*"
+libcublas-static = "*"
 
 [feature.tensor-parallel.dependencies]
 openmpi = "*"
 nccl = "*"
-
-[feature.platform-cuda.dependencies]
-cuda-cudart-dev = "*"
-libcurand-dev = "*"
-# cuda-version = "12.9.*"
-# cuda-nvcc = "*"
-# libcublas-static = "*"
-# cudnn = "8.*"
-# libcublas-dev = "*"
-
-[feature.platform-cuda.activation.env]
-PATH = "$CONDA_PREFIX/nvvm/bin:$PATH"
 
 [feature.hub.dependencies]
 openssl = ">=3.6.4,<4"
