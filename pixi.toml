@@ -4,7 +4,7 @@ name = "ctranslate2-rs-workspace"
 platforms = [
     { platform = "linux-64", cuda = "12.9" },
 ]
-version = "0.3.0"
+version = "0.4.0"
 preview = ["pixi-build"]
 
 [package]
@@ -30,22 +30,27 @@ test = "cargo test -p ct2rs"
 [tasks.cuda-dyn]
 cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,all-tokenizers,hub,ruy"'
 default-environment = "platform-cuda-dyn"
-env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
+env = { CARGO_TARGET_DIR = "target/cuda-dyn" }
 
 [tasks.cuda-full]
 cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,all-tokenizers,hub,ruy"'
 default-environment = "platform-cuda-full"
-env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-full" }
+env = { CARGO_TARGET_DIR = "target/cuda-full" }
 
 [tasks.whisper-dyn]
 cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,all-tokenizers,whisper,hub,ruy"'
 default-environment = "platform-cuda-dyn"
-env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
+env = { CARGO_TARGET_DIR = "target/whisper-dyn" }
+
+[tasks.check-whisper-dyn]
+cmd = 'cargo check -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,all-tokenizers,whisper,hub,ruy"'
+default-environment = "platform-cuda-dyn"
+env = { CARGO_TARGET_DIR = "target/whisper-dyn" }
 
 [tasks.flash-attn]
-cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,whisper,hub,ruy"'
+cmd = 'cargo build -p ct2rs --no-default-features -F "cuda,cuda-dynamic-loading,flash-attention,all-tokenizers,hub,ruy"'
 default-environment = "platform-cuda-dyn"
-env = { CUDA_ARCH_LIST = "8.9;9.0", CARGO_TARGET_DIR = "target/flash-attn" }
+env = { CUDA_ARCH_LIST = "8.9;9.0;10.0;12.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
 
 [tasks.doc]
 cmd = "cargo rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs"
