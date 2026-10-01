@@ -33,3 +33,10 @@ scripts/lessons.py
 # Ignore lock files
 pixi.lock
 Cargo.lock
+
+# Development
+## Ignore model downloads
+.models/
+.tmp/
+.agents/
+skills-lock.json
