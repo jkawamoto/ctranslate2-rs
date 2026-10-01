@@ -53,12 +53,12 @@ default-environment = "platform-cuda-dyn"
 env = { CUDA_ARCH_LIST = "8.9;9.0;10.0;12.0", CARGO_TARGET_DIR = "target/cuda-dyn" }
 
 [tasks.doc]
-cmd = "cargo rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs"
+cmd = "cargo rustdoc -F whisper,hub -p ct2rs"
 default-environment = "hub"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
 [tasks.doc-platform]
-cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
+cmd = "cargo rustdoc -F whisper,hub -p ct2rs-platform"
 default-environment = "platform"
 env = { RUSTC_BOOTSTRAP = "1", RUSTDOCFLAGS = "--cfg docsrs" }
 
