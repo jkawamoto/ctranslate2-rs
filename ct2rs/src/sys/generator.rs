@@ -469,7 +469,7 @@ impl Default for GenerationOptions<String, String, String> {
 
 impl<T: AsRef<str>, U: AsRef<str>, V: AsRef<str>> GenerationOptions<T, U, V> {
     #[inline]
-    fn to_ffi(&self) -> ffi::GenerationOptions {
+    fn to_ffi(&self) -> ffi::GenerationOptions<'_> {
         ffi::GenerationOptions {
             beam_size: self.beam_size,
             patience: self.patience,

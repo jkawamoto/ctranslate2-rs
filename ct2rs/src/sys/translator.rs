@@ -288,7 +288,7 @@ impl Default for TranslationOptions<String, String> {
 }
 
 impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
-    fn to_ffi(&self) -> ffi::TranslationOptions {
+    fn to_ffi(&self) -> ffi::TranslationOptions<'_> {
         ffi::TranslationOptions {
             beam_size: self.beam_size,
             patience: self.patience,
