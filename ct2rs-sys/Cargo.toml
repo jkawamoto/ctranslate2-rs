@@ -9,6 +9,23 @@ keywords = ["ctranslate2", "bindings", "llm", "whisper"]
 license.workspace = true
 repository.workspace = true
 description = "Raw Rust bindings for OpenNMT/CTranslate2"
+include = [
+    "/include",
+    "/src",
+    "/CTranslate2/CMakeLists.txt",
+    "/CTranslate2/LICENSE",
+    "/CTranslate2/cmake",
+    "/CTranslate2/cpp",
+    "/CTranslate2/include",
+    "/CTranslate2/python",
+    "/CTranslate2/src",
+    "/CTranslate2/third_party",
+    "!/CTranslate2/**/.*",
+    "!/CTranslate2/**/test",
+    "!/CTranslate2/**/docs",
+    "!/CTranslate2/**/media",
+    "!/CTranslate2/third_party/thrust/libcudacxx/*.md",
+]
 
 [lib]
 name = "ct2rs_sys"
