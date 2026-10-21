@@ -21,7 +21,7 @@ use super::Device;
 #[cxx::bridge]
 pub(crate) mod ffi {
     unsafe extern "C++" {
-        include!("ct2rs/include/storage_view.h");
+        include!("include/storage_view.h");
 
         type Device = super::Device;
 

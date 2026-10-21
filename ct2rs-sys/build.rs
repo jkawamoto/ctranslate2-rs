@@ -409,6 +409,7 @@ fn main() {
     .file("src/sys/translator.cpp")
     .file("src/sys/generator.cpp")
     .file("src/sys/whisper.cpp")
+    .include(".")
     .include("CTranslate2/include")
     .std("c++17")
     .flag_if_supported("/EHsc")
