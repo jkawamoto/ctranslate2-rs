@@ -18,7 +18,7 @@ use cxx::UniquePtr;
 #[cxx::bridge]
 pub(crate) mod ffi {
     unsafe extern "C++" {
-        include!("ct2rs/include/model_memory_reader.h");
+        include!("include/model_memory_reader.h");
 
         type ModelMemoryReader;
 

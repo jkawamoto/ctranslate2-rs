@@ -61,7 +61,7 @@ pub(crate) mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/config.h");
+        include!("include/config.h");
 
         type BatchType = super::BatchType;
     }

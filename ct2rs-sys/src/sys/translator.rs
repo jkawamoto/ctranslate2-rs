@@ -91,8 +91,8 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/translator.h");
-        include!("ct2rs/src/sys/types.rs.h");
+        include!("include/translator.h");
+        include!("ct2rs-sys/src/sys/types.rs.h");
 
         type VecString = super::VecString;
         type VecStr<'a> = super::VecStr<'a>;
@@ -710,33 +710,5 @@ mod tests {
         assert_eq!(res.score(), None);
         assert_eq!(res.num_hypotheses(), 0);
         assert!(!res.has_scores());
-    }
-
-    #[cfg(feature = "hub")]
-    mod hub {
-        use crate::sys::Translator;
-        use crate::{download_model, Config, Device};
-
-        const MODEL_ID: &str = "jkawamoto/fugumt-en-ja-ct2";
-        #[test]
-        #[ignore]
-        fn test_translator_debug() {
-            let model_path = download_model(MODEL_ID).unwrap();
-
-            let translator = Translator::new(
-                &model_path,
-                &Config {
-                    device: if cfg!(feature = "cuda") {
-                        Device::CUDA
-                    } else {
-                        Device::CPU
-                    },
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-            assert!(format!("{:?}", translator)
-                .contains(model_path.file_name().unwrap().to_str().unwrap()));
-        }
     }
 }

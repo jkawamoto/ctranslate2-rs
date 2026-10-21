@@ -118,8 +118,8 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/whisper.h");
-        include!("ct2rs/src/sys/types.rs.h");
+        include!("include/whisper.h");
+        include!("ct2rs-sys/src/sys/types.rs.h");
 
         type VecStr<'a> = super::VecStr<'a>;
         type VecString = super::VecString;
@@ -583,23 +583,5 @@ mod tests {
         assert_eq!(res.no_speech_prob, 0.);
         assert_eq!(res.num_sequences(), 0);
         assert!(!res.has_scores());
-    }
-
-    #[cfg(feature = "hub")]
-    mod hub {
-        use crate::download_model;
-        use crate::sys::Whisper;
-
-        const MODEL_ID: &str = "jkawamoto/whisper-tiny-ct2";
-
-        #[test]
-        #[ignore]
-        fn test_whisper_debug() {
-            let model_path = download_model(MODEL_ID).unwrap();
-
-            let whisper = Whisper::new(&model_path, Default::default()).unwrap();
-            assert!(format!("{:?}", whisper)
-                .contains(model_path.file_name().unwrap().to_str().unwrap()));
-        }
     }
 }
