@@ -36,7 +36,7 @@ mod ffi {
     /// Example of creating a default `WhisperOptions`:
     ///
     /// ```
-    /// use ct2rs::sys::WhisperOptions;
+    /// use ct2rs_sys::WhisperOptions;
     ///
     /// let options = WhisperOptions::default();
     /// ```
@@ -263,7 +263,7 @@ impl From<VecDetectionResult> for Vec<DetectionResult> {
 /// ```no_run
 /// # use anyhow::Result;
 /// #
-/// use ct2rs::sys::{Config, StorageView, Whisper};
+/// use ct2rs_sys::{Config, StorageView, Whisper};
 ///
 /// # fn main() -> Result<()>{
 /// let whisper = Whisper::new("/path/to/model", Config::default())?;
@@ -323,7 +323,7 @@ impl Whisper {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Whisper};
+    /// use ct2rs_sys::{Config, Whisper};
     ///
     /// # fn main() -> Result<()> {
     /// let whisper = Whisper::new("/path/to/model", Config::default())?;
