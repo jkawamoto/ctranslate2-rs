@@ -5,11 +5,6 @@ authors.workspace = true
 categories = ["api-bindings"]
 documentation = "https://docs.rs/ct2rs-sys"
 edition.workspace = true
-keywords = ["ctranslate2", "bindings", "llm", "whisper"]
-license.workspace = true
-repository.workspace = true
-readme = "README.md"
-description = "Raw Rust bindings for OpenNMT/CTranslate2"
 include = [
     "/include",
     "/src",
@@ -30,6 +25,11 @@ include = [
     "!/CTranslate2/**/media",
     "!/CTranslate2/third_party/thrust/libcudacxx/*.md",
 ]
+keywords = ["ctranslate2", "bindings", "llm", "whisper"]
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+description = "Raw Rust bindings for OpenNMT/CTranslate2"
 
 [lib]
 name = "ct2rs_sys"
