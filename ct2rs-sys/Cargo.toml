@@ -8,11 +8,14 @@ edition.workspace = true
 keywords = ["ctranslate2", "bindings", "llm", "whisper"]
 license.workspace = true
 repository.workspace = true
+readme = "README.md"
 description = "Raw Rust bindings for OpenNMT/CTranslate2"
 include = [
     "/include",
     "/src",
     "/build.rs",
+    "/README.md",
+    "/LICENSE",
     "/CTranslate2/CMakeLists.txt",
     "/CTranslate2/LICENSE",
     "/CTranslate2/cmake",
