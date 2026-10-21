@@ -92,9 +92,9 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/generator.h");
-        include!("ct2rs/src/sys/types.rs.h");
-        include!("ct2rs/src/sys/scoring.rs.h");
+        include!("include/generator.h");
+        include!("ct2rs-sys/src/sys/types.rs.h");
+        include!("ct2rs-sys/src/sys/scoring.rs.h");
 
         type VecString = super::VecString;
         type VecStr<'a> = super::VecStr<'a>;
@@ -145,7 +145,7 @@ unsafe impl Sync for ffi::Generator {}
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Generator, GenerationOptions};
+/// use ct2rs_sys::{Config, Device, Generator, GenerationOptions};
 ///
 /// # fn main() -> Result<()> {
 /// let generator = Generator::new("/path/to/model", &Config::default())?;
@@ -184,7 +184,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Generator};
+    /// use ct2rs_sys::{Config, Generator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -238,7 +238,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Generator, GenerationOptions, GenerationStepResult};
+    /// use ct2rs_sys::{Config, Generator, GenerationOptions, GenerationStepResult};
     ///
     /// # fn main() -> Result<()> {
     /// let start_tokens = [vec!["<s>".to_string()]];
@@ -328,7 +328,7 @@ impl Debug for Generator {
 /// Example of creating a default `GenerationOptions`:
 ///
 /// ```
-/// use ct2rs::sys::GenerationOptions;
+/// use ct2rs_sys::GenerationOptions;
 ///
 /// let options = GenerationOptions::default();
 /// # assert_eq!(options.beam_size, 1);
@@ -632,33 +632,5 @@ mod tests {
         assert!(res.scores.is_empty());
         assert_eq!(res.num_sequences(), 0);
         assert!(!res.has_scores());
-    }
-
-    #[cfg(feature = "hub")]
-    mod hub {
-        use crate::sys::Generator;
-        use crate::{download_model, Config, Device};
-
-        const MODEL_ID: &str = "jkawamoto/gpt2-ct2";
-        #[test]
-        #[ignore]
-        fn test_generator_debug() {
-            let model_path = download_model(MODEL_ID).unwrap();
-
-            let generator = Generator::new(
-                &model_path,
-                &Config {
-                    device: if cfg!(feature = "cuda") {
-                        Device::CUDA
-                    } else {
-                        Device::CPU
-                    },
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-            assert!(format!("{:?}", generator)
-                .contains(model_path.file_name().unwrap().to_str().unwrap()));
-        }
     }
 }

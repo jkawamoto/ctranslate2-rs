@@ -91,8 +91,8 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/translator.h");
-        include!("ct2rs/src/sys/types.rs.h");
+        include!("include/translator.h");
+        include!("ct2rs-sys/src/sys/types.rs.h");
 
         type VecString = super::VecString;
         type VecStr<'a> = super::VecStr<'a>;
@@ -141,8 +141,8 @@ unsafe impl Sync for ffi::Translator {}
 /// Example of creating a default `TranslationOptions`:
 ///
 /// ```
-/// # use ct2rs::sys::BatchType;
-/// use ct2rs::sys::TranslationOptions;
+/// # use ct2rs_sys::BatchType;
+/// use ct2rs_sys::TranslationOptions;
 ///
 /// let options = TranslationOptions::default();
 /// # assert_eq!(options.beam_size, 2);
@@ -331,7 +331,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Translator};
+/// use ct2rs_sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -352,7 +352,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Translator};
+/// use ct2rs_sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -392,7 +392,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Translator};
+    /// use ct2rs_sys::{Config, Translator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -441,7 +441,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, GenerationStepResult, Translator, TranslationOptions};
+    /// use ct2rs_sys::{Config, GenerationStepResult, Translator, TranslationOptions};
     ///
     /// # fn main() -> Result<()> {
     /// let source_tokens = [
@@ -710,33 +710,5 @@ mod tests {
         assert_eq!(res.score(), None);
         assert_eq!(res.num_hypotheses(), 0);
         assert!(!res.has_scores());
-    }
-
-    #[cfg(feature = "hub")]
-    mod hub {
-        use crate::sys::Translator;
-        use crate::{download_model, Config, Device};
-
-        const MODEL_ID: &str = "jkawamoto/fugumt-en-ja-ct2";
-        #[test]
-        #[ignore]
-        fn test_translator_debug() {
-            let model_path = download_model(MODEL_ID).unwrap();
-
-            let translator = Translator::new(
-                &model_path,
-                &Config {
-                    device: if cfg!(feature = "cuda") {
-                        Device::CUDA
-                    } else {
-                        Device::CPU
-                    },
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-            assert!(format!("{:?}", translator)
-                .contains(model_path.file_name().unwrap().to_str().unwrap()));
-        }
     }
 }

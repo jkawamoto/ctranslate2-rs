@@ -13,3 +13,5 @@ ct2rs = { package = "ct2rs-platform", version = "0.10.2" }
 ```
 
 See the [ct2rs crate](../README.md) for more information.
+
+For raw CTranslate2 bindings, depend directly on [`ct2rs-sys`](https://crates.io/crates/ct2rs-sys).

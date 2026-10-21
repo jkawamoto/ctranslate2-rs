@@ -8,22 +8,8 @@ edition.workspace = true
 include = [
     "/include",
     "/src",
-    "/build.rs",
     "/LICENSE",
     "/examples",
-    "/CTranslate2/CMakeLists.txt",
-    "/CTranslate2/LICENSE",
-    "/CTranslate2/cmake",
-    "/CTranslate2/cpp",
-    "/CTranslate2/include",
-    "/CTranslate2/python",
-    "/CTranslate2/src",
-    "/CTranslate2/third_party",
-    "!/CTranslate2/**/.*",
-    "!/CTranslate2/**/test",
-    "!/CTranslate2/**/docs",
-    "!/CTranslate2/**/media",
-    "!/CTranslate2/third_party/thrust/libcudacxx/*.md",
 ]
 keywords = ["ctranslate2", "bindings", "llm", "whisper"]
 license.workspace = true
@@ -33,9 +19,7 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
 anyhow = "1.0"
-cxx = { version = "1.0", features = ["c++17"] }
-intel-onemkl-prebuild = { version = "0.2", optional = true }
-onednn-src = { version = "0.1", optional = true }
+ct2rs-sys = { version = "=0.10.2", path = "../ct2rs-sys", default-features = false }
 sentencepiece = { version = "0.13", optional = true }
 tokenizers = { version = "0.22", optional = true }
 
@@ -48,12 +32,6 @@ serde_json = { version = "1.0", optional = true }
 # Dependencies for Hugging Face integration
 hf-hub = { version = "0.4", optional = true }
 
-[target.'cfg(not(target_os = "windows"))'.dependencies]
-openblas-src = { version = "0.10", features = ["static"], optional = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-openblas-src = { version = "0.10", features = ["static", "system"], optional = true }
-
 [dev-dependencies]
 clap = { version = "4.5", features = ["derive"] }
 rand = "0.9"
@@ -62,13 +40,8 @@ ureq = "2.10"
 # Dependencies for Whisper example
 hound = { version = "3.5.1" }
 
-[build-dependencies]
-cmake = "0.1"
-cxx-build = "1.0"
-walkdir = "2.5"
-
 [features]
-default = ["all-tokenizers", "ruy", "cuda-small-binary"]
+default = ["all-tokenizers", "ct2rs-sys/ruy", "ct2rs-sys/cuda-small-binary"]
 whisper = [
     "dep:mel_spec",
     "dep:ndarray",
@@ -77,26 +50,26 @@ whisper = [
     "all-tokenizers",
 ]
 hub = ["dep:hf-hub"]
-system = ["intel-onemkl-prebuild?/system", "openblas-src?/system"]
+system = ["ct2rs-sys/system"]
 
 # Features to select backends.
-cuda = []
-cudnn = ["cuda"]
-mkl = ["dep:intel-onemkl-prebuild"]
-system-mkl = ["mkl", "intel-onemkl-prebuild/system"]
-openblas = ["dep:openblas-src"]
-dnnl = ["dep:onednn-src"]
-ruy = []
-accelerate = []
-openmp-runtime-comp = []
-openmp-runtime-intel = []
-disable-cpu-dispatch = []
+cuda = ["ct2rs-sys/cuda"]
+cudnn = ["ct2rs-sys/cudnn"]
+mkl = ["ct2rs-sys/mkl"]
+system-mkl = ["ct2rs-sys/system-mkl"]
+openblas = ["ct2rs-sys/openblas"]
+dnnl = ["ct2rs-sys/dnnl"]
+ruy = ["ct2rs-sys/ruy"]
+accelerate = ["ct2rs-sys/accelerate"]
+openmp-runtime-comp = ["ct2rs-sys/openmp-runtime-comp"]
+openmp-runtime-intel = ["ct2rs-sys/openmp-runtime-intel"]
+disable-cpu-dispatch = ["ct2rs-sys/disable-cpu-dispatch"]
 
 # Features to enable GPU functionality.
-flash-attention = []
-tensor-parallel = []
-cuda-dynamic-loading = ["cuda"]
-cuda-small-binary = []
+flash-attention = ["ct2rs-sys/flash-attention"]
+tensor-parallel = ["ct2rs-sys/tensor-parallel"]
+cuda-dynamic-loading = ["ct2rs-sys/cuda-dynamic-loading"]
+cuda-small-binary = ["ct2rs-sys/cuda-small-binary"]
 
 # Futures to select tokenizers.
 all-tokenizers = ["sentencepiece", "tokenizers"]

@@ -8,9 +8,9 @@
 
 #include <utility>
 
-#include "ct2rs/src/sys/whisper.rs.h"
+#include "ct2rs-sys/src/sys/whisper.rs.h"
 
-#include "ct2rs/include/types.h"
+#include "include/types.h"
 
 using rust::Slice;
 using rust::Vec;

@@ -7,6 +7,15 @@
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
+The high-level API is provided by `ct2rs`. Raw bindings are available separately from
+[`ct2rs-sys`](https://crates.io/crates/ct2rs-sys); `ct2rs` no longer exposes a `sys` module.
+Add `ct2rs-sys` directly if you need the low-level API:
+
+```toml
+[dependencies]
+ct2rs-sys = "0.10.2"
+```
+
 ## Usage
 
 Add this crate to your `Cargo.toml` with selecting the backends you want to use as the features:
@@ -144,20 +153,20 @@ the [CTranslate2's docs](https://opennmt.net/CTranslate2/guides/transformers.htm
 
 This application is released under the MIT License. For details, see the [LICENSE](LICENSE) file.
 
-[CTranslate2](https://github.com/OpenNMT/CTranslate2) (which this crate builds and links to)
+[CTranslate2](https://github.com/OpenNMT/CTranslate2) (which `ct2rs-sys` builds and links to)
 is licensed under MIT License.
 If you redistribute binaries or source that include CTranslate2,
 you must comply with the MIT terms, including preserving license and notice files.
 For details, see CTranslate2’s upstream LICENSE/NOTICE.
 
-The published crate may build and/or redistribute artifacts originating from the following third-party projects.
+The published `ct2rs-sys` crate may build and/or redistribute artifacts originating from the following third-party projects.
 Each component remains under its own license, which applies in addition to this crate’s MIT license.
 When redistributing your software,
 ensure that you include the required attributions and license texts for any components
 that were used by your build configuration and target platform.
 The exact set of components used can depend on enabled features, target architecture, and toolchain.
 
-The published crate also includes the following libraries:
+The published `ct2rs-sys` crate also includes the following libraries:
 
 BSD-2-Clause:
 
