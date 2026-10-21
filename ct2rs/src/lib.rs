@@ -15,8 +15,8 @@
 //!   [ctranslate2::Generator](https://opennmt.net/CTranslate2/python/ctranslate2.Generator.html),
 //!   and
 //!   [ctranslate2::Whisper](https://opennmt.net/CTranslate2/python/ctranslate2.models.Whisper.html)
-//!   provided by CTranslate2, specifically [`sys::Translator`], [`sys::Generator`], and
-//!   [`sys::Whisper`].
+//!   provided by CTranslate2, specifically [`ct2rs_sys::Translator`], [`ct2rs_sys::Generator`], and
+//!   [`ct2rs_sys::Whisper`].
 //! * More user-friendly versions of these, [`Translator`], [`Generator`],
 //!   and [`Whisper`] (`whisper` feature is required),
 //!   which incorporate tokenizers for easier handling.
@@ -72,24 +72,13 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(feature = "mkl")]
-extern crate intel_onemkl_prebuild;
-
-#[cfg(feature = "openblas")]
-extern crate openblas_src;
-
-#[cfg(feature = "dnnl")]
-extern crate onednn_src;
+use ct2rs_sys as sys;
 
 pub use generator::{GenerationOptions, Generator};
 #[cfg(feature = "hub")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
 pub use hub::download_model;
 pub use result::GenerationStepResult;
-pub use sys::{
-    set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel,
-    ScoringOptions, ScoringResult,
-};
 pub use tokenizer::Tokenizer;
 pub use translator::{TranslationOptions, Translator};
 #[cfg(feature = "whisper")]
@@ -98,7 +87,6 @@ pub use whisper::{Segment, Whisper, WhisperOptions, Word};
 
 mod generator;
 mod result;
-pub mod sys;
 mod tokenizer;
 pub mod tokenizers;
 mod translator;

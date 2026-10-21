@@ -141,8 +141,8 @@ unsafe impl Sync for ffi::Translator {}
 /// Example of creating a default `TranslationOptions`:
 ///
 /// ```
-/// # use ct2rs::sys::BatchType;
-/// use ct2rs::sys::TranslationOptions;
+/// # use ct2rs_sys::BatchType;
+/// use ct2rs_sys::TranslationOptions;
 ///
 /// let options = TranslationOptions::default();
 /// # assert_eq!(options.beam_size, 2);
@@ -331,7 +331,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Translator};
+/// use ct2rs_sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -352,7 +352,7 @@ impl<T: AsRef<str>, U: AsRef<str>> TranslationOptions<T, U> {
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Translator};
+/// use ct2rs_sys::{Config, Device, Translator};
 ///
 /// # fn main() -> Result<()> {
 /// let translator = Translator::new("/path/to/model", &Config::default())?;
@@ -392,7 +392,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Translator};
+    /// use ct2rs_sys::{Config, Translator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -441,7 +441,7 @@ impl Translator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, GenerationStepResult, Translator, TranslationOptions};
+    /// use ct2rs_sys::{Config, GenerationStepResult, Translator, TranslationOptions};
     ///
     /// # fn main() -> Result<()> {
     /// let source_tokens = [

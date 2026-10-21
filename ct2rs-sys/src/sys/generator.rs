@@ -145,7 +145,7 @@ unsafe impl Sync for ffi::Generator {}
 ///
 /// ```no_run
 /// # use anyhow::Result;
-/// use ct2rs::sys::{Config, Device, Generator, GenerationOptions};
+/// use ct2rs_sys::{Config, Device, Generator, GenerationOptions};
 ///
 /// # fn main() -> Result<()> {
 /// let generator = Generator::new("/path/to/model", &Config::default())?;
@@ -184,7 +184,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Generator};
+    /// use ct2rs_sys::{Config, Generator};
     ///
     /// # fn main() -> Result<()> {
     /// let config = Config::default();
@@ -238,7 +238,7 @@ impl Generator {
     /// ```no_run
     /// # use anyhow::Result;
     /// #
-    /// use ct2rs::sys::{Config, Generator, GenerationOptions, GenerationStepResult};
+    /// use ct2rs_sys::{Config, Generator, GenerationOptions, GenerationStepResult};
     ///
     /// # fn main() -> Result<()> {
     /// let start_tokens = [vec!["<s>".to_string()]];
@@ -328,7 +328,7 @@ impl Debug for Generator {
 /// Example of creating a default `GenerationOptions`:
 ///
 /// ```
-/// use ct2rs::sys::GenerationOptions;
+/// use ct2rs_sys::GenerationOptions;
 ///
 /// let options = GenerationOptions::default();
 /// # assert_eq!(options.beam_size, 1);

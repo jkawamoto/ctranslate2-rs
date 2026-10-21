@@ -21,7 +21,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `ScoringOptions`:
     ///
     /// ```
-    /// use ct2rs::sys::ScoringOptions;
+    /// use ct2rs_sys::ScoringOptions;
     ///
     /// let opts = ScoringOptions::default();
     /// # assert_eq!(opts.max_input_length, 1024);

@@ -34,7 +34,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `Device`:
     ///
     /// ```
-    /// use ct2rs::sys::Device;
+    /// use ct2rs_sys::Device;
     ///
     /// let device = Device::default();
     /// # assert_eq!(device, Device::CPU);
@@ -77,7 +77,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `ComputeType`:
     ///
     /// ```
-    /// use ct2rs::sys::ComputeType;
+    /// use ct2rs_sys::ComputeType;
     ///
     /// let compute_type = ComputeType::default();
     /// # assert_eq!(compute_type, ComputeType::DEFAULT);
@@ -121,7 +121,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `BatchType`:
     ///
     /// ```
-    /// use ct2rs::sys::BatchType;
+    /// use ct2rs_sys::BatchType;
     ///
     /// let batch_type = BatchType::default();
     /// # assert_eq!(batch_type, BatchType::Examples);
@@ -153,7 +153,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `LogLevel`:
     ///
     /// ```
-    /// use ct2rs::sys::LogLevel;
+    /// use ct2rs_sys::LogLevel;
     ///
     /// let log_level = LogLevel::default();
     /// # assert_eq!(log_level, LogLevel::Warning);
@@ -204,7 +204,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the log level to `Debug`.
         /// ```
-        /// use ct2rs::sys::{LogLevel, set_log_level};
+        /// use ct2rs_sys::{LogLevel, set_log_level};
         ///
         /// set_log_level(LogLevel::Debug);
         /// ```
@@ -218,7 +218,7 @@ pub(crate) mod ffi {
         /// # Examples
         /// The following example sets the random seed to `12345`.
         /// ```
-        /// use ct2rs::sys::set_random_seed;
+        /// use ct2rs_sys::set_random_seed;
         ///
         /// set_random_seed(12345);
         /// ```
@@ -313,7 +313,7 @@ impl Display for LogLevel {
 /// Example of creating a default `Config`:
 ///
 /// ```
-/// use ct2rs::sys::{ComputeType, Config, Device};
+/// use ct2rs_sys::{ComputeType, Config, Device};
 ///
 /// let config = Config::default();
 /// # assert_eq!(config.device, Device::default());
