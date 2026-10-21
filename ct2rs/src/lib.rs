@@ -74,6 +74,10 @@
 
 use ct2rs_sys as sys;
 
+pub use ct2rs_sys::{
+    set_log_level, set_random_seed, BatchType, ComputeType, Config, Device, LogLevel,
+    ScoringOptions, ScoringResult,
+};
 pub use generator::{GenerationOptions, Generator};
 #[cfg(feature = "hub")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hub")))]
