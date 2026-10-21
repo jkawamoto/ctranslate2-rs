@@ -1,0 +1,14 @@
+[package]
+name = "ct2rs-sys"
+version.workspace = true
+authors.workspace = true
+categories = ["api-bindings"]
+documentation = "https://docs.rs/ct2rs-sys"
+edition.workspace = true
+keywords = ["ctranslate2", "bindings", "llm", "whisper"]
+license.workspace = true
+repository.workspace = true
+description = "Raw Rust bindings for OpenNMT/CTranslate2"
+
+[lib]
+name = "ct2rs_sys"
