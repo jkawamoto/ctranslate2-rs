@@ -58,6 +58,9 @@ struct Args {
     /// Target language.
     #[arg(short, long, value_name = "LANG", default_value = "jpn_Jpan")]
     target: String,
+    /// Source language.
+    #[arg(short, long, value_name = "LANG", default_value = "eng_Latn")]
+    source: String,
     /// Use CUDA.
     #[arg(short, long)]
     cuda: bool,
@@ -81,11 +84,13 @@ fn main() -> Result<()> {
     let sources = BufReader::new(File::open(args.prompt)?)
         .lines()
         .collect::<std::result::Result<Vec<String>, io::Error>>()?;
+    let source_prefixes = vec![vec![args.source]; sources.len()];
     let target_prefixes = vec![vec![args.target]; sources.len()];
 
     let now = time::Instant::now();
-    let res = t.translate_batch_with_target_prefix(
+    let res = t.translate_batch_with_source_and_target_prefix(
         &sources,
+        &source_prefixes,
         &target_prefixes,
         &Default::default(),
         None,

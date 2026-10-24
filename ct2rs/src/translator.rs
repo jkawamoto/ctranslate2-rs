@@ -18,6 +18,29 @@ pub use sys::TranslationOptions;
 use super::tokenizer::encode_all;
 use super::{sys, Config, GenerationStepResult, Tokenizer};
 
+fn prepend_source_prefixes<T: AsRef<str>>(
+    sources: &mut [Vec<String>],
+    prefixes: &[Vec<T>],
+) -> anyhow::Result<()> {
+    if sources.len() != prefixes.len() {
+        return Err(anyhow!(
+            "the number of source prefixes ({}) must match the number of sources ({})",
+            prefixes.len(),
+            sources.len()
+        ));
+    }
+
+    for (source, prefix) in sources.iter_mut().zip(prefixes) {
+        let mut prefixed: Vec<String> = prefix
+            .iter()
+            .map(|token| token.as_ref().to_string())
+            .collect();
+        prefixed.append(source);
+        *source = prefixed;
+    }
+    Ok(())
+}
+
 /// A text translator with a tokenizer.
 ///
 /// # Example
@@ -170,48 +193,35 @@ impl<T: Tokenizer> Translator<T> {
         V: AsRef<str>,
         W: AsRef<str>,
     {
-        let output = if let Some(callback) = callback {
-            let mut callback_result = Ok(());
-            let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
-                if let Err(e) =
-                    GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
-                {
-                    callback_result = Err(e);
-                    return true;
-                }
-                false
-            };
-            let output = self.translator.translate_batch(
-                &encode_all(&self.tokenizer, sources)?,
-                options,
-                Some(&mut wrapped_callback),
-            )?;
-            callback_result?;
-            output
-        } else {
-            self.translator.translate_batch(
-                &encode_all(&self.tokenizer, sources)?,
-                options,
-                None,
-            )?
-        };
+        self.translate_batch_impl(
+            encode_all(&self.tokenizer, sources)?,
+            None,
+            options,
+            callback,
+        )
+    }
 
-        let mut res = Vec::new();
-        for r in output.into_iter() {
-            let score = r.score();
-            let hypotheses = r
-                .hypotheses
-                .into_iter()
-                .next()
-                .ok_or_else(|| anyhow!("no results are returned"))?;
-            res.push((
-                self.tokenizer
-                    .decode(hypotheses)
-                    .map_err(|err| anyhow!("failed to decode: {err}"))?,
-                score,
-            ));
-        }
-        Ok(res)
+    /// Translates multiple strings with a source prefix for each input.
+    ///
+    /// The prefixes are inserted into the encoded source token lists before they are passed to
+    /// CTranslate2. This is useful for models such as M2M-100 and NLLB that require a source
+    /// language token at the beginning of each input.
+    pub fn translate_batch_with_source_prefix<U, V, W, X>(
+        &self,
+        sources: &[U],
+        source_prefixes: &[Vec<V>],
+        options: &TranslationOptions<W, X>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+    ) -> anyhow::Result<Vec<(String, Option<f32>)>>
+    where
+        U: AsRef<str>,
+        V: AsRef<str>,
+        W: AsRef<str>,
+        X: AsRef<str>,
+    {
+        let mut sources = encode_all(&self.tokenizer, sources)?;
+        prepend_source_prefixes(&mut sources, source_prefixes)?;
+        self.translate_batch_impl(sources, None, options, callback)
     }
 
     /// Translates multiple lists of strings with target prefixes in a batch processing manner.
@@ -251,52 +261,132 @@ impl<T: Tokenizer> Translator<T> {
         W: AsRef<str>,
         E: AsRef<str>,
     {
-        let output = if let Some(callback) = callback {
-            let mut callback_result = Ok(());
-            let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
+        let target_prefixes = target_prefixes
+            .iter()
+            .map(|prefix| {
+                prefix
+                    .iter()
+                    .map(|token| token.as_ref().to_string())
+                    .collect()
+            })
+            .collect::<Vec<Vec<String>>>();
+        self.translate_batch_impl(
+            encode_all(&self.tokenizer, sources)?,
+            Some(&target_prefixes),
+            options,
+            callback,
+        )
+    }
+
+    /// Translates multiple strings with source and target prefixes for each input.
+    pub fn translate_batch_with_source_and_target_prefix<U, V, W, X, Y>(
+        &self,
+        sources: &[U],
+        source_prefixes: &[Vec<V>],
+        target_prefixes: &[Vec<W>],
+        options: &TranslationOptions<X, Y>,
+        callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+    ) -> anyhow::Result<Vec<(String, Option<f32>)>>
+    where
+        U: AsRef<str>,
+        V: AsRef<str>,
+        W: AsRef<str>,
+        X: AsRef<str>,
+        Y: AsRef<str>,
+    {
+        let mut sources = encode_all(&self.tokenizer, sources)?;
+        prepend_source_prefixes(&mut sources, source_prefixes)?;
+        let target_prefixes = target_prefixes
+            .iter()
+            .map(|prefix| {
+                prefix
+                    .iter()
+                    .map(|token| token.as_ref().to_string())
+                    .collect()
+            })
+            .collect::<Vec<Vec<String>>>();
+        self.translate_batch_impl(sources, Some(&target_prefixes), options, callback)
+    }
+
+    fn translate_batch_impl<V, W>(
+        &self,
+        sources: Vec<Vec<String>>,
+        target_prefixes: Option<&[Vec<String>]>,
+        options: &TranslationOptions<V, W>,
+        mut callback: Option<&mut dyn FnMut(GenerationStepResult) -> Result<()>>,
+    ) -> anyhow::Result<Vec<(String, Option<f32>)>>
+    where
+        V: AsRef<str>,
+        W: AsRef<str>,
+    {
+        if let Some(prefixes) = target_prefixes {
+            if sources.len() != prefixes.len() {
+                return Err(anyhow!(
+                    "the number of target prefixes ({}) must match the number of sources ({})",
+                    prefixes.len(),
+                    sources.len()
+                ));
+            }
+        }
+
+        let has_callback = callback.is_some();
+        let mut callback_result = Ok(());
+        let mut wrapped_callback = |r: sys::GenerationStepResult| -> bool {
+            if let Some(callback) = callback.as_deref_mut() {
                 if let Err(e) =
                     GenerationStepResult::from_ffi(r, &self.tokenizer).and_then(|r| callback(r))
                 {
                     callback_result = Err(e);
                     return true;
                 }
-                false
-            };
-            let output = self.translator.translate_batch_with_target_prefix(
-                &encode_all(&self.tokenizer, sources)?,
-                target_prefixes,
-                options,
-                Some(&mut wrapped_callback),
-            )?;
-            callback_result?;
-            output
-        } else {
-            self.translator.translate_batch_with_target_prefix(
-                &encode_all(&self.tokenizer, sources)?,
-                target_prefixes,
-                options,
-                None,
-            )?
+            }
+            false
         };
 
-        let mut res = Vec::new();
-        for (r, prefix) in output.into_iter().zip(target_prefixes) {
-            let score = r.score();
-            let mut hypotheses = r
-                .hypotheses
-                .into_iter()
-                .next()
-                .ok_or_else(|| anyhow!("no results are returned"))?;
-            hypotheses.drain(0..prefix.len());
+        let output = match target_prefixes {
+            Some(prefixes) => self.translator.translate_batch_with_target_prefix(
+                &sources,
+                prefixes,
+                options,
+                if has_callback {
+                    Some(&mut wrapped_callback)
+                } else {
+                    None
+                },
+            )?,
+            None => self.translator.translate_batch(
+                &sources,
+                options,
+                if has_callback {
+                    Some(&mut wrapped_callback)
+                } else {
+                    None
+                },
+            )?,
+        };
+        callback_result?;
 
-            res.push((
-                self.tokenizer
-                    .decode(hypotheses)
-                    .map_err(|err| anyhow!("failed to decode: {err}"))?,
-                score,
-            ));
-        }
-        Ok(res)
+        output
+            .into_iter()
+            .enumerate()
+            .map(|(index, r)| {
+                let score = r.score();
+                let mut hypotheses = r
+                    .hypotheses
+                    .into_iter()
+                    .next()
+                    .ok_or_else(|| anyhow!("no results are returned"))?;
+                if let Some(prefixes) = target_prefixes {
+                    hypotheses.drain(0..prefixes[index].len());
+                }
+                Ok((
+                    self.tokenizer
+                        .decode(hypotheses)
+                        .map_err(|err| anyhow!("failed to decode: {err}"))?,
+                    score,
+                ))
+            })
+            .collect()
     }
 
     /// Number of batches in the work queue.
@@ -321,6 +411,30 @@ impl<T: Tokenizer> Translator<T> {
 impl<T: Tokenizer> Debug for Translator<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.translator)
+    }
+}
+
+#[cfg(test)]
+mod prefix_tests {
+    use super::prepend_source_prefixes;
+
+    #[test]
+    fn test_prepend_source_prefixes() {
+        let mut sources = vec![vec!["hello".to_string()], vec!["world".to_string()]];
+        prepend_source_prefixes(&mut sources, &[vec!["__en__"], vec!["__de__"]]).unwrap();
+        assert_eq!(
+            sources,
+            vec![
+                vec!["__en__".to_string(), "hello".to_string()],
+                vec!["__de__".to_string(), "world".to_string()]
+            ]
+        );
+    }
+
+    #[test]
+    fn test_prepend_source_prefixes_requires_one_prefix_per_source() {
+        let mut sources = vec![vec!["hello".to_string()]];
+        assert!(prepend_source_prefixes(&mut sources, &[] as &[Vec<&str>]).is_err());
     }
 }
 
