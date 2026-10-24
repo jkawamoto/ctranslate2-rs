@@ -31,7 +31,7 @@ fn prepend_source_prefixes<T: AsRef<str>>(
     }
 
     for (source, prefix) in sources.iter_mut().zip(prefixes) {
-        let mut prefixed = prefix
+        let mut prefixed: Vec<String> = prefix
             .iter()
             .map(|token| token.as_ref().to_string())
             .collect();
