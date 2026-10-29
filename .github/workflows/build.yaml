@@ -40,14 +40,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: actions/cache@v6
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo
-            ~/.rustup
-          key: ${{ runner.os }}-rust-${{ matrix.os }}-${{ hashFiles('mise.toml', 'mise.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-${{ matrix.os }}-
+          key: ${{ matrix.backend }}
+          cache-on-failure: true
       - uses: jdx/mise-action@v5
         with:
           cache: true
@@ -67,20 +63,17 @@ jobs:
         backend: [ruy, mkl, openblas, dnnl]
     runs-on: ubuntu-latest
     env:
+      CXXFLAGS: "-march=x86-64"
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
 
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: actions/cache@v6
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo
-            ~/.rustup
-          key: ${{ runner.os }}-rust-${{ hashFiles('mise.toml', 'mise.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
+          key: ${{ matrix.backend }}
+          cache-on-failure: true
       - uses: jdx/mise-action@v5
         with:
           cache: true
@@ -115,14 +108,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: actions/cache@v6
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo
-            ~/.rustup
-          key: ${{ runner.os }}-rust-${{ hashFiles('mise.toml', 'mise.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
+          key: ${{ matrix.backend }}
+          cache-on-failure: true
       - uses: jdx/mise-action@v5
         with:
           cache: true
