@@ -1,0 +1,86 @@
+[settings]
+lockfile = true
+
+[env]
+RUST_BACKTRACE = "full"
+
+[tools]
+dprint = "latest"
+rust = ["latest", "nightly"]
+uv = "latest"
+
+[tasks.build]
+description = "Build the workspace with the whisper feature"
+alias = "b"
+run = "cargo build -vv -F whisper"
+
+[tasks.test]
+description = "Run tests with the whisper and hub features"
+alias = "t"
+run = "cargo test -vv -F whisper,hub"
+
+[tasks.clean]
+description = "Remove Cargo build artifacts"
+run = "cargo clean"
+
+[tasks.package]
+description = "Create crate packages with the whisper and hub features"
+run = "cargo package -vv -F whisper,hub --allow-dirty"
+
+[tasks.doc]
+description = "Generate documentation for ct2rs and ct2rs-platform"
+run = [
+    "cargo +nightly rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs",
+    "cargo +nightly rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
+]
+
+[tasks.pre-commit]
+description = "Run all pre-commit hooks on every file"
+run = "uv tool run --with pre-commit-uv pre-commit run -a"
+
+[tasks.pre-commit-update]
+description = "Update pre-commit hook revisions and run all hooks"
+run = ["uv tool run --with pre-commit-uv pre-commit autoupdate", { task = "pre-commit" }]
+hide = true
+
+[tasks.dprint-update]
+description = "Update dprint plugin versions"
+run = "dprint config update"
+hide = true
+
+[tasks.update]
+description = "Update Cargo dependencies, dprint plugins, and pre-commit hooks"
+run = [
+    "cargo update",
+    { task = "dprint-update" },
+    { task = "pre-commit-update" },
+    "mise lock --bump --platform linux-x64,windows-x64,macos-arm64,macos-x64"
+]
+
+[tasks.bump]
+description = "Bump the project version and rebuild packages and documentation"
+usage = '''
+arg "<type>" help="Version increment: major, minor, or patch" {
+  choices "major" "minor" "patch"
+}
+'''
+run = [
+    'uv tool run bump-my-version bump "${usage_type?}"',
+    { task = "clean" },
+    { task = "package" },
+    { task = "doc" },
+]
+
+[tasks.fix-submodule]
+description = "Initialize and update all Git submodules recursively"
+run = "git submodule update --init --recursive"
+
+[tasks.bump-ctranslate2]
+description = "Check out a CTranslate2 version or tag and update its submodules"
+usage = 'arg "<version>" help="CTranslate2 version or Git tag to check out"'
+run = [
+    "git fetch --all",
+    'git checkout "${usage_version?}"',
+    { task = "fix-submodule" }
+]
+dir = "ct2rs/CTranslate2"
