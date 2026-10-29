@@ -31,12 +31,13 @@ run = "cargo package -vv -F whisper,hub --allow-dirty"
 description = "Generate documentation for ct2rs and ct2rs-platform"
 run = [
     "cargo +nightly rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs",
-    "cargo +nightly rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs"
+    "cargo +nightly rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs",
 ]
 
 [tasks.pre-commit]
 description = "Run all pre-commit hooks on every file"
-run = "uv tool run --with pre-commit-uv pre-commit run -a"
+alias = "p"
+run = ["rustup component add rustfmt", "uv tool run --with pre-commit-uv pre-commit run -a"]
 
 [tasks.pre-commit-update]
 description = "Update pre-commit hook revisions and run all hooks"
@@ -54,7 +55,7 @@ run = [
     "cargo update",
     { task = "dprint-update" },
     { task = "pre-commit-update" },
-    "mise lock --bump --platform linux-x64,windows-x64,macos-arm64,macos-x64"
+    "mise lock --bump --platform linux-x64,windows-x64,macos-arm64,macos-x64",
 ]
 
 [tasks.bump]
@@ -81,6 +82,6 @@ usage = 'arg "<version>" help="CTranslate2 version or Git tag to check out"'
 run = [
     "git fetch --all",
     'git checkout "${usage_version?}"',
-    { task = "fix-submodule" }
+    { task = "fix-submodule" },
 ]
 dir = "ct2rs/CTranslate2"
