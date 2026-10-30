@@ -3,11 +3,16 @@ lockfile = true
 
 [env]
 RUST_BACKTRACE = "full"
+RUSTC_WRAPPER = "sccache"
+CMAKE_C_COMPILER_LAUNCHER = "sccache"
+CMAKE_CXX_COMPILER_LAUNCHER = "sccache"
+CARGO_TARGET_DIR = "{{config_root}}/target/sccache"
 
 [tools]
 dprint = "latest"
 rust = ["latest", "nightly"]
 uv = "latest"
+sccache = "latest"
 
 [tasks.build]
 description = "Build the workspace with the whisper feature"
