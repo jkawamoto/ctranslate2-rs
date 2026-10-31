@@ -140,6 +140,24 @@ ct2-transformers-converter --model facebook/nllb-200-distilled-600M --output_dir
 For more details, please refer to
 the [CTranslate2's docs](https://opennmt.net/CTranslate2/guides/transformers.html#nllb).
 
+## Development
+
+When using [mise](https://mise.jdx.dev/) in this repository, `sccache` is enabled by default for Rust and C/C++
+compilation. Run `mise install` first. CTranslate2 and its dependencies are still built from source; cached compiler
+outputs can speed up later builds. The first build with an empty cache may be slower.
+
+mise builds use `target/sccache` to keep their CMake configuration separate from builds without sccache. To run a
+build without sccache in a POSIX shell, use a separate target directory:
+
+```sh
+env -u RUSTC_WRAPPER -u CMAKE_C_COMPILER_LAUNCHER -u CMAKE_CXX_COMPILER_LAUNCHER \
+  CARGO_TARGET_DIR=target/no-sccache cargo build -p ct2rs --release
+```
+
+Use the same target directory when switching back to cached builds only after reconfiguring CMake; otherwise its cached
+compiler launcher settings may persist. `cargo clean` under mise only cleans the active `CARGO_TARGET_DIR`.
+These settings are local development defaults and are not required for users of the published crate.
+
 ## License
 
 This application is released under the MIT License. For details, see the [LICENSE](LICENSE) file.
