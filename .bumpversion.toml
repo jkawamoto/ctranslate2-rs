@@ -14,6 +14,16 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
 [[tool.bumpversion.files]]
+filename = "README.md"
+search = 'ct2rs-sys = "{current_version}"'
+replace = 'ct2rs-sys = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "ct2rs-sys/README.md"
+search = 'ct2rs-sys = "{current_version}"'
+replace = 'ct2rs-sys = "{new_version}"'
+
+[[tool.bumpversion.files]]
 filename = "ct2rs-platform/Cargo.toml"
 search = 'version = "={current_version}"'
 replace = 'version = "={new_version}"'
