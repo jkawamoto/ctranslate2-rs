@@ -13,7 +13,7 @@ Add `ct2rs-sys` directly if you need the low-level API:
 
 ```toml
 [dependencies]
-ct2rs-sys = "0.10.2"
+ct2rs-sys = "0.10.3"
 ```
 
 ## Usage

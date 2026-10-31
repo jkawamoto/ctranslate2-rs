@@ -19,7 +19,7 @@ description = "Rust bindings for OpenNMT/CTranslate2"
 
 [dependencies]
 anyhow = "1.0"
-ct2rs-sys = { version = "=0.10.2", path = "../ct2rs-sys", default-features = false }
+ct2rs-sys = { version = "=0.10.3", path = "../ct2rs-sys", default-features = false }
 sentencepiece = { version = "0.13", optional = true }
 tokenizers = { version = "0.22", optional = true }
 
