@@ -30,13 +30,18 @@ run = "cargo clean"
 
 [tasks.package]
 description = "Create crate packages with the whisper and hub features"
-run = "cargo package -vv -F whisper,hub --allow-dirty"
-
-[tasks.doc]
-description = "Generate documentation for ct2rs and ct2rs-platform"
 run = [
-    "cargo +nightly rustdoc -F whisper,hub -p ct2rs -- --cfg docsrs",
-    "cargo +nightly rustdoc -F whisper,hub -p ct2rs-platform -- --cfg docsrs",
+    "cargo package -vv -p ct2rs-sys --allow-dirty",
+    "cargo package -vv -p ct2rs -F whisper,hub --allow-dirty",
+    "cargo package -vv -p ct2rs-platform -F whisper,hub --allow-dirty"
+]
+
+[tasks.docs]
+description = "Generate documentation"
+run = [
+    "cargo +nightly rustdoc -p ct2rs-sys -- --cfg docsrs",
+    "cargo +nightly rustdoc -p ct2rs -F whisper,hub -- --cfg docsrs",
+    "cargo +nightly rustdoc -p ct2rs-platform -F whisper,hub -- --cfg docsrs",
 ]
 
 [tasks.pre-commit]
@@ -74,5 +79,5 @@ run = [
     'uv tool run bump-my-version bump "${usage_type?}"',
     { task = "clean" },
     { task = "package" },
-    { task = "doc" },
+    { task = "docs" },
 ]

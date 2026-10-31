@@ -16,6 +16,7 @@ jobs:
           submodules: recursive
       - name: Publish
         run: |
+          cargo publish -p ct2rs-sys
           cargo publish -p ct2rs
           cargo publish -p ct2rs-platform
         env:
