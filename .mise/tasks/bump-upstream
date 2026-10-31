@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+#MISE description = "Update upstream CTranslate2 and create a patch release pull request"
+#MISE dir = "{{ config_root }}"
+#USAGE arg "[version]" default="" help="CTranslate2 version or Git tag to check out (defaults to latest stable release)"
+
+set -euo pipefail
+
+# Check for uncommitted changes in the working tree
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "Error: Working directory has uncommitted changes. Please stash or commit them before running." >&2
+    exit 1
+fi
+
+echo "==> 1. Fetching origin and preparing bump branch..."
+git fetch origin
+
+if git show-ref --verify --quiet refs/heads/bump; then
+    git checkout bump
+else
+    git checkout -B bump origin/bump 2>/dev/null || git checkout -b bump origin/main
+fi
+
+echo "==> Rebasing bump onto origin/main..."
+git rebase origin/main
+
+echo "==> 2. Updating ct2rs/CTranslate2..."
+target_version="${usage_version:-}"
+if [ -n "$target_version" ]; then
+    mise run bump-ctranslate2 "$target_version"
+else
+    mise run bump-ctranslate2
+fi
+
+ct2_version=$(git -C ct2rs/CTranslate2 describe --tags)
+
+echo "==> 3. Checking and committing ct2rs/CTranslate2 submodule changes..."
+if git diff --quiet ct2rs/CTranslate2 && git diff --cached --quiet ct2rs/CTranslate2; then
+    echo "ct2rs/CTranslate2 is already at ${ct2_version}. No upstream changes to update."
+    exit 0
+fi
+
+git add ct2rs/CTranslate2
+git commit -m "chore: update ct2rs/CTranslate2 to ${ct2_version}"
+
+echo "==> 4. Running update task and committing dependency changes if any..."
+mise run update
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    git add -u
+    git commit -m "chore: update dependencies"
+fi
+
+echo "==> 5. Bumping patch version..."
+mise run bump patch
+
+new_version=$(uv tool run --quiet bump-my-version show current_version)
+pr_title="v${new_version}"
+pr_body="Updates \`ct2rs/CTranslate2\` to \`${ct2_version}\`."
+
+echo "==> 6. Pushing bump branch and creating pull request..."
+git push --force-with-lease -u origin bump
+
+if gh pr view bump --json url --jq .url 2>/dev/null; then
+    echo "Pull request already exists for bump branch."
+else
+    gh pr create --base main --head bump --title "$pr_title" --body "$pr_body"
+fi
+
+echo "==> Patch release PR $pr_title created successfully!"
