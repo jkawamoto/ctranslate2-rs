@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description = "Check out the latest CTranslate2 release (or specified version) and update its submodules"
+#MISE dir = "{{ config_root }}/ct2rs/CTranslate2"
+#USAGE arg "[version]" default="" help="CTranslate2 version or Git tag to check out (defaults to latest stable release)"
+
+set -euo pipefail
+
+git fetch --all --tags
+
+version="${usage_version:-}"
+if [ -z "$version" ]; then
+    version=$(git tag -l "v*" --sort=-v:refname | grep -E '^v[0-9]+(\.[0-9]+)*$' | head -n 1)
+fi
+
+if [ -z "$version" ]; then
+    echo "Error: No stable release tag found for CTranslate2" >&2
+    exit 1
+fi
+
+echo "Checking out CTranslate2 ${version}..."
+git checkout "${version}"
+
+# Update submodules of CTranslate2
+git submodule update --init --recursive

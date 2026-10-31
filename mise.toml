@@ -76,17 +76,3 @@ run = [
     { task = "package" },
     { task = "doc" },
 ]
-
-[tasks.fix-submodule]
-description = "Initialize and update all Git submodules recursively"
-run = "git submodule update --init --recursive"
-
-[tasks.bump-ctranslate2]
-description = "Check out a CTranslate2 version or tag and update its submodules"
-usage = 'arg "<version>" help="CTranslate2 version or Git tag to check out"'
-run = [
-    "git fetch --all",
-    'git checkout "${usage_version?}"',
-    { task = "fix-submodule" },
-]
-dir = "ct2rs/CTranslate2"
