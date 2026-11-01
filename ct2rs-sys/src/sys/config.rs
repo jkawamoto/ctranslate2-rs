@@ -378,12 +378,12 @@ impl Config {
 mod tests {
     use rand::random;
 
+    #[cfg(not(feature = "cuda"))]
+    use super::get_device_count;
     use super::{
         get_log_level, get_random_seed, set_log_level, set_random_seed, BatchType, ComputeType,
         Config, Device, LogLevel,
     };
-    #[cfg(not(feature = "cuda"))]
-    use super::get_device_count;
 
     #[test]
     fn test_device_display() {
