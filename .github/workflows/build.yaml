@@ -52,9 +52,9 @@ jobs:
           path: ~/.cache/huggingface
           key: macos-test-data
       - name: Build
-        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
 
   build-linux:
     strategy:
@@ -65,6 +65,7 @@ jobs:
     env:
       CXXFLAGS: "-march=x86-64"
       LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
+      OPENBLAS_TARGET: CORE2
 
     steps:
       - uses: actions/checkout@v7
@@ -82,9 +83,9 @@ jobs:
           path: ~/.cache/huggingface
           key: linux-test-data
       - name: Build
-        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' && matrix.backend != 'dnnl' }}
 
   build-windows:
@@ -120,9 +121,9 @@ jobs:
           path: ~/.cache/huggingface
           key: windows-test-data
       - name: Build
-        run: cargo build -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
+        run: cargo build --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}"
       - name: Run tests
-        run: cargo test -p ct2rs --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
+        run: cargo test --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' }}
 
   docs:
@@ -142,4 +143,4 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
-      - run: mise run doc
+      - run: mise run docs

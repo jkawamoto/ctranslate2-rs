@@ -6,9 +6,9 @@
 //
 // http://opensource.org/licenses/mit-license.php
 
-#include "ct2rs/src/sys/generator.rs.h"
+#include "ct2rs-sys/src/sys/generator.rs.h"
 
-#include "ct2rs/include/types.h"
+#include "include/types.h"
 
 using rust::Str;
 using rust::Vec;
