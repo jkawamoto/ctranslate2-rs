@@ -1,5 +1,6 @@
 [workspace]
 members = ["ct2rs", "ct2rs-platform"]
+default-members = ["ct2rs"]
 resolver = "2"
 
 [workspace.package]

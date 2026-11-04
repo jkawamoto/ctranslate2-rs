@@ -93,6 +93,9 @@ jobs:
       matrix:
         backend: [openblas, ruy, dnnl, mkl]
     runs-on: windows-latest
+    env:
+      RUSTFLAGS: -C target-feature=+crt-static
+
     steps:
       - uses: actions/cache@v6
         with:

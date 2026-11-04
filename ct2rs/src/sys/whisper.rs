@@ -437,7 +437,7 @@ impl Whisper {
     ///   algorithm.
     ///
     /// # Returns
-    /// Returns a vector of [`ffi::WhisperGenerationResult`], one for each sequence
+    /// Returns a vector of [`WhisperAlignmentResult`], one for each sequence
     /// of the batch, or an error if the alignment fails.
     pub fn align(
         &self,
