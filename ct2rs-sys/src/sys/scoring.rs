@@ -21,7 +21,7 @@ pub(crate) mod ffi {
     /// Example of creating a default `ScoringOptions`:
     ///
     /// ```
-    /// use ct2rs::sys::ScoringOptions;
+    /// use ct2rs_sys::ScoringOptions;
     ///
     /// let opts = ScoringOptions::default();
     /// # assert_eq!(opts.max_input_length, 1024);
@@ -61,7 +61,7 @@ pub(crate) mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("ct2rs/include/config.h");
+        include!("include/config.h");
 
         type BatchType = super::BatchType;
     }

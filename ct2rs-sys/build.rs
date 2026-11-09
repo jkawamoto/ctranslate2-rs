@@ -151,6 +151,7 @@ fn build_ctranslate2() {
             include_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_INCLUDE").unwrap()));
             library_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_LIBRARY").unwrap()));
         }
+        println!("cargo:rustc-link-lib=static=openblas");
     }
     if ruy {
         cmake.define("WITH_RUY", "ON");
@@ -169,6 +170,7 @@ fn build_ctranslate2() {
         cmake.define("WITH_DNNL", "ON");
         include_paths.push(PathBuf::from(env::var("DEP_DNNL_INCLUDE_PATH").unwrap()));
         library_paths.push(PathBuf::from(env::var("DEP_DNNL_LIBRARY_PATH").unwrap()));
+        println!("cargo:rustc-link-lib=static=dnnl");
     }
     if openmp_comp {
         // `gomp` is GNU's OpenMP runtime and does not exist on the MSVC toolchain,
@@ -409,6 +411,7 @@ fn main() {
     .file("src/sys/translator.cpp")
     .file("src/sys/generator.cpp")
     .file("src/sys/whisper.cpp")
+    .include(".")
     .include("CTranslate2/include")
     .std("c++17")
     .flag_if_supported("/EHsc")
