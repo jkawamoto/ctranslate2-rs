@@ -7,14 +7,11 @@
 
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
-The high-level API is provided by `ct2rs`. Raw bindings are available separately from
-[`ct2rs-sys`](https://crates.io/crates/ct2rs-sys); `ct2rs` no longer exposes a `sys` module.
-Add `ct2rs-sys` directly if you need the low-level API:
+<div align="center">
+  <img src="./header.png" alt="Rust bindings for CTranslate2" width="100%" />
+  <small>The header image was generated with Muse (Muse Image).</small>
+</div>
 
-```toml
-[dependencies]
-ct2rs-sys = "0.10.3"
-```
 
 ## Usage
 
@@ -36,6 +33,15 @@ If you want [Whisper](https://huggingface.co/docs/transformers/model_doc/whisper
 you need to enable the `whisper` feature.
 
 See below for more details about the available features.
+
+The high-level API is provided by `ct2rs`. Raw bindings are available separately from
+[`ct2rs-sys`](https://crates.io/crates/ct2rs-sys); `ct2rs` no longer exposes a `sys` module.
+Add `ct2rs-sys` directly if you need the low-level API:
+
+```toml
+[dependencies]
+ct2rs-sys = "0.10.3"
+```
 
 ### Prerequisites
 
