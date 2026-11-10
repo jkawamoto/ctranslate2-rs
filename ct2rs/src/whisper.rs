@@ -112,8 +112,8 @@ impl Whisper {
     /// * `options` - Settings.
     ///
     /// # Returns
-    /// Returns a `Result` containing a vector of transcribed strings if successful,
-    /// or an error if the translation fails.
+    /// Returns the first transcription for each audio chunk, or an error if transcription fails.
+    /// Use [`generate_hypotheses`][Self::generate_hypotheses] to retrieve all candidates.
     pub fn generate(
         &self,
         samples: &[f32],
@@ -121,6 +121,49 @@ impl Whisper {
         timestamp: bool,
         options: &WhisperOptions,
     ) -> Result<Vec<String>> {
+        self.generate_raw(samples, language, timestamp, options)?
+            .into_iter()
+            .map(|res| {
+                let r = res
+                    .sequences
+                    .into_iter()
+                    .next()
+                    .ok_or_else(|| anyhow!("failed to transcribe samples"))?;
+                self.tokenizer.decode(r)
+            })
+            .collect()
+    }
+
+    /// Transcribe samples and return all hypotheses for each audio chunk.
+    ///
+    /// Arguments have the same meaning as in [`generate`][Self::generate]. The outer vector
+    /// follows audio chunk order; each inner vector contains that chunk's decoded hypotheses
+    /// in model order. Empty input returns an empty vector. Scores are not returned.
+    pub fn generate_hypotheses(
+        &self,
+        samples: &[f32],
+        language: Option<&str>,
+        timestamp: bool,
+        options: &WhisperOptions,
+    ) -> Result<Vec<Vec<String>>> {
+        self.generate_raw(samples, language, timestamp, options)?
+            .into_iter()
+            .map(|res| {
+                res.sequences
+                    .into_iter()
+                    .map(|sequence| self.tokenizer.decode(sequence))
+                    .collect()
+            })
+            .collect()
+    }
+
+    fn generate_raw(
+        &self,
+        samples: &[f32],
+        language: Option<&str>,
+        timestamp: bool,
+        options: &WhisperOptions,
+    ) -> Result<Vec<sys::WhisperGenerationResult>> {
         let (mut mel_spectrogram, num_chunks) = self.generate_mel_spectrogram(samples)?;
         if num_chunks == 0 {
             return Ok(Vec::new());
@@ -138,17 +181,7 @@ impl Whisper {
         let prompt = self.generate_prompt(&lang_token, timestamp);
 
         self.whisper
-            .generate(&storage_view, &vec![prompt; num_chunks], options)?
-            .into_iter()
-            .map(|res| {
-                let r = res
-                    .sequences
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| anyhow!("failed to transcribe samples"))?;
-                self.tokenizer.decode(r)
-            })
-            .collect()
+            .generate(&storage_view, &vec![prompt; num_chunks], options)
     }
 
     /// Generate transcription segments for the given samples with detailed word-level and segment-level timelines.
@@ -785,6 +818,43 @@ mod tests {
         .unwrap();
 
         assert!(format!("{:?}", w).contains(model_path.file_name().unwrap().to_str().unwrap()));
+    }
+
+    #[test]
+    #[ignore]
+    fn test_whisper_generate_hypotheses() {
+        let model_path = download_model(MODEL_ID).unwrap();
+        let w = Whisper::new(&model_path, Config::default()).unwrap();
+        let options = super::WhisperOptions {
+            beam_size: 2,
+            num_hypotheses: 2,
+            max_length: 16,
+            ..Default::default()
+        };
+
+        assert!(w
+            .generate_hypotheses(&[], Some("en"), false, &options)
+            .unwrap()
+            .is_empty());
+        assert!(w
+            .generate(&[], Some("en"), false, &options)
+            .unwrap()
+            .is_empty());
+
+        let samples = vec![0.0; w.n_samples() + 1];
+        let hypotheses = w
+            .generate_hypotheses(&samples, Some("en"), false, &options)
+            .unwrap();
+        let first = w.generate(&samples, Some("en"), false, &options).unwrap();
+        assert_eq!(hypotheses.len(), 2);
+        assert!(hypotheses.iter().all(|chunk| chunk.len() == 2));
+        assert_eq!(
+            first,
+            hypotheses
+                .into_iter()
+                .map(|chunk| chunk[0].clone())
+                .collect::<Vec<_>>()
+        );
     }
 
     #[test]
