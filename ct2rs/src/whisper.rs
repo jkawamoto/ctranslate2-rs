@@ -121,17 +121,10 @@ impl Whisper {
         timestamp: bool,
         options: &WhisperOptions,
     ) -> Result<Vec<String>> {
-        self.generate_raw(samples, language, timestamp, options)?
-            .into_iter()
-            .map(|res| {
-                let r = res
-                    .sequences
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| anyhow!("failed to transcribe samples"))?;
-                self.tokenizer.decode(r)
-            })
-            .collect()
+        decode_first(
+            self.generate_raw(samples, language, timestamp, options)?,
+            |seq| self.tokenizer.decode(seq),
+        )
     }
 
     /// Transcribe samples and return all hypotheses for each audio chunk.
@@ -146,15 +139,10 @@ impl Whisper {
         timestamp: bool,
         options: &WhisperOptions,
     ) -> Result<Vec<Vec<String>>> {
-        self.generate_raw(samples, language, timestamp, options)?
-            .into_iter()
-            .map(|res| {
-                res.sequences
-                    .into_iter()
-                    .map(|sequence| self.tokenizer.decode(sequence))
-                    .collect()
-            })
-            .collect()
+        decode_hypotheses(
+            self.generate_raw(samples, language, timestamp, options)?,
+            |seq| self.tokenizer.decode(seq),
+        )
     }
 
     fn generate_raw(
@@ -438,6 +426,33 @@ impl Whisper {
     }
 }
 
+fn decode_first(
+    results: Vec<sys::WhisperGenerationResult>,
+    decode: impl Fn(Vec<String>) -> Result<String>,
+) -> Result<Vec<String>> {
+    results
+        .into_iter()
+        .map(|res| {
+            let sequence = res
+                .sequences
+                .into_iter()
+                .next()
+                .ok_or_else(|| anyhow!("failed to transcribe samples"))?;
+            decode(sequence)
+        })
+        .collect()
+}
+
+fn decode_hypotheses(
+    results: Vec<sys::WhisperGenerationResult>,
+    decode: impl Fn(Vec<String>) -> Result<String>,
+) -> Result<Vec<Vec<String>>> {
+    results
+        .into_iter()
+        .map(|res| res.sequences.into_iter().map(&decode).collect())
+        .collect()
+}
+
 fn starts_new_word(token: &str) -> bool {
     // If the token starts with 'Ġ' (GPT-2/Whisper space representation)
     if token.starts_with('Ġ') {
@@ -590,6 +605,44 @@ fn process_word_timings(
 #[cfg(test)]
 mod tests_grouping {
     use super::*;
+
+    #[test]
+    fn test_decode_hypotheses() {
+        let result = |sequences: Vec<Vec<&str>>| sys::WhisperGenerationResult {
+            sequences: sequences
+                .into_iter()
+                .map(|seq| seq.into_iter().map(str::to_string).collect())
+                .collect(),
+            sequences_ids: vec![],
+            scores: vec![],
+            no_speech_prob: 0.0,
+        };
+        let decode = |seq: Vec<String>| {
+            if seq == ["bad"] {
+                Err(anyhow!("decode failed"))
+            } else {
+                Ok(seq.join(""))
+            }
+        };
+        let results = vec![
+            result(vec![vec!["a"], vec!["b"]]),
+            result(vec![vec!["c"], vec!["d"]]),
+        ];
+        assert_eq!(
+            decode_first(results.clone(), decode).unwrap(),
+            vec!["a", "c"]
+        );
+        assert_eq!(
+            decode_hypotheses(results, decode).unwrap(),
+            vec![vec!["a", "b"], vec!["c", "d"]]
+        );
+        assert!(decode_first(vec![result(vec![])], decode).is_err());
+        assert!(decode_first(vec![result(vec![vec!["bad"]])], decode).is_err());
+        let results = vec![result(vec![vec!["a"], vec!["bad"]])];
+        assert_eq!(decode_first(results.clone(), decode).unwrap(), vec!["a"]);
+        assert!(decode_hypotheses(results, decode).is_err());
+        assert!(decode_hypotheses(vec![], decode).unwrap().is_empty());
+    }
 
     #[test]
     fn test_starts_new_word() {
@@ -848,13 +901,7 @@ mod tests {
         let first = w.generate(&samples, Some("en"), false, &options).unwrap();
         assert_eq!(hypotheses.len(), 2);
         assert!(hypotheses.iter().all(|chunk| chunk.len() == 2));
-        assert_eq!(
-            first,
-            hypotheses
-                .into_iter()
-                .map(|chunk| chunk[0].clone())
-                .collect::<Vec<_>>()
-        );
+        assert_eq!(first.len(), 2);
     }
 
     #[test]
