@@ -52,7 +52,7 @@ cxx-build = "1.0"
 walkdir = "2.5"
 
 [dev-dependencies]
-rand = "0.9"
+rand = "0.10"
 
 [features]
 default = ["ruy", "cuda-small-binary"]
