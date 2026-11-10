@@ -8,6 +8,10 @@
 
 //! This crate provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 //!
+//! ![Rust bindings for CTranslate2](https://raw.githubusercontent.com/jkawamoto/ctranslate2-rs/main/header.png)
+//!
+//! The header image was generated with Muse (Muse Image).
+//!
 //! This crate provides the following:
 //!
 //! * Rust bindings for

@@ -8,10 +8,13 @@
 This library provides Rust bindings for [OpenNMT/CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
 <div align="center">
-  <img src="./header.png" alt="Rust bindings for CTranslate2" width="100%" />
+  <img
+    src="https://raw.githubusercontent.com/jkawamoto/ctranslate2-rs/main/header.png"
+    alt="Rust bindings for CTranslate2"
+    width="100%"
+  />
   <small>The header image was generated with Muse (Muse Image).</small>
 </div>
-
 
 ## Usage
 
