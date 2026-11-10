@@ -813,7 +813,8 @@ mod tests {
                 "https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav";
             let response = ureq::get(url).call().expect("failed to download wav file");
             let mut out = std::fs::File::create(wav_path).expect("failed to create wav file");
-            std::io::copy(&mut response.into_reader(), &mut out).expect("failed to write wav file");
+            std::io::copy(&mut response.into_parts().1.into_reader(), &mut out)
+                .expect("failed to write wav file");
         }
 
         let samples = read_audio(wav_path, w.sampling_rate()).unwrap();
