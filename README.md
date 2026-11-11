@@ -29,14 +29,14 @@ Add this crate to your `Cargo.toml` and select the backend features you want to 
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.10.4", features = ["cuda", "dnnl", "mkl"] }
+ct2rs = { version = "0.11.0", features = ["cuda", "dnnl", "mkl"] }
 ```
 
 Alternatively, use the `ct2rs-platform` crate to enable platform-specific default features:
 
 ```toml
 [dependencies]
-ct2rs = { version = "0.10.4", package = "ct2rs-platform" }
+ct2rs = { version = "0.11.0", package = "ct2rs-platform" }
 ```
 
 See [Features](#features) for details about the available features and their requirements.
@@ -58,7 +58,7 @@ Add `ct2rs-sys` directly if you need the low-level API:
 
 ```toml
 [dependencies]
-ct2rs-sys = "0.10.3"
+ct2rs-sys = "0.11.0"
 ```
 
 ### Additional notes for Windows

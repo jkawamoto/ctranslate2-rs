@@ -9,7 +9,7 @@ Add this crate as the `package` argument of the `ct2rs` crate in your `Cargo.tom
 
 ```toml
 [dependencies]
-ct2rs = { package = "ct2rs-platform", version = "0.10.4" }
+ct2rs = { package = "ct2rs-platform", version = "0.11.0" }
 ```
 
 See the [ct2rs crate](../README.md) for more information.
