@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel]
+        os: [macos-15]
         backend: [ruy, accelerate]
     runs-on: ${{ matrix.os }}
 

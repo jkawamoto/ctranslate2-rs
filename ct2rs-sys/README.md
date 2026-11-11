@@ -5,7 +5,7 @@ This crate owns the CTranslate2 build and link configuration used by `ct2rs`.
 
 ```toml
 [dependencies]
-ct2rs-sys = "0.10.3"
+ct2rs-sys = "0.11.0"
 ```
 
 The bindings are exposed at the crate root, for example `ct2rs_sys::Translator` and
