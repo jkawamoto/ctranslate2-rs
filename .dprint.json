@@ -7,7 +7,7 @@
     "**/*.{toml,md}"
   ],
   "excludes": [
-    "ct2rs/CTranslate2/**"
+    "ct2rs-sys/CTranslate2/**"
   ],
   "plugins": [
     "npm:@dprint/markdown@0.29.0",

@@ -23,7 +23,7 @@ fi
 echo "==> Rebasing bump onto origin/main..."
 git rebase origin/main
 
-echo "==> 2. Updating ct2rs/CTranslate2..."
+echo "==> 2. Updating ct2rs-sys/CTranslate2..."
 target_version="${usage_version:-}"
 if [ -n "$target_version" ]; then
     mise run bump-ctranslate2 "$target_version"
@@ -31,16 +31,16 @@ else
     mise run bump-ctranslate2
 fi
 
-ct2_version=$(git -C ct2rs/CTranslate2 describe --tags)
+ct2_version=$(git -C ct2rs-sys/CTranslate2 describe --tags)
 
-echo "==> 3. Checking and committing ct2rs/CTranslate2 submodule changes..."
-if git diff --quiet ct2rs/CTranslate2 && git diff --cached --quiet ct2rs/CTranslate2; then
-    echo "ct2rs/CTranslate2 is already at ${ct2_version}. No upstream changes to update."
+echo "==> 3. Checking and committing ct2rs-sys/CTranslate2 submodule changes..."
+if git diff --quiet ct2rs-sys/CTranslate2 && git diff --cached --quiet ct2rs-sys/CTranslate2; then
+    echo "ct2rs-sys/CTranslate2 is already at ${ct2_version}. No upstream changes to update."
     exit 0
 fi
 
-git add ct2rs/CTranslate2
-git commit -m "chore: update ct2rs/CTranslate2 to ${ct2_version}"
+git add ct2rs-sys/CTranslate2
+git commit -m "chore: update ct2rs-sys/CTranslate2 to ${ct2_version}"
 
 echo "==> 4. Running update task and committing dependency changes if any..."
 mise run update
@@ -54,7 +54,7 @@ mise run bump patch
 
 new_version=$(uv tool run --quiet bump-my-version show current_version)
 pr_title="v${new_version}"
-pr_body="Updates \`ct2rs/CTranslate2\` to \`${ct2_version}\`."
+pr_body="Updates \`ct2rs-sys/CTranslate2\` to \`${ct2_version}\`."
 
 echo "==> 6. Pushing bump branch and creating pull request..."
 git push --force-with-lease -u origin bump
