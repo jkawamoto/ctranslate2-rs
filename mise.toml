@@ -31,9 +31,7 @@ run = "cargo clean"
 [tasks.package]
 description = "Create crate packages with the whisper and hub features"
 run = [
-    "cargo package -vv -p ct2rs-sys --allow-dirty",
-    "cargo package -vv -p ct2rs -F whisper,hub --allow-dirty",
-    "cargo package -vv -p ct2rs-platform -F whisper,hub --allow-dirty",
+    "cargo package -vv -p ct2rs-sys -p ct2rs -p ct2rs-platform -F ct2rs/whisper,ct2rs/hub,ct2rs-platform/whisper,ct2rs-platform/hub --allow-dirty",
 ]
 
 [tasks.docs]
