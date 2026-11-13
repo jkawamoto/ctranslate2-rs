@@ -87,6 +87,9 @@ jobs:
       - name: Run tests
         run: cargo test --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" -- --include-ignored
         if: ${{ matrix.backend != 'mkl' && matrix.backend != 'dnnl' }}
+      - name: Link tests
+        run: cargo test --no-default-features -F "all-tokenizers,whisper,hub,${{ matrix.backend }}" --tests --no-run
+        if: ${{ matrix.backend == 'mkl' || matrix.backend == 'dnnl' }}
 
   build-windows:
     strategy:
