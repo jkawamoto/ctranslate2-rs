@@ -37,7 +37,7 @@ backend = "core:rust"
 specifiers = ["latest"]
 
 [[tools.rust]]
-version = "nightly-2026-11-11"
+version = "nightly-2026-11-13"
 backend = "core:rust"
 specifiers = ["nightly"]
 
