@@ -32,12 +32,12 @@ url_api = "https://api.github.com/repos/dprint/dprint/releases/assets/667629154"
 provenance = "github-attestations"
 
 [[tools.rust]]
-version = "1.99.1"
+version = "1.100.0"
 backend = "core:rust"
 specifiers = ["latest"]
 
 [[tools.rust]]
-version = "nightly-2026-11-13"
+version = "nightly-2026-11-15"
 backend = "core:rust"
 specifiers = ["nightly"]
 
@@ -70,30 +70,30 @@ url = "https://github.com/mozilla/sccache/releases/download/v0.19.0/sccache-v0.1
 url_api = "https://api.github.com/repos/mozilla/sccache/releases/assets/671951037"
 
 [[tools.uv]]
-version = "0.13.7"
+version = "0.13.8"
 backend = "aqua:astral-sh/uv"
 specifiers = ["latest"]
 
 [tools.uv."platforms.linux-x64"]
-checksum = "sha256:c5221ff41b7892bfc223543883600125f6a47fe845093e0f5bdff4f359196d83"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009823"
+checksum = "sha256:5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313966"
 provenance = "github-attestations"
 
 [tools.uv."platforms.macos-arm64"]
-checksum = "sha256:81b811b57e4624df7ed3aac148e0359100d9962f3d9dce00aec533dc2e086731"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009442"
+checksum = "sha256:6b71028a6b904f2ae3340ef52e595512de807d06c0a20eaef2f692581b246558"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313603"
 provenance = "github-attestations"
 
 [tools.uv."platforms.macos-x64"]
-checksum = "sha256:20c47e4c1f630b8abaff8c291fa9b9aa300fef92c4fbff95adf198b55287cda7"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009775"
+checksum = "sha256:a04c2ffeac28b2003a2c13caf538ab425fcd7def3e4a41571f4a8fb370a66af3"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313917"
 provenance = "github-attestations"
 
 [tools.uv."platforms.windows-x64"]
-checksum = "sha256:0cdc5b38fe5a8168ed6a25814f5ba43c21d313dd3187314fccb37b7cec46e021"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.7/uv-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009796"
+checksum = "sha256:529e78a9cec6cd7e3e014f7ecd8bda0c113969d4ed0f2efeedb85c30943325b8"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313927"
 provenance = "github-attestations"
