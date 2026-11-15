@@ -38,7 +38,7 @@ name = "ct2rs_sys"
 anyhow = "1.0"
 cxx = { version = "1.0", features = ["c++17"] }
 intel-onemkl-prebuild = { version = "0.2", optional = true }
-onednn-src = { version = "0.1", optional = true }
+onednn-src = { version = "0.1.24", optional = true }
 
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 openblas-src = { version = "0.10", features = ["static"], optional = true }
