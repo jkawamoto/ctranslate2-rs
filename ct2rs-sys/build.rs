@@ -1,6 +1,6 @@
 // build.rs
 //
-// Copyright (c) 2023-2025 Junpei Kawamoto
+// Copyright (c) 2023-2026 Junpei Kawamoto
 //
 // This software is released under the MIT License.
 //
@@ -151,7 +151,6 @@ fn build_ctranslate2() {
             include_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_INCLUDE").unwrap()));
             library_paths.push(PathBuf::from(env::var("DEP_OPENBLAS_LIBRARY").unwrap()));
         }
-        println!("cargo:rustc-link-lib=static=openblas");
     }
     if ruy {
         cmake.define("WITH_RUY", "ON");
