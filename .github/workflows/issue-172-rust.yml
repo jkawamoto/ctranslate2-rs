@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [baseline, fixed]
+        mode: [whole-archive, fixed]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +25,15 @@ jobs:
         if: matrix.mode == 'baseline'
         shell: pwsh
         run: git show 12f8df7:ct2rs-sys/build.rs | Set-Content ct2rs-sys/build.rs
+      - name: Isolate the whole-archive change
+        if: matrix.mode == 'whole-archive'
+        shell: pwsh
+        run: |
+          $source = (git show 12f8df7:ct2rs-sys/build.rs) -join "`n"
+          $old = 'println!("cargo:rustc-link-lib=static={}", library_name(name));'
+          $new = 'if library_name(name) == "ctranslate2" { println!("cargo:rustc-link-lib=static:+whole-archive=ctranslate2"); } else { println!("cargo:rustc-link-lib=static={}", library_name(name)); }'
+          if (-not $source.Contains($old)) { throw "Could not find native link directive" }
+          $source.Replace($old, $new) | Set-Content ct2rs-sys/build.rs
       - name: Build Rust Whisper probe
         shell: pwsh
         env:

@@ -459,7 +459,13 @@ fn link_libraries<T: AsRef<Path>>(root: T) {
                         println!("cargo:rustc-link-search={}", dir.display());
                         current_dir = Some(dir.to_path_buf())
                     }
-                    println!("cargo:rustc-link-lib=static={}", library_name(name));
+                    let name = library_name(name);
+                    if name == "ctranslate2" {
+                        // Load generic kernels first so shared inline helpers do not come from AVX objects.
+                        println!("cargo:rustc-link-lib=static:+whole-archive={name}");
+                    } else {
+                        println!("cargo:rustc-link-lib=static={name}");
+                    }
                 });
         }
     }
