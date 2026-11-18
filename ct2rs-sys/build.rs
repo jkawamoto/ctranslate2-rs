@@ -33,6 +33,8 @@ enum Os {
 
 fn build_ctranslate2() {
     let mut cmake = Config::new("CTranslate2");
+    // Unoptimized ISA-specific objects can export shared inline helpers containing AVX instructions.
+    cmake.profile("Release");
     match env::var("CMAKE_PARALLEL") {
         Ok(job_n) => {
             cmake.build_arg("-j").build_arg(job_n);
@@ -83,7 +85,11 @@ fn build_ctranslate2() {
         }
 
         println!("cargo::rustc-link-arg=/FORCE:MULTIPLE");
-        cmake.profile("Release").cxxflag("/EHsc").static_crt(true);
+        cmake
+            .cxxflag("/EHsc")
+            .static_crt(true)
+            // The cmake crate otherwise overwrites MSVC's Release optimization flags.
+            .define("CMAKE_CXX_FLAGS_RELEASE", "/O2 /Ob2 /DNDEBUG");
     }
     let mut include_paths: Vec<PathBuf> = env::var("CMAKE_INCLUDE_PATH")
         .as_ref()
@@ -162,8 +168,8 @@ fn build_ctranslate2() {
     if tensor_parallel {
         cmake.define("WITH_TENSOR_PARALLEL", "ON");
     }
-    if sse4_1 {
-        cmake.define("CMAKE_CXX_FLAGS", "-msse4.1");
+    if sse4_1 && env::var("CARGO_CFG_TARGET_ENV").as_deref() != Ok("msvc") {
+        cmake.cxxflag("-msse4.1");
     }
     if dnnl {
         cmake.define("WITH_DNNL", "ON");

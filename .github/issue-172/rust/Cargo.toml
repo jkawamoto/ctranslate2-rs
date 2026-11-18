@@ -1,0 +1,9 @@
+[package]
+name = "issue-172-rust-probe"
+version = "0.0.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+ct2rs-sys = { path = "../../../ct2rs-sys" }

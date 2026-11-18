@@ -2,6 +2,10 @@ name: Investigate issue 172
 on:
   push:
     branches: [investigate/issue-172-msvc]
+    paths:
+      - .github/issue-172/CMakeLists.txt
+      - .github/issue-172/probe.cc
+      - .github/issue-172/src/**
 permissions:
   contents: read
 jobs:
