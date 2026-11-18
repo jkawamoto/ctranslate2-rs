@@ -1,0 +1,9 @@
+[package]
+name = "issue-172-probe"
+version = "0.0.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+cmake = "=0.1.58"

@@ -1,0 +1,58 @@
+name: Investigate issue 172
+on:
+  push:
+    branches: [investigate/issue-172-msvc]
+permissions:
+  contents: read
+jobs:
+  msvc:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [default, optimized, explicit-generator, no-dispatch]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build CTranslate2 with the Rust cmake crate
+        shell: pwsh
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          $env:CT2_SOURCE = "$env:GITHUB_WORKSPACE/ct2rs-sys/CTranslate2"
+          $env:OUT_DIR = "$env:RUNNER_TEMP/ct2-172"
+          $env:TARGET = "x86_64-pc-windows-msvc"
+          $env:HOST = "x86_64-pc-windows-msvc"
+          $env:OPT_LEVEL = "0"
+          $env:DEBUG = "false"
+          $env:PROFILE = "debug"
+          $env:CARGO_CFG_TARGET_OS = "windows"
+          $env:CARGO_CFG_TARGET_ARCH = "x86_64"
+          $env:CARGO_CFG_TARGET_ENV = "msvc"
+          cargo run --manifest-path .github/issue-172/Cargo.toml 2>&1 | Tee-Object "$env:RUNNER_TEMP/build.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content "$env:OUT_DIR/build/CMakeCache.txt" | Select-String 'CMAKE_CXX_FLAGS|ENABLE_CPU_DISPATCH|CMAKE_GENERATOR:'
+          & "$env:OUT_DIR/build/Release/probe.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:CT2_FORCE_CPU_ISA = "GENERIC"
+          & "$env:OUT_DIR/build/Release/probe.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Disassemble kernel objects
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem "$env:RUNNER_TEMP/ct2-172" -Recurse -Filter "*kernels*.obj" | ForEach-Object {
+            dumpbin /disasm /symbols $_.FullName | Out-File "$($_.FullName).disasm.txt"
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: msvc-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/build.log
+            ${{ runner.temp }}/ct2-172/build/CMakeCache.txt
+            ${{ runner.temp }}/ct2-172/build/probe.map
+            ${{ runner.temp }}/ct2-172/build/Release/probe.exe
+            ${{ runner.temp }}/ct2-172/**/*.disasm.txt
