@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [manual-isa]
+        mode: [bridge-opt, bridge-opt3, no-dispatch, manual-isa]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,12 +68,11 @@ jobs:
           RUSTFLAGS: -C target-feature=+crt-static,+sse4.1
           CMAKE_BUILD_PARALLEL_LEVEL: "4"
         run: |
-          $env:RUSTFLAGS += " -Clink-arg=/MAP:$env:RUNNER_TEMP/probe.map"
           $features = @()
           if ('${{ matrix.mode }}' -eq 'no-dispatch') {
             $features = @('--features', 'ct2rs-sys/disable-cpu-dispatch')
           }
-          cargo build --manifest-path .github/issue-172/rust/Cargo.toml --target-dir "$env:RUNNER_TEMP/rust-target" @features 2>&1 | Tee-Object "$env:RUNNER_TEMP/rust-build.log"
+          cargo rustc --manifest-path .github/issue-172/rust/Cargo.toml --target-dir "$env:RUNNER_TEMP/rust-target" @features -- "-Clink-arg=/MAP:$env:RUNNER_TEMP/probe.map" 2>&1 | Tee-Object "$env:RUNNER_TEMP/rust-build.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
