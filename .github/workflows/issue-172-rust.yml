@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [bridge-opt, bridge-opt3, no-dispatch]
+        mode: [manual-isa]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,6 +49,19 @@ jobs:
         if: matrix.mode == 'no-dispatch'
         shell: pwsh
         run: git show 12f8df7:ct2rs-sys/build.rs | Set-Content ct2rs-sys/build.rs
+      - name: Restrict automatic code generation to baseline ISA
+        if: matrix.mode == 'manual-isa'
+        shell: pwsh
+        run: |
+          git show 12f8df7:ct2rs-sys/build.rs | Set-Content ct2rs-sys/build.rs
+          foreach ($file in @('ct2rs-sys/CTranslate2/CMakeLists.txt', 'ct2rs-sys/CTranslate2/third_party/ruy/ruy/CMakeLists.txt')) {
+            $separator = if ($file.Contains('third_party')) { ';' } else { ' ' }
+            $source = Get-Content $file -Raw
+            $source = $source.Replace('"/arch:AVX512"', ('"/D__AVX__' + $separator + '/D__AVX2__' + $separator + '/D__AVX512F__' + $separator + '/D__AVX512CD__' + $separator + '/D__AVX512VL__' + $separator + '/D__AVX512BW__' + $separator + '/D__AVX512DQ__"'))
+            $source = $source.Replace('"/arch:AVX2"', ('"/D__AVX__' + $separator + '/D__AVX2__"'))
+            $source = $source.Replace('"/arch:AVX"', '"/D__AVX__"')
+            $source | Set-Content $file
+          }
       - name: Build Rust Whisper probe
         shell: pwsh
         env:
