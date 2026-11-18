@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [whole-archive, fixed]
+        mode: [bridge-opt, bridge-opt3, no-dispatch]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,13 +34,33 @@ jobs:
           $new = 'if library_name(name) == "ctranslate2" { println!("cargo:rustc-link-lib=static:+whole-archive=ctranslate2"); } else { println!("cargo:rustc-link-lib=static={}", library_name(name)); }'
           if (-not $source.Contains($old)) { throw "Could not find native link directive" }
           $source.Replace($old, $new) | Set-Content ct2rs-sys/build.rs
+      - name: Optimize both native libraries and CXX bridge
+        if: startsWith(matrix.mode, 'bridge-opt')
+        shell: pwsh
+        run: |
+          $source = (git show fd8d938:ct2rs-sys/build.rs) -join "`n"
+          $source = $source.Replace('.std("c++17")', '.std("c++17").opt_level(2)')
+          if ('${{ matrix.mode }}' -eq 'bridge-opt3') {
+            $source = $source.Replace('.cxxflag("/EHsc")', '.cxxflag("/EHsc").cxxflag("/Ob3")')
+            $source = $source.Replace('.std("c++17").opt_level(2)', '.std("c++17").opt_level(2).flag("/Ob3")')
+          }
+          $source | Set-Content ct2rs-sys/build.rs
+      - name: Disable CTranslate2 CPU dispatch
+        if: matrix.mode == 'no-dispatch'
+        shell: pwsh
+        run: git show 12f8df7:ct2rs-sys/build.rs | Set-Content ct2rs-sys/build.rs
       - name: Build Rust Whisper probe
         shell: pwsh
         env:
           RUSTFLAGS: -C target-feature=+crt-static,+sse4.1
           CMAKE_BUILD_PARALLEL_LEVEL: "4"
         run: |
-          cargo build --manifest-path .github/issue-172/rust/Cargo.toml --target-dir "$env:RUNNER_TEMP/rust-target" 2>&1 | Tee-Object "$env:RUNNER_TEMP/rust-build.log"
+          $env:RUSTFLAGS += " -Clink-arg=/MAP:$env:RUNNER_TEMP/probe.map"
+          $features = @()
+          if ('${{ matrix.mode }}' -eq 'no-dispatch') {
+            $features = @('--features', 'ct2rs-sys/disable-cpu-dispatch')
+          }
+          cargo build --manifest-path .github/issue-172/rust/Cargo.toml --target-dir "$env:RUNNER_TEMP/rust-target" @features 2>&1 | Tee-Object "$env:RUNNER_TEMP/rust-build.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
@@ -48,5 +68,7 @@ jobs:
           name: rust-${{ matrix.mode }}
           path: |
             ${{ runner.temp }}/rust-build.log
+            ${{ runner.temp }}/probe.map
             ${{ runner.temp }}/rust-target/debug/issue-172-rust-probe.exe
+            ${{ runner.temp }}/rust-target/debug/issue-172-rust-probe.pdb
             ${{ runner.temp }}/rust-target/debug/build/**/CMakeCache.txt
