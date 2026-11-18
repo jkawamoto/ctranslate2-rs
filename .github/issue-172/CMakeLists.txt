@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 project(issue_172_probe CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(WITH_MKL OFF CACHE BOOL "")
