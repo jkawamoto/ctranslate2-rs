@@ -1,0 +1,90 @@
+name: Issue 172 C++ Reproduction Experiment
+
+on:
+  push:
+    branches:
+      - investigate/issue-172-cpp-repro
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-probe:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        dispatch: [ON, OFF]
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          $buildDir = "$env:RUNNER_TEMP/build-dispatch-${{ matrix.dispatch }}"
+          cmake -B $buildDir -S .github/issue-172-cpp `
+            -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCT2_SOURCE="$env:GITHUB_WORKSPACE/ct2rs-sys/CTranslate2" `
+            -DENABLE_CPU_DISPATCH=${{ matrix.dispatch }} `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $buildDir = "$env:RUNNER_TEMP/build-dispatch-${{ matrix.dispatch }}"
+          cmake --build $buildDir --config Release --verbose 2>&1 | Tee-Object "$buildDir/build.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Dump symbols and disasm
+        if: always()
+        shell: pwsh
+        run: |
+          $buildDir = "$env:RUNNER_TEMP/build-dispatch-${{ matrix.dispatch }}"
+          Get-ChildItem $buildDir -Recurse -Filter "*.obj" | ForEach-Object {
+            dumpbin /symbols $_.FullName | Out-File "$($_.FullName).symbols.txt"
+            dumpbin /disasm $_.FullName | Out-File "$($_.FullName).disasm.txt"
+          }
+          Get-ChildItem "$buildDir/Release" -Filter "*.exe" | ForEach-Object {
+            dumpbin /headers $_.FullName | Out-File "$($_.FullName).headers.txt"
+          }
+
+      - name: Run control test on Windows runner
+        shell: pwsh
+        run: |
+          $buildDir = "$env:RUNNER_TEMP/build-dispatch-${{ matrix.dispatch }}"
+          & "$buildDir/Release/control.exe"
+          & "$buildDir/Release/control.exe" --trigger-avx
+
+      - name: Run probe tests on Windows runner (AVX enabled environment)
+        shell: pwsh
+        run: |
+          $buildDir = "$env:RUNNER_TEMP/build-dispatch-${{ matrix.dispatch }}"
+          Get-ChildItem "$buildDir/Release" -Filter "probe*.exe" | ForEach-Object {
+            Write-Host "=== Running $($_.Name) ==="
+            & $_.FullName
+            Write-Host "=== Running $($_.Name) with CT2_FORCE_CPU_ISA=GENERIC ==="
+            $env:CT2_FORCE_CPU_ISA = "GENERIC"
+            & $_.FullName
+            $env:CT2_FORCE_CPU_ISA = $null
+          }
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpp-repro-dispatch-${{ matrix.dispatch }}
+          path: |
+            ${{ runner.temp }}/build-dispatch-${{ matrix.dispatch }}/**/*.exe
+            ${{ runner.temp }}/build-dispatch-${{ matrix.dispatch }}/**/*.map
+            ${{ runner.temp }}/build-dispatch-${{ matrix.dispatch }}/**/*.txt
+            ${{ runner.temp }}/build-dispatch-${{ matrix.dispatch }}/**/*.log
+            ${{ runner.temp }}/build-dispatch-${{ matrix.dispatch }}/CMakeCache.txt
