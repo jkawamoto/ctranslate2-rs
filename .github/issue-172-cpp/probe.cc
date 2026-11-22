@@ -8,6 +8,7 @@
 #include "cpu/kernels.h"
 #include "cpu/backend.h"
 #include "cpu/parallel.h"
+#include "cpu/cpu_info.h"
 #include "ctranslate2/primitives.h"
 
 void check(bool condition, const char* message) {
@@ -38,12 +39,12 @@ int main() {
 
   // 2. CTranslate2 ISA detection
   std::cout << "probe ctranslate2 isa=" << cpu::isa_to_str(cpu::get_cpu_isa()) << std::endl;
-  std::cout << "ct2 cpu_supports: GENERIC=" << cpu::cpu_supports(CpuIsa::GENERIC)
-            << " SSE41=" << cpu::cpu_supports(CpuIsa::SSE41)
-            << " AVX=" << cpu::cpu_supports(CpuIsa::AVX)
-            << " AVX2=" << cpu::cpu_supports(CpuIsa::AVX2)
-            << " AVX512=" << cpu::cpu_supports(CpuIsa::AVX512)
+#if defined(CT2_X86_BUILD)
+  std::cout << "ct2 cpu_supports: AVX=" << cpu::cpu_supports_avx()
+            << " AVX2=" << cpu::cpu_supports_avx2()
+            << " AVX512=" << cpu::cpu_supports_avx512()
             << std::endl;
+#endif
 
   const float x[] = {-2.f, -1.f, 0.f, 1.f, 2.f};
   float y[5] = {0.f};
