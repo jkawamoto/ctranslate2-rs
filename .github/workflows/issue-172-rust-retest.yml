@@ -1,0 +1,107 @@
+name: Issue 172 Rust Retest
+on:
+  push:
+    branches: [investigate/issue-172-rust-retest]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target_name: updated-default
+            version: updated
+            features: ""
+          - target_name: updated-no-dispatch
+            version: updated
+            features: "--features ct2rs-sys/disable-cpu-dispatch"
+          - target_name: baseline-default
+            version: baseline
+            features: ""
+          - target_name: baseline-no-dispatch
+            version: baseline
+            features: "--features ct2rs-sys/disable-cpu-dispatch"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Switch to baseline if requested
+        if: matrix.version == 'baseline'
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse .github/issue-172/rust "$env:RUNNER_TEMP/probe_src"
+          git checkout 12f8df7
+          git submodule update --init --recursive
+          New-Item -ItemType Directory -Force -Path .github/issue-172
+          Copy-Item -Recurse "$env:RUNNER_TEMP/probe_src" .github/issue-172/rust
+
+      - name: Record toolchain and environment info
+        shell: pwsh
+        run: |
+          $infoDir = "$env:RUNNER_TEMP/info"
+          New-Item -ItemType Directory -Force -Path $infoDir
+          rustc -vV | Set-Content "$infoDir/rustc_version.txt"
+          cargo -vV | Set-Content "$infoDir/cargo_version.txt"
+          cmake --version | Set-Content "$infoDir/cmake_version.txt"
+          cl 2>&1 | Set-Content "$infoDir/cl_version.txt"
+          git log -1 --format="%H %s" | Set-Content "$infoDir/git_commit.txt"
+          git submodule status | Set-Content "$infoDir/git_submodules.txt"
+          if (Test-Path ct2rs-sys/CTranslate2/python/ctranslate2/version.py) {
+            Get-Content ct2rs-sys/CTranslate2/python/ctranslate2/version.py | Set-Content "$infoDir/ct2_version.py"
+          }
+
+          $featureArgs = @()
+          if ('${{ matrix.features }}' -ne '') {
+            $featureArgs = '${{ matrix.features }}'.Split(' ')
+          }
+          cargo tree --manifest-path .github/issue-172/rust/Cargo.toml -e features @featureArgs | Set-Content "$infoDir/cargo_tree.txt"
+
+      - name: Build control binary
+        shell: pwsh
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static,+sse4.1
+          CMAKE_BUILD_PARALLEL_LEVEL: "4"
+        run: |
+          $targetDir = "$env:RUNNER_TEMP/target"
+          $buildLog = "$env:RUNNER_TEMP/build.log"
+          cargo rustc --manifest-path .github/issue-172/rust/Cargo.toml --target-dir $targetDir --bin control -- "-Clink-arg=/MAP:$env:RUNNER_TEMP/control.map" 2>&1 | Tee-Object -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build Rust Whisper probe
+        shell: pwsh
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static,+sse4.1
+          CMAKE_BUILD_PARALLEL_LEVEL: "4"
+        run: |
+          $targetDir = "$env:RUNNER_TEMP/target"
+          $buildLog = "$env:RUNNER_TEMP/build.log"
+          $featureArgs = @()
+          if ('${{ matrix.features }}' -ne '') {
+            $featureArgs = '${{ matrix.features }}'.Split(' ')
+          }
+          cargo rustc --manifest-path .github/issue-172/rust/Cargo.toml --target-dir $targetDir --bin issue-172-rust-probe @featureArgs -- "-Clink-arg=/MAP:$env:RUNNER_TEMP/probe.map" 2>&1 | Tee-Object -Append -FilePath $buildLog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-retest-${{ matrix.target_name }}
+          path: |
+            ${{ runner.temp }}/build.log
+            ${{ runner.temp }}/probe.map
+            ${{ runner.temp }}/control.map
+            ${{ runner.temp }}/info/*
+            ${{ runner.temp }}/target/debug/issue-172-rust-probe.exe
+            ${{ runner.temp }}/target/debug/issue-172-rust-probe.pdb
+            ${{ runner.temp }}/target/debug/control.exe
+            ${{ runner.temp }}/target/debug/control.pdb
+            ${{ runner.temp }}/target/debug/build/**/CMakeCache.txt
